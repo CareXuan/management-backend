@@ -24,5 +24,18 @@ func LoginSrv(c *gin.Context, phone string, password string) {
 		common.ResForbidden(c, "密码错误")
 		return
 	}
+	var userRole model.UserRole
+	_, err = conf.Mysql.Where("id = ?", user.Id).Get(&userRole)
+	if err != nil {
+		common.ResError(c, "获取用户角色失败")
+		return
+	}
+	var role model.Role
+	_, err = conf.Mysql.Where("id = ?", userRole.RoleId).Get(&role)
+	if err != nil {
+		common.ResError(c, "获取角色信息失败")
+		return
+	}
+	user.RoleStr = role
 	common.ResOk(c, "ok", user)
 }
