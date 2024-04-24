@@ -1,7 +1,7 @@
 package model
 
 type User struct {
-	Id        int    `json:"-" xorm:"pk autoincr INT(11)"`
+	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
 	Name      string `json:"name" xorm:"varchar(128) not null"`
 	Password  string `json:"password" xorm:"varchar(256) not null"`
 	Phone     string `json:"phone" xorm:"varchar(20) not null"`
