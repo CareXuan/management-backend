@@ -1,0 +1,6 @@
+package utils
+
+const RESPONSE_OK = 200
+const RESPONSE_FORBIDDEN = 403
+const RESPONSE_NOT_FOUND = 404
+const RESPONSE_ERROR = 500
