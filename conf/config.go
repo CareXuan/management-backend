@@ -69,6 +69,8 @@ func connectMysql() {
 func syncTables() {
 	err := Mysql.Sync2(
 		new(model.User),
+		new(model.Permission),
+		new(model.UserPermission),
 	)
 	if err != nil {
 		log.Fatal(err)
