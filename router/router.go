@@ -17,13 +17,19 @@ func InitRouter(r *gin.Engine) {
 		user := v1.Group("user")
 		{
 			user.GET("/", controller.GetUserInfo)
+			user.GET("/list", controller.GetUserList)
+			user.POST("/add", controller.AddUser)
 			user.GET("/permission", controller.GetUserPermission)
 		}
 
-		// 用户相关
+		// 权限
 		auth := v1.Group("auth")
 		{
 			auth.POST("/login", controller.Login)
+			auth.GET("/permission", controller.AllPermission)
+			auth.POST("/permission/add", controller.AddPermission)
+			auth.POST("/permission/delete", controller.RemovePermission)
+			auth.GET("/roles", controller.AllRoles)
 		}
 	}
 }

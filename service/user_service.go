@@ -6,6 +6,7 @@ import (
 	"management-backend/common"
 	"management-backend/conf"
 	"management-backend/model"
+	"management-backend/utils"
 )
 
 func GetUserInfoSer(c *gin.Context, userId int) {
@@ -29,6 +30,77 @@ func GetUserInfoSer(c *gin.Context, userId int) {
 	}
 	user.RoleStr = role
 	common.ResOk(c, "ok", user)
+}
+
+func GetUserListSrv(c *gin.Context, userName string, page int, pageSize int) {
+	var users []*model.User
+	sess := conf.Mysql.NewSession()
+	if userName != "" {
+		sess.Where("name=?", userName)
+	}
+	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&users)
+	if err != nil {
+		common.ResError(c, "获取用户列表失败")
+		return
+	}
+	if len(users) <= 0 {
+		common.ResOk(c, "ok", utils.CommonListRes{Count: 0, Data: []*model.User{}})
+		return
+	}
+	var userIds []int
+	for _, user := range users {
+		userIds = append(userIds, user.Id)
+	}
+	var userRoles []model.UserRole
+	err = conf.Mysql.In("user_id", userIds).Find(&userRoles)
+	if err != nil {
+		common.ResError(c, "获取用户角色关联关系失败")
+		return
+	}
+	var rolesIds []int
+	var userRoleIdMapping = make(map[int]int)
+	for _, userRole := range userRoles {
+		rolesIds = append(rolesIds, userRole.RoleId)
+		userRoleIdMapping[userRole.UserId] = userRole.RoleId
+	}
+	var roles []model.Role
+	err = conf.Mysql.In("id", rolesIds).Find(&roles)
+	if err != nil {
+		common.ResError(c, "获取角色信息失败")
+		return
+	}
+	var roleMapping = make(map[int]model.Role)
+	for _, role := range roles {
+		roleMapping[role.Id] = role
+	}
+	for _, u := range users {
+		u.RoleStr = roleMapping[userRoleIdMapping[u.Id]]
+	}
+
+	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: users})
+}
+
+func AddUserSer(c *gin.Context, name string, password string, phone string, roleId int) {
+	var user = model.User{
+		Name:     name,
+		Password: password,
+		Phone:    phone,
+	}
+	_, err := conf.Mysql.Insert(&user)
+	if err != nil {
+		common.ResError(c, "添加用户失败")
+		return
+	}
+	var userRole = model.UserRole{
+		UserId: int(user.Id),
+		RoleId: roleId,
+	}
+	_, err = conf.Mysql.Insert(&userRole)
+	if err != nil {
+		common.ResError(c, "添加用户角色关联信息失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
 }
 
 func GetUserPermissionSer(c *gin.Context, userId int) {

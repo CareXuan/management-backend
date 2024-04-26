@@ -11,3 +11,10 @@ type User struct {
 	UpdatedAt int64  `json:"-" xorm:"int(20) not null default 0"`
 	DeletedAt int64  `json:"-" xorm:"int(20) not null default 0"`
 }
+
+type AddUserReq struct {
+	Name     string `json:"name"`
+	Password string `json:"password"`
+	Phone    string `json:"phone"`
+	RoleId   int    `json:"role_id"`
+}

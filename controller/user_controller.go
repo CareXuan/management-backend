@@ -2,6 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
+	"management-backend/model"
 	"management-backend/service"
 	"strconv"
 )
@@ -16,4 +18,22 @@ func GetUserPermission(c *gin.Context) {
 	userId := c.Query("user_id")
 	userIdInt, _ := strconv.Atoi(userId)
 	service.GetUserPermissionSer(c, userIdInt)
+}
+
+func GetUserList(c *gin.Context) {
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	userName := c.Query("user_name")
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	service.GetUserListSrv(c, userName, pageInt, pageSizeInt)
+}
+
+func AddUser(c *gin.Context) {
+	var user model.AddUserReq
+	if err := c.ShouldBindJSON(&user); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AddUserSer(c, user.Name, user.Password, user.Phone, user.RoleId)
 }
