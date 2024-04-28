@@ -34,6 +34,24 @@ func AllRoles(c *gin.Context) {
 	service.GetAllRolesSer(c, pageInt, pageSizeInt)
 }
 
+func AddRole(c *gin.Context) {
+	var roleAddReq model.RoleAddReq
+	if err := c.ShouldBindJSON(&roleAddReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AddRoleSer(c, roleAddReq)
+}
+
+func DeleteRole(c *gin.Context) {
+	var roleDeleteReq model.RoleAddReq
+	if err := c.ShouldBindJSON(&roleDeleteReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.DeleteRoleSer(c, roleDeleteReq.Id)
+}
+
 func AddPermission(c *gin.Context) {
 	var permissionReq model.Permission
 	if err := c.ShouldBindJSON(&permissionReq); err != nil {

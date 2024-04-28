@@ -81,12 +81,18 @@ func GetUserListSrv(c *gin.Context, userName string, page int, pageSize int) {
 }
 
 func AddUserSer(c *gin.Context, name string, password string, phone string, roleId int) {
+	newToken, err := utils.GenerateRandomToken(20)
+	if err != nil {
+		common.ResError(c, "生成token失败")
+		return
+	}
 	var user = model.User{
 		Name:     name,
 		Password: password,
 		Phone:    phone,
+		Token:    newToken,
 	}
-	_, err := conf.Mysql.Insert(&user)
+	_, err = conf.Mysql.Insert(&user)
 	if err != nil {
 		common.ResError(c, "添加用户失败")
 		return

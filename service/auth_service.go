@@ -74,6 +74,52 @@ func GetAllRolesSer(c *gin.Context, page int, pageSize int) {
 	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: roles})
 }
 
+func AddRoleSer(c *gin.Context, roleAdd model.RoleAddReq) {
+	var role = model.Role{
+		Name: roleAdd.Name,
+	}
+	_, err := conf.Mysql.Insert(&role)
+	if err != nil {
+		common.ResError(c, "添加角色失败")
+		return
+	}
+	var rolePermissions []model.RolePermission
+	for _, pId := range roleAdd.Permission {
+		if pId == 0 {
+			continue
+		}
+		rolePermissions = append(rolePermissions, model.RolePermission{
+			RoleId:       role.Id,
+			PermissionId: pId,
+		})
+	}
+	_, err = conf.Mysql.Insert(&rolePermissions)
+	if err != nil {
+		common.ResError(c, "添加角色权限关系失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func DeleteRoleSer(c *gin.Context, roleId int) {
+	_, err := conf.Mysql.Where("id = ?", roleId).Delete(&model.Role{})
+	if err != nil {
+		common.ResError(c, "删除角色失败")
+		return
+	}
+	_, err = conf.Mysql.Where("role_id = ?", roleId).Delete(&model.RolePermission{})
+	if err != nil {
+		common.ResError(c, "删除角色权限关系失败")
+		return
+	}
+	_, err = conf.Mysql.Where("role_id = ?", roleId).Delete(&model.UserRole{})
+	if err != nil {
+		common.ResError(c, "删除用户角色关系失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
 func AddPermissionSer(c *gin.Context, parentId int, path string, icon string, sort int, label string, desc string, component string) {
 	var newPermission = model.Permission{
 		Path:      path,

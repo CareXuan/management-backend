@@ -30,6 +30,8 @@ func InitRouter(r *gin.Engine) {
 			auth.POST("/permission/add", controller.AddPermission)
 			auth.POST("/permission/delete", controller.RemovePermission)
 			auth.GET("/roles", controller.AllRoles)
+			auth.POST("/roles/add", controller.AddRole)
+			auth.POST("/roles/delete", controller.DeleteRole)
 		}
 	}
 }
