@@ -35,5 +35,5 @@ func AddUser(c *gin.Context) {
 		log.Fatal(err)
 		return
 	}
-	service.AddUserSer(c, user.Name, user.Password, user.Phone, user.RoleId)
+	service.AddUserSer(c, user.Id, user.Name, user.Password, user.Phone, user.RoleId)
 }

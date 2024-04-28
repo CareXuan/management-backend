@@ -16,7 +16,7 @@ func InitRouter(r *gin.Engine) {
 		// 用户相关
 		user := v1.Group("user")
 		{
-			user.GET("/", controller.GetUserInfo)
+			user.GET("/info", controller.GetUserInfo)
 			user.GET("/list", controller.GetUserList)
 			user.POST("/add", controller.AddUser)
 			user.GET("/permission", controller.GetUserPermission)
@@ -30,6 +30,7 @@ func InitRouter(r *gin.Engine) {
 			auth.POST("/permission/add", controller.AddPermission)
 			auth.POST("/permission/delete", controller.RemovePermission)
 			auth.GET("/roles", controller.AllRoles)
+			auth.GET("/roles/info", controller.GetRoleInfo)
 			auth.POST("/roles/add", controller.AddRole)
 			auth.POST("/roles/delete", controller.DeleteRole)
 		}

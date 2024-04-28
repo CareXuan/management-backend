@@ -34,6 +34,12 @@ func AllRoles(c *gin.Context) {
 	service.GetAllRolesSer(c, pageInt, pageSizeInt)
 }
 
+func GetRoleInfo(c *gin.Context) {
+	roleId := c.Query("role_id")
+	roleIdInt, _ := strconv.Atoi(roleId)
+	service.GetRolePermissionSer(c, roleIdInt)
+}
+
 func AddRole(c *gin.Context) {
 	var roleAddReq model.RoleAddReq
 	if err := c.ShouldBindJSON(&roleAddReq); err != nil {

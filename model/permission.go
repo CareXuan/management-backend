@@ -4,6 +4,7 @@ type Permission struct {
 	Id        int           `json:"id" xorm:"pk autoincr INT(11)"`
 	Uuid      int           `json:"uuid" xorm:"varchar(128) not null"`
 	Label     string        `json:"label" xorm:"varchar(64) not null"`
+	Title     string        `json:"title" xorm:"-"`
 	Path      string        `json:"path" xorm:"varchar(256) not null"`
 	Icon      string        `json:"icon" xorm:"varchar(512) not null"`
 	Component string        `json:"component" xorm:"varchar(128) not null"`

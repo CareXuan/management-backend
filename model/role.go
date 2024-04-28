@@ -13,3 +13,9 @@ type RoleAddReq struct {
 	Name       string `json:"name"`
 	Permission []int  `json:"permission"`
 }
+
+type RoleInfoRes struct {
+	Id         int    `json:"id"`
+	Name       string `json:"name"`
+	Permission []int  `json:"permission"`
+}

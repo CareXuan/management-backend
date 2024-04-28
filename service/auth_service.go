@@ -74,29 +74,85 @@ func GetAllRolesSer(c *gin.Context, page int, pageSize int) {
 	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: roles})
 }
 
+func GetRolePermissionSer(c *gin.Context, roleId int) {
+	var role model.Role
+	_, err := conf.Mysql.Where("id = ?", roleId).Get(&role)
+	if err != nil {
+		common.ResError(c, "获取角色信息失败")
+		return
+	}
+	var rolePermissions []*model.RolePermission
+	err = conf.Mysql.Where("role_id = ?", roleId).Find(&rolePermissions)
+	if err != nil {
+		common.ResError(c, "获取角色关联权限失败")
+		return
+	}
+	var permissionIds []int
+	for _, p := range rolePermissions {
+		permissionIds = append(permissionIds, p.PermissionId)
+	}
+	common.ResOk(c, "ok", model.RoleInfoRes{Id: role.Id, Name: role.Name, Permission: permissionIds})
+}
+
 func AddRoleSer(c *gin.Context, roleAdd model.RoleAddReq) {
-	var role = model.Role{
-		Name: roleAdd.Name,
-	}
-	_, err := conf.Mysql.Insert(&role)
-	if err != nil {
-		common.ResError(c, "添加角色失败")
-		return
-	}
-	var rolePermissions []model.RolePermission
-	for _, pId := range roleAdd.Permission {
-		if pId == 0 {
-			continue
+	if roleAdd.Id == 0 {
+		var role = model.Role{
+			Name: roleAdd.Name,
 		}
-		rolePermissions = append(rolePermissions, model.RolePermission{
-			RoleId:       role.Id,
-			PermissionId: pId,
+		_, err := conf.Mysql.Insert(&role)
+		if err != nil {
+			common.ResError(c, "添加角色失败")
+			return
+		}
+		var rolePermissions []model.RolePermission
+		for _, pId := range roleAdd.Permission {
+			if pId == 0 {
+				continue
+			}
+			rolePermissions = append(rolePermissions, model.RolePermission{
+				RoleId:       role.Id,
+				PermissionId: pId,
+			})
+		}
+		_, err = conf.Mysql.Insert(&rolePermissions)
+		if err != nil {
+			common.ResError(c, "添加角色权限关系失败")
+			return
+		}
+	} else {
+		var role model.Role
+		_, err := conf.Mysql.Where("id = ?", roleAdd.Id).Get(&role)
+		if err != nil {
+			common.ResError(c, "获取角色信息失败")
+			return
+		}
+		_, err = conf.Mysql.Where("id = ?", roleAdd.Id).Update(&model.Role{
+			Name: roleAdd.Name,
 		})
-	}
-	_, err = conf.Mysql.Insert(&rolePermissions)
-	if err != nil {
-		common.ResError(c, "添加角色权限关系失败")
-		return
+		if err != nil {
+			common.ResError(c, "修改角色信息失败")
+			return
+		}
+		_, err = conf.Mysql.Where("role_id = ?", roleAdd.Id).Delete(&model.RolePermission{})
+		if err != nil {
+			common.ResError(c, "删除原有角色关联权限失败")
+			return
+		}
+		var newRolePermissions []model.RolePermission
+		for _, pId := range roleAdd.Permission {
+			if pId == 0 {
+				continue
+			}
+			newRolePermissions = append(newRolePermissions, model.RolePermission{
+				RoleId:       role.Id,
+				PermissionId: pId,
+			})
+		}
+		_, err = conf.Mysql.Insert(&newRolePermissions)
+		if err != nil {
+			common.ResError(c, "添加角色关联权限失败")
+			return
+		}
 	}
 	common.ResOk(c, "ok", nil)
 }
