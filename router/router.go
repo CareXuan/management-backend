@@ -39,6 +39,7 @@ func InitRouter(r *gin.Engine) {
 		device := v1.Group("device")
 		{
 			device.GET("/list", controller.DeviceList)
+			device.GET("/signals", controller.SignalDetailList)
 		}
 	}
 }
