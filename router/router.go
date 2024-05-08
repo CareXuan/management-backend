@@ -34,5 +34,11 @@ func InitRouter(r *gin.Engine) {
 			auth.POST("/roles/add", controller.AddRole)
 			auth.POST("/roles/delete", controller.DeleteRole)
 		}
+
+		// 电动车设备
+		device := v1.Group("device")
+		{
+			device.GET("/list", controller.DeviceList)
+		}
 	}
 }

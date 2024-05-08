@@ -2,6 +2,8 @@ package conf
 
 import (
 	"github.com/go-xorm/xorm"
+	"github.com/gomodule/redigo/redis"
+	"github.com/streadway/amqp"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
@@ -13,7 +15,10 @@ import (
 )
 
 type Config struct {
-	Mysql MysqlConfig `yaml:"mysql"`
+	Mysql   MysqlConfig   `yaml:"mysql"`
+	Rabbit  RabbitConfig  `yaml:"rabbit"`
+	Redis   RedisConfig   `yaml:"redis"`
+	Vehicle VehicleConfig `yaml:"vehicle_config"`
 }
 
 type MysqlConfig struct {
@@ -21,9 +26,23 @@ type MysqlConfig struct {
 	S string `yaml:"s"`
 }
 
+type RabbitConfig struct {
+	Host string `yaml:"host"`
+}
+
+type RedisConfig struct {
+	Host string `yaml:"host"`
+}
+
+type VehicleConfig struct {
+	Host string `yaml:"host"`
+}
+
 var (
-	Mysql *xorm.EngineGroup
-	Conf  *Config
+	Mysql  *xorm.EngineGroup
+	Rabbit *amqp.Connection
+	Redis  redis.Conn
+	Conf   *Config
 )
 
 func NewConfig(configPath string) {
@@ -39,6 +58,9 @@ func NewConfig(configPath string) {
 		return
 	}
 	connectMysql()
+	connectRabbitMQ()
+	connectRedis()
+	GetVehicleConfig(Conf.Vehicle.Host)
 }
 
 func connectMysql() {
@@ -74,6 +96,24 @@ func syncTables() {
 		new(model.Permission),
 		new(model.RolePermission),
 	)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func connectRabbitMQ() {
+	var err error
+	// 连接到RabbitMQ服务器
+	Rabbit, err = amqp.Dial(Conf.Rabbit.Host)
+	if err != nil {
+		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+	}
+}
+
+func connectRedis() {
+	var err error
+	Redis, err = redis.Dial("tcp", Conf.Redis.Host)
 	if err != nil {
 		log.Fatal(err)
 		return
