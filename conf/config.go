@@ -24,6 +24,7 @@ type Config struct {
 	Rabbit  RabbitConfig  `yaml:"rabbit"`
 	Redis   RedisConfig   `yaml:"redis"`
 	Vehicle VehicleConfig `yaml:"vehicle_config"`
+	Tcp     TcpConfig     `yaml:"tcp"`
 }
 
 type MysqlConfig struct {
@@ -41,6 +42,11 @@ type RedisConfig struct {
 
 type VehicleConfig struct {
 	Host string `yaml:"host"`
+}
+
+type TcpConfig struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
 }
 
 var (
@@ -142,6 +148,7 @@ func GetVehicleConfig(configUrl string) {
 		_, err := Redis.Do("SET", fmt.Sprintf(utils.REDIS_KEY_VEHICLE_CONFIG, deviceId), string(deviceConfigJson))
 		if err != nil {
 			log.Fatal(err)
+			return
 		}
 	}
 }

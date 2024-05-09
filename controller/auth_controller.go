@@ -66,6 +66,7 @@ func AddPermission(c *gin.Context) {
 	}
 	service.AddPermissionSer(
 		c,
+		permissionReq.Id,
 		permissionReq.ParentId,
 		permissionReq.Path,
 		permissionReq.Icon,
@@ -74,6 +75,12 @@ func AddPermission(c *gin.Context) {
 		permissionReq.Desc,
 		permissionReq.Component,
 	)
+}
+
+func GetPermissionDetail(c *gin.Context) {
+	permissionId := c.Query("id")
+	permissionIdInt, _ := strconv.Atoi(permissionId)
+	service.GetPermissionDetailSer(c, permissionIdInt)
 }
 
 func RemovePermission(c *gin.Context) {

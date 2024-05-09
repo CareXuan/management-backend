@@ -10,7 +10,7 @@ type VehicleConfig struct {
 	DeviceType int    `json:"deviceType"`
 	Id         int    `json:"id"`
 	OperGid    int    `json:"operGid"`
-	SenceId    string `json:"senceId"`
+	SenceIn    string `json:"senceIn"`
 	SenceOut   string `json:"senceOut"`
 	ZoneId     int    `json:"zoneId"`
 	ZoneName   string `json:"zoneName"`

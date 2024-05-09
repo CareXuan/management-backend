@@ -8,5 +8,6 @@ type Device struct {
 	SignalIntensity int    `json:"signal_intensity" xorm:"int not null"`
 	Status          int    `json:"status" xorm:"int not null"`
 	Comment         string `json:"comment" xorm:"varchar(255) not null"`
+	Active          int    `json:"active" xorm:"-"`
 	Ts              string `json:"-" xorm:"int(11) not null default 0"`
 }

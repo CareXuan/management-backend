@@ -176,22 +176,54 @@ func DeleteRoleSer(c *gin.Context, roleId int) {
 	common.ResOk(c, "ok", nil)
 }
 
-func AddPermissionSer(c *gin.Context, parentId int, path string, icon string, sort int, label string, desc string, component string) {
-	var newPermission = model.Permission{
-		Path:      path,
-		Icon:      icon,
-		Sort:      sort,
-		ParentId:  parentId,
-		Label:     label,
-		Desc:      desc,
-		Component: component,
-	}
-	_, err := conf.Mysql.Insert(newPermission)
-	if err != nil {
-		common.ResError(c, "添加权限失败")
-		return
+func AddPermissionSer(c *gin.Context, id int, parentId int, path string, icon string, sort int, label string, desc string, component string) {
+	if id != 0 {
+		var permission model.Permission
+		_, err := conf.Mysql.Where("id = ?", id).Get(&permission)
+		if err != nil {
+			common.ResError(c, "获取权限详情失败")
+			return
+		}
+		_, err = conf.Mysql.Where("id = ?", permission.Id).Update(&model.Permission{
+			Path:      path,
+			Icon:      icon,
+			Sort:      sort,
+			ParentId:  parentId,
+			Label:     label,
+			Desc:      desc,
+			Component: component,
+		})
+		if err != nil {
+			common.ResError(c, "修改权限失败")
+			return
+		}
+	} else {
+		var newPermission = model.Permission{
+			Path:      path,
+			Icon:      icon,
+			Sort:      sort,
+			ParentId:  parentId,
+			Label:     label,
+			Desc:      desc,
+			Component: component,
+		}
+		_, err := conf.Mysql.Insert(newPermission)
+		if err != nil {
+			common.ResError(c, "添加权限失败")
+			return
+		}
 	}
 	common.ResOk(c, "ok", nil)
+}
+
+func GetPermissionDetailSer(c *gin.Context, id int) {
+	var permission model.Permission
+	_, err := conf.Mysql.Where("id = ?", id).Get(&permission)
+	if err != nil {
+		common.ResError(c, "获取权限详情失败")
+		return
+	}
+	common.ResOk(c, "ok", permission)
 }
 
 func RemovePermissionSer(c *gin.Context, id int) {

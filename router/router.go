@@ -27,6 +27,7 @@ func InitRouter(r *gin.Engine) {
 		{
 			auth.POST("/login", controller.Login)
 			auth.GET("/permission", controller.AllPermission)
+			auth.GET("/permission/detail", controller.GetPermissionDetail)
 			auth.POST("/permission/add", controller.AddPermission)
 			auth.POST("/permission/delete", controller.RemovePermission)
 			auth.GET("/roles", controller.AllRoles)
