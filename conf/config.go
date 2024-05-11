@@ -25,6 +25,7 @@ type Config struct {
 	Redis   RedisConfig   `yaml:"redis"`
 	Vehicle VehicleConfig `yaml:"vehicle_config"`
 	Tcp     TcpConfig     `yaml:"tcp"`
+	Ammeter AmmeterConfig `yaml:"ammeter"`
 }
 
 type MysqlConfig struct {
@@ -47,6 +48,11 @@ type VehicleConfig struct {
 type TcpConfig struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
+}
+
+type AmmeterConfig struct {
+	Supervisor int `yaml:"supervisor"`
+	Manager    int `yaml:"manager"`
 }
 
 var (
@@ -106,6 +112,11 @@ func syncTables() {
 		new(model.UserRole),
 		new(model.Permission),
 		new(model.RolePermission),
+		new(model.Ammeter),
+		new(model.AmmeterConfig),
+		new(model.AmmeterData),
+		new(model.AmmeterManage),
+		new(model.AmmeterWarning),
 	)
 	if err != nil {
 		log.Fatal(err)

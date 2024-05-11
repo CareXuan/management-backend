@@ -41,6 +41,18 @@ func InitRouter(r *gin.Engine) {
 		{
 			device.GET("/list", controller.DeviceList)
 			device.GET("/signals", controller.SignalDetailList)
+			device.POST("/report", controller.DeviceReport)
+		}
+
+		// 电表设备
+		ammeter := v1.Group("ammeter")
+		{
+			ammeter.GET("/list", controller.List)
+			ammeter.GET("/tree", controller.Tree)
+			ammeter.GET("/info", controller.Info)
+			ammeter.GET("/statistics", controller.Statistics)
+			ammeter.GET("/warning", controller.Warning)
+			ammeter.GET("/config", controller.Config)
 		}
 	}
 }

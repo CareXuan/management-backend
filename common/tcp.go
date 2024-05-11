@@ -12,6 +12,7 @@ type TcpCommonData struct {
 
 type ElectricVehicleTcpData struct {
 	DeviceId int    `json:"device_id"`
+	Type     int    `json:"type"`
 	Msg      string `json:"msg"`
 }
 

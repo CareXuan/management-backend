@@ -11,3 +11,9 @@ type Device struct {
 	Active          int    `json:"active" xorm:"-"`
 	Ts              string `json:"-" xorm:"int(11) not null default 0"`
 }
+
+type DeviceReportReq struct {
+	DeviceId    int `json:"device_id"`
+	ReportType  int `json:"report_type"`
+	ControlType int `json:"control_type"`
+}

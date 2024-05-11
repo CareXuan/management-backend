@@ -2,6 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
+	"management-backend/model"
 	"management-backend/service"
 	"strconv"
 )
@@ -25,4 +27,13 @@ func SignalDetailList(c *gin.Context) {
 	pageInt, _ := strconv.Atoi(page)
 	pageSizeInt, _ := strconv.Atoi(pageSize)
 	service.SignalDetailListSer(c, pageInt, pageSizeInt, deviceId)
+}
+
+func DeviceReport(c *gin.Context) {
+	var req model.DeviceReportReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.DeviceReportSer(c, req.ReportType, req.DeviceId, req.ControlType)
 }

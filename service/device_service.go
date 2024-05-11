@@ -51,3 +51,21 @@ func SignalDetailListSer(c *gin.Context, page int, pageSize int, deviceId string
 	}
 	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: signals})
 }
+
+func DeviceReportSer(c *gin.Context, reportType int, deviceId int, controlType int) {
+	tcpData := common.TcpCommonData{
+		Type: reportType,
+		Data: common.ElectricVehicleTcpData{
+			DeviceId: deviceId,
+			Type:     controlType,
+			Msg:      "",
+		},
+	}
+
+	err := common.TcpRequest(conf.Conf.Tcp.Host, conf.Conf.Tcp.Port, tcpData)
+	if err != nil {
+		common.ResError(c, "发送控制命令失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
