@@ -18,3 +18,19 @@ type Ammeter struct {
 	IsSupervisor    int        `json:"is_supervisor" xorm:"-"`
 	CreateTime      int        `json:"-" xorm:"int(11) not null default 0"`
 }
+
+type AmmeterNodeAdd struct {
+	NodeId    int    `json:"node_id"`
+	NodeType  int    `json:"node_type"`
+	NodeModel string `json:"node_model"`
+	Num       string `json:"num"`
+	Card      string `json:"card"`
+	Location  string `json:"location"`
+	ParentId  int    `json:"parent_id"`
+	Managers  []int  `json:"managers"`
+}
+
+type ChangeSwitchReq struct {
+	AmmeterId int `json:"ammeter_id"`
+	Switch    int `json:"switch"`
+}

@@ -2,6 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
+	"management-backend/model"
 	"management-backend/service"
 	"strconv"
 )
@@ -23,10 +25,28 @@ func Tree(c *gin.Context) {
 	service.TreeSer(c, userIdInt)
 }
 
+func AddNode(c *gin.Context) {
+	var req model.AmmeterNodeAdd
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AddTreeNodeSer(c, req.NodeId, req.NodeType, req.NodeModel, req.Num, req.Card, req.Location, req.ParentId, req.Managers)
+}
+
 func Info(c *gin.Context) {
 	ammeterId := c.Query("ammeter_id")
 	ammeterIdInt, _ := strconv.Atoi(ammeterId)
 	service.AmmeterInfoSer(c, ammeterIdInt)
+}
+
+func ChangeSwitch(c *gin.Context) {
+	var req model.ChangeSwitchReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.ChangeAmmeterSwitchSer(c, req.AmmeterId, req.Switch)
 }
 
 func Statistics(c *gin.Context) {
@@ -49,8 +69,26 @@ func Warning(c *gin.Context) {
 	service.WarningListSer(c, pageInt, pageSizeInt, ammeterIdInt)
 }
 
+func ChangeWarning(c *gin.Context) {
+	var req model.AmmeterWarningUpdateReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.ChangeWarningStatusSer(c, req.WarningId, req.Status, req.UserId)
+}
+
 func Config(c *gin.Context) {
 	ammeterId := c.Query("ammeter_id")
 	ammeterIdInt, _ := strconv.Atoi(ammeterId)
 	service.ConfigInfoSer(c, ammeterIdInt)
+}
+
+func UpdateConfig(c *gin.Context) {
+	var req model.AmmeterConfig
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.UpdateConfigSer(c, req)
 }

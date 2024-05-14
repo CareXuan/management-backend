@@ -49,10 +49,14 @@ func InitRouter(r *gin.Engine) {
 		{
 			ammeter.GET("/list", controller.List)
 			ammeter.GET("/tree", controller.Tree)
+			ammeter.POST("/tree/add", controller.AddNode)
 			ammeter.GET("/info", controller.Info)
+			ammeter.POST("/switch", controller.ChangeSwitch)
 			ammeter.GET("/statistics", controller.Statistics)
 			ammeter.GET("/warning", controller.Warning)
+			ammeter.POST("/warning/deal", controller.ChangeWarning)
 			ammeter.GET("/config", controller.Config)
+			ammeter.POST("/config/update", controller.UpdateConfig)
 		}
 	}
 }

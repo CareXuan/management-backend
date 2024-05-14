@@ -11,3 +11,9 @@ type AmmeterWarning struct {
 	DealUserName string `json:"deal_user_name" xorm:"-"`
 	CreateTime   int    `json:"-" xorm:"int(11) not null default 0"`
 }
+
+type AmmeterWarningUpdateReq struct {
+	WarningId int `json:"warning_id"`
+	Status    int `json:"status"`
+	UserId    int `json:"user_id"`
+}
