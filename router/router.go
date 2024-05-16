@@ -57,6 +57,7 @@ func InitRouter(r *gin.Engine) {
 			ammeter.POST("/warning/deal", controller.ChangeWarning)
 			ammeter.GET("/config", controller.Config)
 			ammeter.POST("/config/update", controller.UpdateConfig)
+			ammeter.POST("/data/add", controller.AddTestData)
 		}
 	}
 }

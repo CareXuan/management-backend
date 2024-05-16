@@ -16,7 +16,11 @@ func List(c *gin.Context) {
 	num := c.Query("num")
 	userId := c.Query("user_id")
 	userIdInt, _ := strconv.Atoi(userId)
-	service.ListSer(c, pageInt, pageSizeInt, num, userIdInt)
+	status := c.Query("status")
+	statusInt, _ := strconv.Atoi(status)
+	ammeterType := c.Query("type")
+	ammeterTypeInt, _ := strconv.Atoi(ammeterType)
+	service.ListSer(c, pageInt, pageSizeInt, num, statusInt, ammeterTypeInt, userIdInt)
 }
 
 func Tree(c *gin.Context) {
@@ -66,7 +70,17 @@ func Warning(c *gin.Context) {
 	pageSizeInt, _ := strconv.Atoi(pageSize)
 	ammeterId := c.Query("ammeter_id")
 	ammeterIdInt, _ := strconv.Atoi(ammeterId)
-	service.WarningListSer(c, pageInt, pageSizeInt, ammeterIdInt)
+	warningType := c.Query("type")
+	warningTypeInt, _ := strconv.Atoi(warningType)
+	status := c.Query("status")
+	statusInt, _ := strconv.Atoi(status)
+	startDealTime := c.Query("start_deal_time")
+	endDealTime := c.Query("end_deal_time")
+	startTime := c.Query("start_time")
+	endTime := c.Query("end_time")
+	dealUser := c.Query("deal_user")
+	dealUserInt, _ := strconv.Atoi(dealUser)
+	service.WarningListSer(c, pageInt, pageSizeInt, warningTypeInt, statusInt, startDealTime, endDealTime, startTime, endTime, dealUserInt, ammeterIdInt)
 }
 
 func ChangeWarning(c *gin.Context) {
@@ -91,4 +105,13 @@ func UpdateConfig(c *gin.Context) {
 		return
 	}
 	service.UpdateConfigSer(c, req)
+}
+
+func AddTestData(c *gin.Context) {
+	var req model.AmmeterDataReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AddTestData(c, req.AmmeterId, req.Type, req.Value, req.CreateTime)
 }

@@ -26,6 +26,7 @@ type Config struct {
 	Vehicle VehicleConfig `yaml:"vehicle_config"`
 	Tcp     TcpConfig     `yaml:"tcp"`
 	Ammeter AmmeterConfig `yaml:"ammeter"`
+	Admin   int           `yaml:"admin"`
 }
 
 type MysqlConfig struct {

@@ -10,14 +10,14 @@ import (
 	"time"
 )
 
-func ListSer(c *gin.Context, page int, pageSize int, num string, userId int) {
+func ListSer(c *gin.Context, page int, pageSize int, num string, status int, ammeterType int, userId int) {
 	var userRole model.UserRole
 	_, err := conf.Mysql.Where("user_id=?", userId).Get(&userRole)
 	if err != nil {
 		common.ResError(c, "获取用户信息失败")
 		return
 	}
-	if userRole.RoleId != conf.Conf.Ammeter.Manager && userRole.RoleId != conf.Conf.Ammeter.Supervisor {
+	if userRole.RoleId != conf.Conf.Ammeter.Manager && userRole.RoleId != conf.Conf.Ammeter.Supervisor && userRole.RoleId != conf.Conf.Admin {
 		common.ResError(c, "当前用户无法访问此模块")
 		return
 	}
@@ -25,6 +25,12 @@ func ListSer(c *gin.Context, page int, pageSize int, num string, userId int) {
 	sess := conf.Mysql.NewSession()
 	if num != "" {
 		sess.Where("num=?", num)
+	}
+	if status != 0 {
+		sess.Where("status=?", status)
+	}
+	if ammeterType != 0 {
+		sess.Where("type=?", ammeterType)
 	}
 	var ammeterIds []int
 	if userRole.RoleId == conf.Conf.Ammeter.Manager {
@@ -56,7 +62,7 @@ func TreeSer(c *gin.Context, userId int) {
 		common.ResError(c, "获取用户信息失败")
 		return
 	}
-	if userRole.RoleId != conf.Conf.Ammeter.Manager && userRole.RoleId != conf.Conf.Ammeter.Supervisor {
+	if userRole.RoleId != conf.Conf.Ammeter.Manager && userRole.RoleId != conf.Conf.Ammeter.Supervisor && userRole.RoleId != conf.Conf.Admin {
 		common.ResError(c, "当前用户无法访问此模块")
 		return
 	}
@@ -122,14 +128,15 @@ func getChildNode(parentNode []*model.Ammeter, manageIds []int, isSupervisor boo
 func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, num string, card string, location string, parentId int, managers []int) {
 	if nodeId == 0 {
 		var insertAmmeter = model.Ammeter{
-			Type:     nodeType,
-			Model:    nodeModel,
-			Num:      num,
-			Card:     card,
-			Location: location,
-			ParentId: parentId,
-			Status:   utils.AMMETER_STATUS_OFFLINE,
-			Switch:   utils.AMMETER_STATUS_SWITCH_CLOSE,
+			Type:       nodeType,
+			Model:      nodeModel,
+			Num:        num,
+			Card:       card,
+			Location:   location,
+			ParentId:   parentId,
+			Status:     utils.AMMETER_STATUS_OFFLINE,
+			Switch:     utils.AMMETER_STATUS_SWITCH_CLOSE,
+			CreateTime: int(time.Now().Unix()),
 		}
 		_, err := conf.Mysql.Insert(&insertAmmeter)
 		if err != nil {
@@ -146,8 +153,9 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 		var addAmmeterManager []*model.AmmeterManage
 		for _, manager := range managers {
 			addAmmeterManager = append(addAmmeterManager, &model.AmmeterManage{
-				AmmeterId: insertAmmeter.Id,
-				UserId:    manager,
+				AmmeterId:  insertAmmeter.Id,
+				UserId:     manager,
+				CreateTime: int(time.Now().Unix()),
 			})
 		}
 		_, err = conf.Mysql.Insert(&addAmmeterManager)
@@ -157,14 +165,15 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 		}
 	} else {
 		_, err := conf.Mysql.Where("id=?", nodeId).Update(model.Ammeter{
-			Type:     nodeType,
-			Model:    nodeModel,
-			Num:      num,
-			Card:     card,
-			Location: location,
-			ParentId: parentId,
-			Status:   utils.AMMETER_STATUS_OFFLINE,
-			Switch:   utils.AMMETER_STATUS_SWITCH_CLOSE,
+			Type:       nodeType,
+			Model:      nodeModel,
+			Num:        num,
+			Card:       card,
+			Location:   location,
+			ParentId:   parentId,
+			Status:     utils.AMMETER_STATUS_OFFLINE,
+			Switch:     utils.AMMETER_STATUS_SWITCH_CLOSE,
+			CreateTime: int(time.Now().Unix()),
 		})
 		if err != nil {
 			common.ResError(c, "修改设备失败")
@@ -178,8 +187,9 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 		var addAmmeterManager []*model.AmmeterManage
 		for _, manager := range managers {
 			addAmmeterManager = append(addAmmeterManager, &model.AmmeterManage{
-				AmmeterId: nodeId,
-				UserId:    manager,
+				AmmeterId:  nodeId,
+				UserId:     manager,
+				CreateTime: int(time.Now().Unix()),
 			})
 		}
 		_, err = conf.Mysql.Insert(&addAmmeterManager)
@@ -274,10 +284,29 @@ func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, sta
 	common.ResOk(c, "ok", res)
 }
 
-func WarningListSer(c *gin.Context, page int, pageSize int, ammeterId int) {
+func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, status int, startDealTime string, endDealTime string, startTime string, endTime string, dealUser int, ammeterId int) {
 	var warnings []*model.AmmeterWarning
 	sess := conf.Mysql.NewSession()
 	sess.Where("ammeter_id=?", ammeterId)
+	if warningType != 0 {
+		sess.Where("type=?", warningType)
+	}
+	if status != 0 {
+		sess.Where("status=?", status)
+	}
+	if startDealTime != "" && endDealTime != "" {
+		dealTimeStart, _ := time.Parse("2006-01-02 15:04:05", startDealTime+"00:00:00")
+		dealTimeEnd, _ := time.Parse("2006-01-02 15:04:05", endDealTime+"00:00:00")
+		sess.Where("deal_time > ? AND deal_time < ?", dealTimeStart.Unix(), dealTimeEnd.Unix())
+	}
+	if startTime != "" && endTime != "" {
+		timeStart, _ := time.Parse("2006-01-02 15:04:05", startTime+"00:00:00")
+		timeEnd, _ := time.Parse("2006-01-02 15:04:05", endTime+"00:00:00")
+		sess.Where("create_time > ? AND create_time < ?", timeStart.Unix(), timeEnd.Unix())
+	}
+	if dealUser != 0 {
+		sess.Where("deal_user=?", dealUser)
+	}
 	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&warnings)
 	if err != nil {
 		common.ResError(c, "查询报警列表失败")
@@ -299,7 +328,12 @@ func WarningListSer(c *gin.Context, page int, pageSize int, ammeterId int) {
 	}
 	for _, w := range warnings {
 		w.DealUserName = userMapping[w.DealUser]
-		w.DealTimeStr = time.Unix(int64(w.DealTime), 0).Format("2006-01-02 15:04:05")
+		if w.DealTime == 0 {
+			w.DealTimeStr = "-"
+		} else {
+			w.DealTimeStr = time.Unix(int64(w.DealTime), 0).Format("2006-01-02 15:04:05")
+		}
+		w.WarningTimeStr = time.Unix(int64(w.CreateTime), 0).Format("2006-01-02 15:04:05")
 	}
 	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: warnings})
 }
@@ -335,5 +369,16 @@ func UpdateConfigSer(c *gin.Context, config model.AmmeterConfig) {
 		common.ResError(c, "修改配置失败")
 		return
 	}
+	common.ResOk(c, "ok", nil)
+}
+
+func AddTestData(c *gin.Context, ammeterId int, dataType int, value int, createTime string) {
+	t, _ := time.Parse("2006-01-02 15:04:05", createTime)
+	_, _ = conf.Mysql.Insert(&model.AmmeterData{
+		AmmeterId:  ammeterId,
+		Type:       dataType,
+		Value:      value,
+		CreateTime: int(t.Unix()),
+	})
 	common.ResOk(c, "ok", nil)
 }
