@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"management-backend/common"
@@ -284,7 +285,7 @@ func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, sta
 	common.ResOk(c, "ok", res)
 }
 
-func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, status int, startDealTime string, endDealTime string, startTime string, endTime string, dealUser int, ammeterId int) {
+func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, status int, startDealTime string, endDealTime string, startTime string, endTime string, dealUser string, ammeterId int) {
 	var warnings []*model.AmmeterWarning
 	sess := conf.Mysql.NewSession()
 	sess.Where("ammeter_id=?", ammeterId)
@@ -295,17 +296,28 @@ func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, sta
 		sess.Where("status=?", status)
 	}
 	if startDealTime != "" && endDealTime != "" {
-		dealTimeStart, _ := time.Parse("2006-01-02 15:04:05", startDealTime+"00:00:00")
-		dealTimeEnd, _ := time.Parse("2006-01-02 15:04:05", endDealTime+"00:00:00")
+		dealTimeStart, _ := time.Parse("2006-01-02 15:04:05", startDealTime+" 00:00:00")
+		dealTimeEnd, _ := time.Parse("2006-01-02 15:04:05", endDealTime+" 23:59:59")
+		fmt.Println(startDealTime, dealTimeStart)
 		sess.Where("deal_time > ? AND deal_time < ?", dealTimeStart.Unix(), dealTimeEnd.Unix())
 	}
 	if startTime != "" && endTime != "" {
-		timeStart, _ := time.Parse("2006-01-02 15:04:05", startTime+"00:00:00")
-		timeEnd, _ := time.Parse("2006-01-02 15:04:05", endTime+"00:00:00")
+		timeStart, _ := time.Parse("2006-01-02 15:04:05", startTime+" 00:00:00")
+		timeEnd, _ := time.Parse("2006-01-02 15:04:05", endTime+" 23:59:59")
 		sess.Where("create_time > ? AND create_time < ?", timeStart.Unix(), timeEnd.Unix())
 	}
-	if dealUser != 0 {
-		sess.Where("deal_user=?", dealUser)
+	if dealUser != "" {
+		var users []*model.User
+		var userIds []int
+		err := conf.Mysql.Where("name like ?", "%"+dealUser+"%").Find(&users)
+		if err != nil {
+			common.ResError(c, "获取用户列表失败")
+			return
+		}
+		for _, user := range users {
+			userIds = append(userIds, user.Id)
+		}
+		sess.In("deal_user", userIds)
 	}
 	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&warnings)
 	if err != nil {

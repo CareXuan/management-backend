@@ -79,8 +79,7 @@ func Warning(c *gin.Context) {
 	startTime := c.Query("start_time")
 	endTime := c.Query("end_time")
 	dealUser := c.Query("deal_user")
-	dealUserInt, _ := strconv.Atoi(dealUser)
-	service.WarningListSer(c, pageInt, pageSizeInt, warningTypeInt, statusInt, startDealTime, endDealTime, startTime, endTime, dealUserInt, ammeterIdInt)
+	service.WarningListSer(c, pageInt, pageSizeInt, warningTypeInt, statusInt, startDealTime, endDealTime, startTime, endTime, dealUser, ammeterIdInt)
 }
 
 func ChangeWarning(c *gin.Context) {
