@@ -93,6 +93,32 @@ func TreeSer(c *gin.Context, userId int) {
 	common.ResOk(c, "ok", ammeters)
 }
 
+func TreeManagerSer(c *gin.Context) {
+	var userRoles []*model.UserRole
+	var userIds []int
+	err := conf.Mysql.Where("role_id=?", conf.Conf.Ammeter.Manager).Find(&userRoles)
+	if err != nil {
+		common.ResError(c, "获取管理员ID失败")
+		return
+	}
+	for _, userRole := range userRoles {
+		userIds = append(userIds, userRole.UserId)
+	}
+	var users []*model.User
+	err = conf.Mysql.In("id", userIds).Find(&users)
+	if err != nil {
+		common.ResError(c, "获取用户失败")
+	}
+	var res []model.TreeManagerRes
+	for _, user := range users {
+		res = append(res, model.TreeManagerRes{
+			Id:   user.Id,
+			Name: user.Name,
+		})
+	}
+	common.ResOk(c, "ok", res)
+}
+
 func getChildNode(parentNode []*model.Ammeter, manageIds []int, isSupervisor bool) {
 	var parentIds []int
 	for _, parent := range parentNode {
@@ -158,6 +184,13 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 				UserId:     manager,
 				CreateTime: int(time.Now().Unix()),
 			})
+			if parentId != 0 {
+				addAmmeterManager = append(addAmmeterManager, &model.AmmeterManage{
+					AmmeterId:  parentId,
+					UserId:     manager,
+					CreateTime: int(time.Now().Unix()),
+				})
+			}
 		}
 		_, err = conf.Mysql.Insert(&addAmmeterManager)
 		if err != nil {
@@ -192,12 +225,43 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 				UserId:     manager,
 				CreateTime: int(time.Now().Unix()),
 			})
+			if parentId != 0 {
+				addAmmeterManager = append(addAmmeterManager, &model.AmmeterManage{
+					AmmeterId:  parentId,
+					UserId:     manager,
+					CreateTime: int(time.Now().Unix()),
+				})
+			}
 		}
 		_, err = conf.Mysql.Insert(&addAmmeterManager)
 		if err != nil {
 			common.ResError(c, "添加管理员失败")
 			return
 		}
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func DeleteTreeNodeSer(c *gin.Context, nodeId int) {
+	var nodes []*model.Ammeter
+	var nodeIds []int
+	err := conf.Mysql.Where("id=?", nodeId).Or("parent_id=?", nodeId).Find(&nodes)
+	if err != nil {
+		common.ResError(c, "获取节点失败")
+		return
+	}
+	for _, node := range nodes {
+		nodeIds = append(nodeIds, node.Id)
+	}
+	_, err = conf.Mysql.In("id", nodeIds).Delete(&model.Ammeter{})
+	if err != nil {
+		common.ResError(c, "删除节点失败")
+		return
+	}
+	_, err = conf.Mysql.In("ammeter_id", nodeIds).Delete(&model.AmmeterManage{})
+	if err != nil {
+		common.ResError(c, "删除节点管理失败")
+		return
 	}
 	common.ResOk(c, "ok", nil)
 }

@@ -49,7 +49,9 @@ func InitRouter(r *gin.Engine) {
 		{
 			ammeter.GET("/list", controller.List)
 			ammeter.GET("/tree", controller.Tree)
+			ammeter.GET("/tree/manager", controller.TreeManager)
 			ammeter.POST("/tree/add", controller.AddNode)
+			ammeter.POST("/tree/delete", controller.DeleteNode)
 			ammeter.GET("/info", controller.Info)
 			ammeter.POST("/switch", controller.ChangeSwitch)
 			ammeter.GET("/statistics", controller.Statistics)

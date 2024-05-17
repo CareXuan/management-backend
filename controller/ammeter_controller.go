@@ -29,6 +29,10 @@ func Tree(c *gin.Context) {
 	service.TreeSer(c, userIdInt)
 }
 
+func TreeManager(c *gin.Context) {
+	service.TreeManagerSer(c)
+}
+
 func AddNode(c *gin.Context) {
 	var req model.AmmeterNodeAdd
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -36,6 +40,15 @@ func AddNode(c *gin.Context) {
 		return
 	}
 	service.AddTreeNodeSer(c, req.NodeId, req.NodeType, req.NodeModel, req.Num, req.Card, req.Location, req.ParentId, req.Managers)
+}
+
+func DeleteNode(c *gin.Context) {
+	var req model.AmmeterNodeAdd
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.DeleteTreeNodeSer(c, req.NodeId)
 }
 
 func Info(c *gin.Context) {
