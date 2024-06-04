@@ -6,13 +6,14 @@ import (
 	"log"
 	"management-backend/common"
 	"management-backend/conf"
-	"management-backend/model"
+	"management-backend/model/ammeter"
+	"management-backend/model/rbac"
 	"management-backend/utils"
 	"time"
 )
 
 func ListSer(c *gin.Context, page int, pageSize int, num string, status int, ammeterType int, userId int) {
-	var userRole model.UserRole
+	var userRole rbac.UserRole
 	_, err := conf.Mysql.Where("user_id=?", userId).Get(&userRole)
 	if err != nil {
 		common.ResError(c, "获取用户信息失败")
@@ -22,7 +23,7 @@ func ListSer(c *gin.Context, page int, pageSize int, num string, status int, amm
 		common.ResError(c, "当前用户无法访问此模块")
 		return
 	}
-	var ammeters []*model.Ammeter
+	var ammeters []*ammeter.Ammeter
 	sess := conf.Mysql.NewSession()
 	if num != "" {
 		sess.Where("num=?", num)
@@ -35,7 +36,7 @@ func ListSer(c *gin.Context, page int, pageSize int, num string, status int, amm
 	}
 	var ammeterIds []int
 	if userRole.RoleId == conf.Conf.Ammeter.Manager {
-		var ammeterManages []*model.AmmeterManage
+		var ammeterManages []*ammeter.AmmeterManage
 		err := conf.Mysql.Where("user_id=?", userId).Find(&ammeterManages)
 		if err != nil {
 			common.ResError(c, "获取管理信息失败")
@@ -57,7 +58,7 @@ func ListSer(c *gin.Context, page int, pageSize int, num string, status int, amm
 }
 
 func TreeSer(c *gin.Context, userId int) {
-	var userRole model.UserRole
+	var userRole rbac.UserRole
 	_, err := conf.Mysql.Where("user_id=?", userId).Get(&userRole)
 	if err != nil {
 		common.ResError(c, "获取用户信息失败")
@@ -67,10 +68,10 @@ func TreeSer(c *gin.Context, userId int) {
 		common.ResError(c, "当前用户无法访问此模块")
 		return
 	}
-	var ammeters []*model.Ammeter
+	var ammeters []*ammeter.Ammeter
 	var ammeterIds []int
 	if userRole.RoleId == conf.Conf.Ammeter.Manager {
-		var ammeterManages []*model.AmmeterManage
+		var ammeterManages []*ammeter.AmmeterManage
 		err = conf.Mysql.Where("user_id=?", userId).Find(&ammeterManages)
 		if err != nil {
 			common.ResError(c, "获取管理信息失败")
@@ -94,7 +95,7 @@ func TreeSer(c *gin.Context, userId int) {
 }
 
 func TreeManagerSer(c *gin.Context) {
-	var userRoles []*model.UserRole
+	var userRoles []*rbac.UserRole
 	var userIds []int
 	err := conf.Mysql.Where("role_id=?", conf.Conf.Ammeter.Manager).Find(&userRoles)
 	if err != nil {
@@ -104,14 +105,14 @@ func TreeManagerSer(c *gin.Context) {
 	for _, userRole := range userRoles {
 		userIds = append(userIds, userRole.UserId)
 	}
-	var users []*model.User
+	var users []*rbac.User
 	err = conf.Mysql.In("id", userIds).Find(&users)
 	if err != nil {
 		common.ResError(c, "获取用户失败")
 	}
-	var res []model.TreeManagerRes
+	var res []ammeter.TreeManagerRes
 	for _, user := range users {
-		res = append(res, model.TreeManagerRes{
+		res = append(res, ammeter.TreeManagerRes{
 			Id:   user.Id,
 			Name: user.Name,
 		})
@@ -119,7 +120,7 @@ func TreeManagerSer(c *gin.Context) {
 	common.ResOk(c, "ok", res)
 }
 
-func getChildNode(parentNode []*model.Ammeter, manageIds []int, isSupervisor bool) {
+func getChildNode(parentNode []*ammeter.Ammeter, manageIds []int, isSupervisor bool) {
 	var parentIds []int
 	for _, parent := range parentNode {
 		parentIds = append(parentIds, parent.Id)
@@ -127,7 +128,7 @@ func getChildNode(parentNode []*model.Ammeter, manageIds []int, isSupervisor boo
 	if len(parentIds) == 0 {
 		return
 	}
-	var childAmmeters []*model.Ammeter
+	var childAmmeters []*ammeter.Ammeter
 	sess := conf.Mysql.NewSession()
 	if len(manageIds) > 0 {
 		sess.In("id", manageIds)
@@ -137,7 +138,7 @@ func getChildNode(parentNode []*model.Ammeter, manageIds []int, isSupervisor boo
 		log.Fatal(err)
 		return
 	}
-	var childMapping = make(map[int][]*model.Ammeter)
+	var childMapping = make(map[int][]*ammeter.Ammeter)
 	for _, childNode := range childAmmeters {
 		childMapping[childNode.ParentId] = append(childMapping[childNode.ParentId], childNode)
 	}
@@ -154,7 +155,7 @@ func getChildNode(parentNode []*model.Ammeter, manageIds []int, isSupervisor boo
 
 func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, num string, card string, location string, parentId int, managers []int) {
 	if nodeId == 0 {
-		var insertAmmeter = model.Ammeter{
+		var insertAmmeter = ammeter.Ammeter{
 			Type:       nodeType,
 			Model:      nodeModel,
 			Num:        num,
@@ -170,22 +171,22 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 			common.ResError(c, "添加设备失败")
 			return
 		}
-		_, err = conf.Mysql.Insert(&model.AmmeterConfig{
+		_, err = conf.Mysql.Insert(&ammeter.AmmeterConfig{
 			AmmeterId: insertAmmeter.Id,
 		})
 		if err != nil {
 			common.ResError(c, "添加设备配置失败")
 			return
 		}
-		var addAmmeterManager []*model.AmmeterManage
+		var addAmmeterManager []*ammeter.AmmeterManage
 		for _, manager := range managers {
-			addAmmeterManager = append(addAmmeterManager, &model.AmmeterManage{
+			addAmmeterManager = append(addAmmeterManager, &ammeter.AmmeterManage{
 				AmmeterId:  insertAmmeter.Id,
 				UserId:     manager,
 				CreateTime: int(time.Now().Unix()),
 			})
 			if parentId != 0 {
-				addAmmeterManager = append(addAmmeterManager, &model.AmmeterManage{
+				addAmmeterManager = append(addAmmeterManager, &ammeter.AmmeterManage{
 					AmmeterId:  parentId,
 					UserId:     manager,
 					CreateTime: int(time.Now().Unix()),
@@ -198,7 +199,7 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 			return
 		}
 	} else {
-		_, err := conf.Mysql.Where("id=?", nodeId).Update(model.Ammeter{
+		_, err := conf.Mysql.Where("id=?", nodeId).Update(ammeter.Ammeter{
 			Type:       nodeType,
 			Model:      nodeModel,
 			Num:        num,
@@ -213,20 +214,20 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 			common.ResError(c, "修改设备失败")
 			return
 		}
-		_, err = conf.Mysql.Where("ammeter_id=?", nodeId).Delete(&model.AmmeterManage{})
+		_, err = conf.Mysql.Where("ammeter_id=?", nodeId).Delete(&ammeter.AmmeterManage{})
 		if err != nil {
 			common.ResError(c, "删除管理员失败")
 			return
 		}
-		var addAmmeterManager []*model.AmmeterManage
+		var addAmmeterManager []*ammeter.AmmeterManage
 		for _, manager := range managers {
-			addAmmeterManager = append(addAmmeterManager, &model.AmmeterManage{
+			addAmmeterManager = append(addAmmeterManager, &ammeter.AmmeterManage{
 				AmmeterId:  nodeId,
 				UserId:     manager,
 				CreateTime: int(time.Now().Unix()),
 			})
 			if parentId != 0 {
-				addAmmeterManager = append(addAmmeterManager, &model.AmmeterManage{
+				addAmmeterManager = append(addAmmeterManager, &ammeter.AmmeterManage{
 					AmmeterId:  parentId,
 					UserId:     manager,
 					CreateTime: int(time.Now().Unix()),
@@ -243,7 +244,7 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 }
 
 func DeleteTreeNodeSer(c *gin.Context, nodeId int) {
-	var nodes []*model.Ammeter
+	var nodes []*ammeter.Ammeter
 	var nodeIds []int
 	err := conf.Mysql.Where("id=?", nodeId).Or("parent_id=?", nodeId).Find(&nodes)
 	if err != nil {
@@ -253,12 +254,12 @@ func DeleteTreeNodeSer(c *gin.Context, nodeId int) {
 	for _, node := range nodes {
 		nodeIds = append(nodeIds, node.Id)
 	}
-	_, err = conf.Mysql.In("id", nodeIds).Delete(&model.Ammeter{})
+	_, err = conf.Mysql.In("id", nodeIds).Delete(&ammeter.Ammeter{})
 	if err != nil {
 		common.ResError(c, "删除节点失败")
 		return
 	}
-	_, err = conf.Mysql.In("ammeter_id", nodeIds).Delete(&model.AmmeterManage{})
+	_, err = conf.Mysql.In("ammeter_id", nodeIds).Delete(&ammeter.AmmeterManage{})
 	if err != nil {
 		common.ResError(c, "删除节点管理失败")
 		return
@@ -267,7 +268,7 @@ func DeleteTreeNodeSer(c *gin.Context, nodeId int) {
 }
 
 func AmmeterInfoSer(c *gin.Context, ammeterId int) {
-	var ammeterInfo model.Ammeter
+	var ammeterInfo ammeter.Ammeter
 	_, err := conf.Mysql.Where("id=?", ammeterId).Get(&ammeterInfo)
 	if err != nil {
 		common.ResError(c, "获取设备信息失败")
@@ -277,7 +278,7 @@ func AmmeterInfoSer(c *gin.Context, ammeterId int) {
 }
 
 func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int) {
-	_, err := conf.Mysql.Where("id=?", ammeterId).Update(&model.Ammeter{
+	_, err := conf.Mysql.Where("id=?", ammeterId).Update(&ammeter.Ammeter{
 		Switch: ammeterSwitch,
 	})
 	if err != nil {
@@ -290,7 +291,7 @@ func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int) {
 func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, startAt string, endAt string) {
 	startTime, _ := time.Parse("2006-01-02 15:04:05", startAt+" 00:00:00")
 	endTime, _ := time.Parse("2006-01-02 15:04:05", endAt+" 23:59:59")
-	var datas []model.StatisticForm
+	var datas []ammeter.StatisticForm
 	sess := conf.Mysql.NewSession()
 	sess.Table("ammeter_data")
 	sess.Where("ammeter_id=?", ammeterId)
@@ -308,7 +309,7 @@ func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, sta
 		common.ResError(c, "获取设备统计数据失败")
 		return
 	}
-	var res model.AmmeterStatisticRes
+	var res ammeter.AmmeterStatisticRes
 	res.Data = datas
 	if statisticsType == utils.AMMETER_DATA_TYPE_CONSUMPTION {
 		var todayTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02")+" 00:00:00")
@@ -317,7 +318,7 @@ func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, sta
 		var lastMonthTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().AddDate(0, -1, 0).Format("2006-01")+"-01 00:00:00")
 		var thisYearTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006")+"-01-01 00:00:00")
 		var lastYearTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().AddDate(-1, 0, 0).Format("2006")+"-01-01 00:00:00")
-		var statisticsData []*model.AmmeterData
+		var statisticsData []*ammeter.AmmeterData
 		lastYearTimeStamp := time.Date(time.Now().Year()-1, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()
 		err := conf.Mysql.Where("create_time > ?", lastYearTimeStamp).Where("ammeter_id=?", ammeterId).Where("type=?", statisticsType).Find(&statisticsData)
 		if err != nil {
@@ -350,7 +351,7 @@ func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, sta
 }
 
 func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, status int, startDealTime string, endDealTime string, startTime string, endTime string, dealUser string, ammeterId int) {
-	var warnings []*model.AmmeterWarning
+	var warnings []*ammeter.AmmeterWarning
 	sess := conf.Mysql.NewSession()
 	sess.Where("ammeter_id=?", ammeterId)
 	if warningType != 0 {
@@ -371,7 +372,7 @@ func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, sta
 		sess.Where("create_time > ? AND create_time < ?", timeStart.Unix(), timeEnd.Unix())
 	}
 	if dealUser != "" {
-		var users []*model.User
+		var users []*rbac.User
 		var userIds []int
 		err := conf.Mysql.Where("name like ?", "%"+dealUser+"%").Find(&users)
 		if err != nil {
@@ -392,7 +393,7 @@ func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, sta
 	for _, w := range warnings {
 		userIds = append(userIds, w.DealUser)
 	}
-	var users []*model.User
+	var users []*rbac.User
 	var userMapping = make(map[int]string)
 	err = conf.Mysql.In("id", userIds).Find(&users)
 	if err != nil {
@@ -415,7 +416,7 @@ func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, sta
 }
 
 func ChangeWarningStatusSer(c *gin.Context, warningId int, status int, userId int) {
-	_, err := conf.Mysql.Where("id=?", warningId).Update(&model.AmmeterWarning{
+	_, err := conf.Mysql.Where("id=?", warningId).Update(&ammeter.AmmeterWarning{
 		Status:   status,
 		DealTime: int(time.Now().Unix()),
 		DealUser: userId,
@@ -428,7 +429,7 @@ func ChangeWarningStatusSer(c *gin.Context, warningId int, status int, userId in
 }
 
 func ConfigInfoSer(c *gin.Context, ammeterId int) {
-	var config model.AmmeterConfig
+	var config ammeter.AmmeterConfig
 	_, err := conf.Mysql.Where("ammeter_id=?", ammeterId).Get(&config)
 	if err != nil {
 		common.ResError(c, "获取设备配置失败")
@@ -439,7 +440,7 @@ func ConfigInfoSer(c *gin.Context, ammeterId int) {
 	common.ResOk(c, "ok", config)
 }
 
-func UpdateConfigSer(c *gin.Context, config model.AmmeterConfig) {
+func UpdateConfigSer(c *gin.Context, config ammeter.AmmeterConfig) {
 	_, err := conf.Mysql.Where("ammeter_id=?", config.AmmeterId).Update(&config)
 	if err != nil {
 		common.ResError(c, "修改配置失败")
@@ -450,7 +451,7 @@ func UpdateConfigSer(c *gin.Context, config model.AmmeterConfig) {
 
 func AddTestData(c *gin.Context, ammeterId int, dataType int, value int, createTime string) {
 	t, _ := time.Parse("2006-01-02 15:04:05", createTime)
-	_, _ = conf.Mysql.Insert(&model.AmmeterData{
+	_, _ = conf.Mysql.Insert(&ammeter.AmmeterData{
 		AmmeterId:  ammeterId,
 		Type:       dataType,
 		Value:      value,

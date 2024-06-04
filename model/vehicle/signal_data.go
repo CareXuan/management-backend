@@ -1,4 +1,4 @@
-package model
+package vehicle
 
 type SignalData struct {
 	Id          int    `json:"id" xorm:"pk autoincr INT(11)"`

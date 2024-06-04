@@ -1,4 +1,4 @@
-package model
+package vehicle
 
 type VehicleConfig struct {
 	CampusId   int    `json:"campusId"`

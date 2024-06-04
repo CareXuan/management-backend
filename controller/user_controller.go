@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
+	"management-backend/model/rbac"
 	"management-backend/service"
 	"strconv"
 )
@@ -30,7 +30,7 @@ func GetUserList(c *gin.Context) {
 }
 
 func AddUser(c *gin.Context) {
-	var user model.AddUserReq
+	var user rbac.AddUserReq
 	if err := c.ShouldBindJSON(&user); err != nil {
 		log.Fatal(err)
 		return

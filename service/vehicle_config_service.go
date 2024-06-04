@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"management-backend/conf"
-	"management-backend/model"
+	"management-backend/model/vehicle"
 	"management-backend/utils"
 )
 
-func GetVehicleConfigFromRedis(deviceId int) (*model.VehicleConfig, error) {
-	var config model.VehicleConfig
+func GetVehicleConfigFromRedis(deviceId int) (*vehicle.VehicleConfig, error) {
+	var config vehicle.VehicleConfig
 	vehicleConfig, err := redis.String(conf.Redis.Do("GET", fmt.Sprintf(utils.REDIS_KEY_VEHICLE_CONFIG, deviceId)))
 	if err != nil {
 		return nil, err

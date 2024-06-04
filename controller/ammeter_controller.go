@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
+	"management-backend/model/ammeter"
 	"management-backend/service"
 	"strconv"
 )
@@ -34,7 +34,7 @@ func TreeManager(c *gin.Context) {
 }
 
 func AddNode(c *gin.Context) {
-	var req model.AmmeterNodeAdd
+	var req ammeter.AmmeterNodeAdd
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		return
@@ -43,7 +43,7 @@ func AddNode(c *gin.Context) {
 }
 
 func DeleteNode(c *gin.Context) {
-	var req model.AmmeterNodeAdd
+	var req ammeter.AmmeterNodeAdd
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		return
@@ -58,7 +58,7 @@ func Info(c *gin.Context) {
 }
 
 func ChangeSwitch(c *gin.Context) {
-	var req model.ChangeSwitchReq
+	var req ammeter.ChangeSwitchReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		return
@@ -96,7 +96,7 @@ func Warning(c *gin.Context) {
 }
 
 func ChangeWarning(c *gin.Context) {
-	var req model.AmmeterWarningUpdateReq
+	var req ammeter.AmmeterWarningUpdateReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		return
@@ -111,7 +111,7 @@ func Config(c *gin.Context) {
 }
 
 func UpdateConfig(c *gin.Context) {
-	var req model.AmmeterConfig
+	var req ammeter.AmmeterConfig
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		return
@@ -120,7 +120,7 @@ func UpdateConfig(c *gin.Context) {
 }
 
 func AddTestData(c *gin.Context) {
-	var req model.AmmeterDataReq
+	var req ammeter.AmmeterDataReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		return

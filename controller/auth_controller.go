@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
+	"management-backend/model/rbac"
 	"management-backend/service"
 	"strconv"
 )
@@ -41,7 +41,7 @@ func GetRoleInfo(c *gin.Context) {
 }
 
 func AddRole(c *gin.Context) {
-	var roleAddReq model.RoleAddReq
+	var roleAddReq rbac.RoleAddReq
 	if err := c.ShouldBindJSON(&roleAddReq); err != nil {
 		log.Fatal(err)
 		return
@@ -50,7 +50,7 @@ func AddRole(c *gin.Context) {
 }
 
 func DeleteRole(c *gin.Context) {
-	var roleDeleteReq model.RoleAddReq
+	var roleDeleteReq rbac.RoleAddReq
 	if err := c.ShouldBindJSON(&roleDeleteReq); err != nil {
 		log.Fatal(err)
 		return
@@ -59,7 +59,7 @@ func DeleteRole(c *gin.Context) {
 }
 
 func AddPermission(c *gin.Context) {
-	var permissionReq model.Permission
+	var permissionReq rbac.Permission
 	if err := c.ShouldBindJSON(&permissionReq); err != nil {
 		log.Fatal(err)
 		return
@@ -84,7 +84,7 @@ func GetPermissionDetail(c *gin.Context) {
 }
 
 func RemovePermission(c *gin.Context) {
-	var permissionReq model.Permission
+	var permissionReq rbac.Permission
 	if err := c.ShouldBindJSON(&permissionReq); err != nil {
 		log.Fatal(err)
 		return

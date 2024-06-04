@@ -1,4 +1,4 @@
-package model
+package rbac
 
 type User struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`

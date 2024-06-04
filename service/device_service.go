@@ -5,12 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"management-backend/common"
 	"management-backend/conf"
-	"management-backend/model"
+	"management-backend/model/vehicle"
 	"management-backend/utils"
 )
 
 func DeviceListSer(c *gin.Context, page int, pageSize int, name string, iccid string, deviceType string, status string) {
-	var devices []*model.Device
+	var devices []*vehicle.Device
 
 	sess := conf.Mysql.NewSession()
 	if name != "" {
@@ -42,7 +42,7 @@ func DeviceListSer(c *gin.Context, page int, pageSize int, name string, iccid st
 }
 
 func SignalDetailListSer(c *gin.Context, page int, pageSize int, deviceId string) {
-	var signals []*model.SignalData
+	var signals []*vehicle.SignalData
 	sess := conf.Mysql.NewSession()
 	count, err := sess.Where("device_id=?", deviceId).OrderBy("id desc").Limit(pageSize, (page-1)*pageSize).FindAndCount(&signals)
 	if err != nil {

@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
+	"management-backend/model/vehicle"
 	"management-backend/service"
 	"strconv"
 )
@@ -30,7 +30,7 @@ func SignalDetailList(c *gin.Context) {
 }
 
 func DeviceReport(c *gin.Context) {
-	var req model.DeviceReportReq
+	var req vehicle.DeviceReportReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		return

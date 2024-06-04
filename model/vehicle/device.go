@@ -1,4 +1,4 @@
-package model
+package vehicle
 
 type Device struct {
 	Id              int    `json:"id" xorm:"pk autoincr INT(11)"`

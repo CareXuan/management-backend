@@ -1,4 +1,4 @@
-package model
+package ammeter
 
 type Ammeter struct {
 	Id              int        `json:"id" xorm:"pk autoincr INT(11)"`

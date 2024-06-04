@@ -10,7 +10,8 @@ import (
 	"io/ioutil"
 	"log"
 	"management-backend/common"
-	"management-backend/model"
+	"management-backend/model/ammeter"
+	"management-backend/model/rbac"
 	"management-backend/utils"
 	"strconv"
 	"time"
@@ -78,7 +79,7 @@ func NewConfig(configPath string) {
 	connectMysql()
 	connectRabbitMQ()
 	connectRedis()
-	GetVehicleConfig(Conf.Vehicle.Host)
+	//GetVehicleConfig(Conf.Vehicle.Host)
 }
 
 func connectMysql() {
@@ -108,16 +109,16 @@ func connectMysql() {
 
 func syncTables() {
 	err := Mysql.Sync2(
-		new(model.User),
-		new(model.Role),
-		new(model.UserRole),
-		new(model.Permission),
-		new(model.RolePermission),
-		new(model.Ammeter),
-		new(model.AmmeterConfig),
-		new(model.AmmeterData),
-		new(model.AmmeterManage),
-		new(model.AmmeterWarning),
+		new(rbac.User),
+		new(rbac.Role),
+		new(rbac.UserRole),
+		new(rbac.Permission),
+		new(rbac.RolePermission),
+		new(ammeter.Ammeter),
+		new(ammeter.AmmeterConfig),
+		new(ammeter.AmmeterData),
+		new(ammeter.AmmeterManage),
+		new(ammeter.AmmeterWarning),
 	)
 	if err != nil {
 		log.Fatal(err)
