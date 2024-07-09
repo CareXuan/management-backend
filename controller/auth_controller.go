@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
-	"management-backend/service"
+	"my-gpt-server/model"
+	"my-gpt-server/service"
 	"strconv"
 )
 

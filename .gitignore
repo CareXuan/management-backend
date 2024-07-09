@@ -1,4 +1,4 @@
-./conf/config.yaml
+conf/config.yaml
 .idea
 go.sum
-management-backend
+my-gpt-server

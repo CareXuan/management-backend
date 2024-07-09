@@ -5,7 +5,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
-	"management-backend/model"
+	"my-gpt-server/model"
 	"time"
 	"xorm.io/core"
 
@@ -14,11 +14,16 @@ import (
 
 type Config struct {
 	Mysql MysqlConfig `yaml:"mysql"`
+	Gpt   GptConfig   `yaml:"gpt"`
 }
 
 type MysqlConfig struct {
 	M string `yaml:"m"`
 	S string `yaml:"s"`
+}
+
+type GptConfig struct {
+	Key string `yaml:"key"`
 }
 
 var (
@@ -73,6 +78,7 @@ func syncTables() {
 		new(model.UserRole),
 		new(model.Permission),
 		new(model.RolePermission),
+		new(model.GptQuestion),
 	)
 	if err != nil {
 		log.Fatal(err)

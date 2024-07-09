@@ -1,3 +1,6 @@
 mysql:
-  m: root:root@tcp(1.92.71.193:3307)/management
-  s: root:root@tcp(1.92.71.193:3307)/management
+  m: root:root@tcp(localhost:3307)/gpt
+  s: root:root@tcp(localhost:3307)/gpt
+
+gpt:
+  key: 

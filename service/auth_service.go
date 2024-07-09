@@ -3,10 +3,10 @@ package service
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
-	"management-backend/utils"
+	"my-gpt-server/common"
+	"my-gpt-server/conf"
+	"my-gpt-server/model"
+	"my-gpt-server/utils"
 )
 
 func LoginSrv(c *gin.Context, phone string, password string) {

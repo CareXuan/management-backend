@@ -2,9 +2,9 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/controller"
-	"management-backend/middleware"
+	"my-gpt-server/common"
+	"my-gpt-server/controller"
+	"my-gpt-server/middleware"
 )
 
 func InitRouter(r *gin.Engine) {
@@ -33,6 +33,14 @@ func InitRouter(r *gin.Engine) {
 			auth.GET("/roles/info", controller.GetRoleInfo)
 			auth.POST("/roles/add", controller.AddRole)
 			auth.POST("/roles/delete", controller.DeleteRole)
+		}
+
+		// gpt
+		gpt := v1.Group("gpt")
+		{
+			gpt.GET("/one", controller.GetOneAnswer)
+			gpt.GET("/list", controller.QuestionList)
+			gpt.GET("/detail", controller.QuestionDetail)
 		}
 	}
 }
