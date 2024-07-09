@@ -79,6 +79,11 @@ func syncTables() {
 		new(model.Permission),
 		new(model.RolePermission),
 		new(model.GptQuestion),
+		new(model.Member),
+		new(model.MemberRecord),
+		new(model.MemberUseRecord),
+		new(model.Device),
+		new(model.Appointment),
 	)
 	if err != nil {
 		log.Fatal(err)
