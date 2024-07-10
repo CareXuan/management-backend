@@ -35,6 +35,27 @@ func InitRouter(r *gin.Engine) {
 			auth.POST("/roles/delete", controller.DeleteRole)
 		}
 
+		// 会员
+		member := v1.Group("member")
+		{
+			member.GET("/list", controller.GetMemberList)
+			member.GET("/detail", controller.GetMemberDetail)
+			member.POST("/add", controller.AddMember)
+			member.POST("/recharge", controller.MemberRecharge)
+		}
+
+		// 设备
+		device := v1.Group("device")
+		{
+			device.GET("/list")
+		}
+
+		// 预约
+		appointment := v1.Group("appointment")
+		{
+			appointment.GET("/list")
+		}
+
 		// gpt
 		gpt := v1.Group("gpt")
 		{

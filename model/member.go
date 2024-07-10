@@ -10,7 +10,7 @@ type Member struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
 	Name      string `json:"name" xorm:"VARCHAR(64) not null"`
 	Card      string `json:"card" xorm:"VARCHAR(128) not null"`
-	CreatedAt int    `json:"created_at" xorm:"INT(11) not null default 0"`
+	CreatedAt int64  `json:"created_at" xorm:"INT(11) not null default 0"`
 }
 
 type MemberRecord struct {
@@ -21,23 +21,33 @@ type MemberRecord struct {
 	Cost      int    `json:"cost" xorm:"INT(11) not null"`
 	Remark    string `json:"remark" xorm:"VARCHAR(256) not null"`
 	Pic       string `json:"pic" xorm:"VARCHAR(512) not null"`
-	CreatedAt int    `json:"created_at" xorm:"INT(11) not null default 0"`
+	CreatedAt int64  `json:"created_at" xorm:"INT(11) not null default 0"`
 }
 
 type MemberUseRecord struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
 	CardId    int    `json:"card_id" xorm:"INT(11) not null"`
 	UseType   int    `json:"use_type" xorm:"INT(5) not null"`
+	Times     int    `json:"times" xorm:"INT(11) not null"`
 	StartTime int    `json:"start_time" xorm:"INT(11) not null"`
 	EndTime   int    `json:"end_time" xorm:"INT(11) not null"`
 	Remark    string `json:"remark" xorm:"VARCHAR(256) not null"`
 	Pic       string `json:"pic" xorm:"VARCHAR(512) not null"`
 	Status    int    `json:"status" xorm:"INT(5) not null"`
-	CreatedAt int    `json:"created_at" xorm:"INT(11) not null default 0"`
+	CreatedAt int64  `json:"created_at" xorm:"INT(11) not null default 0"`
 }
 
 type MemberAddReq struct {
 	Name   string `json:"name"`
+	Type   int    `json:"type"`
+	Price  int    `json:"price"`
+	Cost   int    `json:"cost"`
+	Remark string `json:"remark"`
+	Pic    string `json:"pic"`
+}
+
+type MemberRechargeReq struct {
+	CardId int    `json:"card_id"`
 	Type   int    `json:"type"`
 	Price  int    `json:"price"`
 	Cost   int    `json:"cost"`
