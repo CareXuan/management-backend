@@ -10,6 +10,7 @@ type Member struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
 	Name      string `json:"name" xorm:"VARCHAR(64) not null"`
 	Card      string `json:"card" xorm:"VARCHAR(128) not null"`
+	Phone     string `json:"phone" xorm:"VARCHAR(16) not null"`
 	CreatedAt int64  `json:"created_at" xorm:"INT(11) not null default 0"`
 }
 

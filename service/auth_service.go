@@ -7,11 +7,12 @@ import (
 	"my-gpt-server/conf"
 	"my-gpt-server/model"
 	"my-gpt-server/utils"
+	"time"
 )
 
 func LoginSrv(c *gin.Context, phone string, password string) {
 	var user model.User
-	_, err := conf.Mysql.Where("phone = ?", phone).Get(&user)
+	_, err := conf.Mysql.Where("phone = ?", phone).Where("deleted_at = 0").Get(&user)
 	if err != nil {
 		fmt.Println(err)
 		common.ResError(c, "获取用户失败")
@@ -26,13 +27,13 @@ func LoginSrv(c *gin.Context, phone string, password string) {
 		return
 	}
 	var userRole model.UserRole
-	_, err = conf.Mysql.Where("id = ?", user.Id).Get(&userRole)
+	_, err = conf.Mysql.Where("id = ?", user.Id).Where("deleted_at = 0").Get(&userRole)
 	if err != nil {
 		common.ResError(c, "获取用户角色失败")
 		return
 	}
 	var role model.Role
-	_, err = conf.Mysql.Where("id = ?", userRole.RoleId).Get(&role)
+	_, err = conf.Mysql.Where("id = ?", userRole.RoleId).Where("deleted_at = 0").Get(&role)
 	if err != nil {
 		common.ResError(c, "获取角色信息失败")
 		return
@@ -43,7 +44,7 @@ func LoginSrv(c *gin.Context, phone string, password string) {
 
 func GetAllPermissionSer(c *gin.Context) {
 	var permissions []*model.Permission
-	err := conf.Mysql.OrderBy("sort").Find(&permissions)
+	err := conf.Mysql.Where("deleted_at = 0").OrderBy("sort").Find(&permissions)
 	if err != nil {
 		common.ResError(c, "获取权限信息失败")
 		return
@@ -66,7 +67,7 @@ func GetAllPermissionSer(c *gin.Context) {
 
 func GetAllRolesSer(c *gin.Context, page int, pageSize int) {
 	var roles []*model.Role
-	count, err := conf.Mysql.Limit(pageSize, (page-1)*pageSize).FindAndCount(&roles)
+	count, err := conf.Mysql.Where("deleted_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&roles)
 	if err != nil {
 		common.ResError(c, "获取角色信息失败")
 		return
@@ -76,13 +77,13 @@ func GetAllRolesSer(c *gin.Context, page int, pageSize int) {
 
 func GetRolePermissionSer(c *gin.Context, roleId int) {
 	var role model.Role
-	_, err := conf.Mysql.Where("id = ?", roleId).Get(&role)
+	_, err := conf.Mysql.Where("id = ?", roleId).Where("deleted_at = 0").Get(&role)
 	if err != nil {
 		common.ResError(c, "获取角色信息失败")
 		return
 	}
 	var rolePermissions []*model.RolePermission
-	err = conf.Mysql.Where("role_id = ?", roleId).Find(&rolePermissions)
+	err = conf.Mysql.Where("role_id = ?", roleId).Where("deleted_at = 0").Find(&rolePermissions)
 	if err != nil {
 		common.ResError(c, "获取角色关联权限失败")
 		return
@@ -97,7 +98,9 @@ func GetRolePermissionSer(c *gin.Context, roleId int) {
 func AddRoleSer(c *gin.Context, roleAdd model.RoleAddReq) {
 	if roleAdd.Id == 0 {
 		var role = model.Role{
-			Name: roleAdd.Name,
+			Name:      roleAdd.Name,
+			CreatedAt: int(time.Now().Unix()),
+			UpdatedAt: int(time.Now().Unix()),
 		}
 		_, err := conf.Mysql.Insert(&role)
 		if err != nil {
@@ -112,6 +115,8 @@ func AddRoleSer(c *gin.Context, roleAdd model.RoleAddReq) {
 			rolePermissions = append(rolePermissions, model.RolePermission{
 				RoleId:       role.Id,
 				PermissionId: pId,
+				CreatedAt:    int(time.Now().Unix()),
+				UpdatedAt:    int(time.Now().Unix()),
 			})
 		}
 		_, err = conf.Mysql.Insert(&rolePermissions)
@@ -121,19 +126,19 @@ func AddRoleSer(c *gin.Context, roleAdd model.RoleAddReq) {
 		}
 	} else {
 		var role model.Role
-		_, err := conf.Mysql.Where("id = ?", roleAdd.Id).Get(&role)
+		_, err := conf.Mysql.Where("id = ?", roleAdd.Id).Where("deleted_at = 0").Get(&role)
 		if err != nil {
 			common.ResError(c, "获取角色信息失败")
 			return
 		}
-		_, err = conf.Mysql.Where("id = ?", roleAdd.Id).Update(&model.Role{
+		_, err = conf.Mysql.Where("id = ?", roleAdd.Id).Where("deleted_at = 0").Update(&model.Role{
 			Name: roleAdd.Name,
 		})
 		if err != nil {
 			common.ResError(c, "修改角色信息失败")
 			return
 		}
-		_, err = conf.Mysql.Where("role_id = ?", roleAdd.Id).Delete(&model.RolePermission{})
+		_, err = conf.Mysql.Where("role_id = ?", roleAdd.Id).Where("deleted_at = 0").Update(&model.RolePermission{DeletedAt: int(time.Now().Unix())})
 		if err != nil {
 			common.ResError(c, "删除原有角色关联权限失败")
 			return
@@ -146,6 +151,8 @@ func AddRoleSer(c *gin.Context, roleAdd model.RoleAddReq) {
 			newRolePermissions = append(newRolePermissions, model.RolePermission{
 				RoleId:       role.Id,
 				PermissionId: pId,
+				CreatedAt:    int(time.Now().Unix()),
+				UpdatedAt:    int(time.Now().Unix()),
 			})
 		}
 		_, err = conf.Mysql.Insert(&newRolePermissions)
@@ -158,17 +165,17 @@ func AddRoleSer(c *gin.Context, roleAdd model.RoleAddReq) {
 }
 
 func DeleteRoleSer(c *gin.Context, roleId int) {
-	_, err := conf.Mysql.Where("id = ?", roleId).Delete(&model.Role{})
+	_, err := conf.Mysql.Where("id = ?", roleId).Where("deleted_at = 0").Update(&model.Role{DeletedAt: int(time.Now().Unix())})
 	if err != nil {
 		common.ResError(c, "删除角色失败")
 		return
 	}
-	_, err = conf.Mysql.Where("role_id = ?", roleId).Delete(&model.RolePermission{})
+	_, err = conf.Mysql.Where("role_id = ?", roleId).Where("deleted_at = 0").Update(&model.RolePermission{DeletedAt: int(time.Now().Unix())})
 	if err != nil {
 		common.ResError(c, "删除角色权限关系失败")
 		return
 	}
-	_, err = conf.Mysql.Where("role_id = ?", roleId).Delete(&model.UserRole{})
+	_, err = conf.Mysql.Where("role_id = ?", roleId).Where("deleted_at = 0").Update(&model.UserRole{DeletedAt: int(time.Now().Unix())})
 	if err != nil {
 		common.ResError(c, "删除用户角色关系失败")
 		return
@@ -185,6 +192,8 @@ func AddPermissionSer(c *gin.Context, parentId int, path string, icon string, so
 		Label:     label,
 		Desc:      desc,
 		Component: component,
+		CreatedAt: int(time.Now().Unix()),
+		UpdatedAt: int(time.Now().Unix()),
 	}
 	_, err := conf.Mysql.Insert(newPermission)
 	if err != nil {
@@ -205,12 +214,12 @@ func RemovePermissionSer(c *gin.Context, id int) {
 	for _, p := range permissions {
 		permissionIds = append(permissionIds, p.Id)
 	}
-	_, err = conf.Mysql.In("id", permissionIds).Delete(&model.Permission{})
+	_, err = conf.Mysql.In("id", permissionIds).Where("deleted_at = 0").Update(&model.Permission{DeletedAt: int(time.Now().Unix())})
 	if err != nil {
 		common.ResError(c, "节点删除失败")
 		return
 	}
-	_, err = conf.Mysql.In("permission_id", permissionIds).Delete(&model.RolePermission{})
+	_, err = conf.Mysql.In("permission_id", permissionIds).Where("deleted_at = 0").Where("deleted_at = 0").Delete(&model.RolePermission{DeletedAt: int(time.Now().Unix())})
 	if err != nil {
 		common.ResError(c, "节点关联角色信息删除失败")
 		return

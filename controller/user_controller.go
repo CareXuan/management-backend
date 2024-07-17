@@ -37,3 +37,12 @@ func AddUser(c *gin.Context) {
 	}
 	service.AddUserSer(c, user.Id, user.Name, user.Password, user.Phone, user.RoleId)
 }
+
+func DeleteUser(c *gin.Context) {
+	var user model.AddUserReq
+	if err := c.ShouldBindJSON(&user); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.DeleteUserSer(c, user.Id)
+}
