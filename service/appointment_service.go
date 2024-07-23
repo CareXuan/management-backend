@@ -64,3 +64,20 @@ func GetAppointmentListSer(c *gin.Context, deviceId int, memberName, memberPhone
 
 	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: appointments})
 }
+
+func GetAppointmentDetailSer(c *gin.Context, appointmentId int) {
+	var appointment model.Appointment
+	_, err := conf.Mysql.Where("id=?", appointmentId).Get(&appointment)
+	if err != nil {
+		common.ResError(c, "获取预约详情失败")
+		return
+	}
+	var member *model.Member
+	_, err = conf.Mysql.Where("id=?", appointment.MemberId).Get(member)
+	if err != nil {
+		common.ResError(c, "获取预约用户失败")
+		return
+	}
+	appointment.Member = member
+	common.ResOk(c, "ok", appointment)
+}

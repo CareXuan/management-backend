@@ -65,6 +65,16 @@ func GetAllPermissionSer(c *gin.Context) {
 	common.ResOk(c, "ok", fatherPermissions)
 }
 
+func GetPermissionDetailSer(c *gin.Context, id int) {
+	var permission model.Permission
+	_, err := conf.Mysql.Where("id = ?", id).Get(&permission)
+	if err != nil {
+		common.ResError(c, "获取权限详情失败")
+		return
+	}
+	common.ResOk(c, "ok", permission)
+}
+
 func GetAllRolesSer(c *gin.Context, page int, pageSize int) {
 	var roles []*model.Role
 	count, err := conf.Mysql.Where("deleted_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&roles)
@@ -183,22 +193,39 @@ func DeleteRoleSer(c *gin.Context, roleId int) {
 	common.ResOk(c, "ok", nil)
 }
 
-func AddPermissionSer(c *gin.Context, parentId int, path string, icon string, sort int, label string, desc string, component string) {
-	var newPermission = model.Permission{
-		Path:      path,
-		Icon:      icon,
-		Sort:      sort,
-		ParentId:  parentId,
-		Label:     label,
-		Desc:      desc,
-		Component: component,
-		CreatedAt: int(time.Now().Unix()),
-		UpdatedAt: int(time.Now().Unix()),
-	}
-	_, err := conf.Mysql.Insert(newPermission)
-	if err != nil {
-		common.ResError(c, "添加权限失败")
-		return
+func AddPermissionSer(c *gin.Context, id int, parentId int, path string, icon string, sort int, label string, desc string, component string) {
+	if id != 0 {
+		_, err := conf.Mysql.Where("id = ?", id).Update(model.Permission{
+			Path:      path,
+			Icon:      icon,
+			Sort:      sort,
+			ParentId:  parentId,
+			Label:     label,
+			Desc:      desc,
+			Component: component,
+			UpdatedAt: int(time.Now().Unix()),
+		})
+		if err != nil {
+			common.ResError(c, "修改权限失败")
+			return
+		}
+	} else {
+		var newPermission = model.Permission{
+			Path:      path,
+			Icon:      icon,
+			Sort:      sort,
+			ParentId:  parentId,
+			Label:     label,
+			Desc:      desc,
+			Component: component,
+			CreatedAt: int(time.Now().Unix()),
+			UpdatedAt: int(time.Now().Unix()),
+		}
+		_, err := conf.Mysql.Insert(newPermission)
+		if err != nil {
+			common.ResError(c, "添加权限失败")
+			return
+		}
 	}
 	common.ResOk(c, "ok", nil)
 }

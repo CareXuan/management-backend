@@ -18,7 +18,7 @@ func GetUserInfoSer(c *gin.Context, userId int) {
 		return
 	}
 	var userRole model.UserRole
-	_, err = conf.Mysql.Where("id = ?", userId).Where("deleted_at = 0").Get(&userRole)
+	_, err = conf.Mysql.Where("user_id = ?", userId).Where("deleted_at = 0").Get(&userRole)
 	if err != nil {
 		common.ResError(c, "获取用户角色失败")
 		return
@@ -163,7 +163,7 @@ func DeleteUserSer(c *gin.Context, userId int) {
 
 func GetUserPermissionSer(c *gin.Context, userId int) {
 	var userRole model.UserRole
-	_, err := conf.Mysql.Where("id = ?", userId).Where("deleted_at = 0").Get(&userRole)
+	_, err := conf.Mysql.Where("user_id = ?", userId).Where("deleted_at = 0").Get(&userRole)
 	if err != nil {
 		common.ResError(c, "获取用户角色失败")
 		return

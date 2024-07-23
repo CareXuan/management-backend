@@ -26,6 +26,12 @@ func AllPermission(c *gin.Context) {
 	service.GetAllPermissionSer(c)
 }
 
+func PermissionDetail(c *gin.Context) {
+	id := c.Query("id")
+	idInt, _ := strconv.Atoi(id)
+	service.GetPermissionDetailSer(c, idInt)
+}
+
 func AllRoles(c *gin.Context) {
 	page := c.Query("page")
 	pageSize := c.Query("page_size")
@@ -66,6 +72,7 @@ func AddPermission(c *gin.Context) {
 	}
 	service.AddPermissionSer(
 		c,
+		permissionReq.Id,
 		permissionReq.ParentId,
 		permissionReq.Path,
 		permissionReq.Icon,

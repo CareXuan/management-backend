@@ -28,6 +28,7 @@ func InitRouter(r *gin.Engine) {
 		{
 			auth.POST("/login", controller.Login)
 			auth.GET("/permission", controller.AllPermission)
+			auth.GET("/permission/detail", controller.PermissionDetail)
 			auth.POST("/permission/add", controller.AddPermission)
 			auth.POST("/permission/delete", controller.RemovePermission)
 			auth.GET("/roles", controller.AllRoles)
@@ -50,7 +51,7 @@ func InitRouter(r *gin.Engine) {
 		{
 			device.GET("/list", controller.GetDeviceList)
 			device.GET("/info", controller.GetDeviceInfo)
-			device.POST("/info", controller.AddDevice)
+			device.POST("/add", controller.AddDevice)
 		}
 
 		// 预约
@@ -58,6 +59,7 @@ func InitRouter(r *gin.Engine) {
 		{
 			appointment.GET("/list", controller.GetAppointmentList)
 			appointment.GET("/detail", controller.GetAppointmentDetail)
+			appointment.POST("/add", controller.AddAppointment)
 		}
 
 		// gpt

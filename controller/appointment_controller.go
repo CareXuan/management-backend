@@ -20,5 +20,11 @@ func GetAppointmentList(c *gin.Context) {
 }
 
 func GetAppointmentDetail(c *gin.Context) {
-	//id := c.Query("id")
+	id := c.Query("id")
+	idInt, _ := strconv.Atoi(id)
+	service.GetAppointmentDetailSer(c, idInt)
+}
+
+func AddAppointment(c *gin.Context) {
+
 }
