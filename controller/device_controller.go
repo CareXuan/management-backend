@@ -35,5 +35,5 @@ func DeviceReport(c *gin.Context) {
 		log.Fatal(err)
 		return
 	}
-	service.DeviceReportSer(c, req.ReportType, req.DeviceId, req.ControlType)
+	service.DeviceReportSer(c, req.ReportType, req.DeviceId, req.ControlType, req.Msg)
 }

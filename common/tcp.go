@@ -29,3 +29,17 @@ func TcpRequest(host string, port string, data TcpCommonData) error {
 	}
 	return nil
 }
+
+func CommonSendDeviceReport(host string, port string, reportType int, deviceId int, controlType int, msg string) error {
+	tcpData := TcpCommonData{
+		Type: reportType,
+		Data: ElectricVehicleTcpData{
+			DeviceId: deviceId,
+			Type:     controlType,
+			Msg:      msg,
+		},
+	}
+
+	err := TcpRequest(host, port, tcpData)
+	return err
+}

@@ -9,6 +9,7 @@ import (
 	"management-backend/model/ammeter"
 	"management-backend/model/rbac"
 	"management-backend/utils"
+	"strconv"
 	"time"
 )
 
@@ -285,6 +286,19 @@ func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int) {
 		common.ResError(c, "修改开关状态失败")
 		return
 	}
+	var ammeterItem ammeter.Ammeter
+	_, err = conf.Mysql.Where("id=?", ammeterId).Get(&ammeterItem)
+	if err != nil {
+		common.ResError(c, "获取电表信息失败")
+		return
+	}
+	deviceId, _ := strconv.Atoi(ammeterItem.Card)
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host, conf.Conf.Tcp.Port, 1, deviceId, ammeterSwitch, ammeterItem.Num)
+	if err != nil {
+		common.ResError(c, "发送控制命令失败")
+		return
+	}
+
 	common.ResOk(c, "ok", nil)
 }
 

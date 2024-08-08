@@ -13,7 +13,8 @@ type Device struct {
 }
 
 type DeviceReportReq struct {
-	DeviceId    int `json:"device_id"`
-	ReportType  int `json:"report_type"`
-	ControlType int `json:"control_type"`
+	DeviceId    int    `json:"device_id"`
+	ReportType  int    `json:"report_type"`
+	ControlType int    `json:"control_type"`
+	Msg         string `json:"msg"`
 }
