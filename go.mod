@@ -6,11 +6,8 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/go-xorm/xorm v0.7.9
-<<<<<<< Updated upstream
-=======
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/streadway/amqp v1.1.0
->>>>>>> Stashed changes
 	gopkg.in/yaml.v3 v3.0.1
 	xorm.io/core v0.7.2-0.20190928055935-90aeac8d08eb
 )
