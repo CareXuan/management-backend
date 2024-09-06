@@ -82,7 +82,10 @@ func syncTables() {
 		new(model.Member),
 		new(model.MemberRecord),
 		new(model.MemberUseRecord),
+		new(model.MemberDeviceRecord),
 		new(model.Device),
+		new(model.DevicePackage),
+		new(model.DevicePackageDetail),
 		new(model.Appointment),
 	)
 	if err != nil {

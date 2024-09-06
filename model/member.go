@@ -8,21 +8,34 @@ const USE_STATUS_FINISH = 2
 
 type Member struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
-	Name      string `json:"name" xorm:"VARCHAR(64) not null"`
-	Card      string `json:"card" xorm:"VARCHAR(128) not null"`
-	Phone     string `json:"phone" xorm:"VARCHAR(16) not null"`
+	Name      string `json:"name" xorm:"VARCHAR(64) not null default '' comment('姓名')"`
+	Card      string `json:"card" xorm:"VARCHAR(128) not null default '' comment('卡号')"`
+	Phone     string `json:"phone" xorm:"VARCHAR(16) not null default '' comment('手机号')"`
+	Emergency string `json:"emergency" xorm:"VARCHAR(16) not null default '' comment('紧急联系人')"`
+	Birthday  string `json:"birthday" xorm:"VARCHAR(16) not null default '' comment('生日')"`
+	Gender    int    `json:"gender" xorm:"INT(3) not null default 0 comment('性别 1：男 2：女')"`
+	Remark    string `json:"remark" xorm:"VARCHAR(256) not null default '' comment('备注')"`
 	CreatedAt int64  `json:"created_at" xorm:"INT(11) not null default 0"`
 }
 
 type MemberRecord struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
 	CardId    int    `json:"card_id" xorm:"INT(11) not null"`
-	Type      int    `json:"type" xorm:"INT(11) not null"`
-	Price     int    `json:"price" xorm:"INT(11) not null"`
-	Cost      int    `json:"cost" xorm:"INT(11) not null"`
-	Remark    string `json:"remark" xorm:"VARCHAR(256) not null"`
-	Pic       string `json:"pic" xorm:"VARCHAR(512) not null"`
+	Type      int    `json:"type" xorm:"INT(11) not null default 0 comment('记录类型 1：充值 2：退款')"`
+	Price     int    `json:"price" xorm:"INT(11) not null default 0 comment('原价')"`
+	Cost      int    `json:"cost" xorm:"INT(11) not null default 0 comment('实际支付价格')"`
+	PackageId int    `json:"package_id" xorm:"INT(11) not null default 0 comment('套餐ID 如未使用套餐为0')"`
+	Remark    string `json:"remark" xorm:"VARCHAR(256) not null default '' comment('备注')"`
+	Pic       string `json:"pic" xorm:"VARCHAR(512) not null default '' comment('图片')"`
 	CreatedAt int64  `json:"created_at" xorm:"INT(11) not null default 0"`
+}
+
+type MemberRecordDetail struct {
+	Id        int   `json:"id" xorm:"pk autoincr INT(11)"`
+	RecordId  int   `json:"record_id" xorm:"INT(11) not null comment('充值记录ID')"`
+	Type      int   `json:"type" xorm:"INT(3) not null default 0 comment('类型 1：计次 2：计时')"`
+	Value     int   `json:"value" xorm:"INT(11) not null default 0 comment('type=1 充值次数 type=2 结束时间')"`
+	CreatedAt int64 `json:"created_at" xorm:"INT(11) not null default 0"`
 }
 
 type MemberUseRecord struct {
@@ -36,6 +49,15 @@ type MemberUseRecord struct {
 	Pic       string `json:"pic" xorm:"VARCHAR(512) not null"`
 	Status    int    `json:"status" xorm:"INT(5) not null"`
 	CreatedAt int64  `json:"created_at" xorm:"INT(11) not null default 0"`
+}
+
+type MemberDeviceRecord struct {
+	Id        int   `json:"id" xorm:"pk autoincr INT(11)"`
+	MemberId  int   `json:"member_id" xorm:"INT(11) not null default 0 comment('会员ID')"`
+	DeviceId  int   `json:"device_id" xorm:"INT(11) not null default 0 comment('设备ID')"`
+	Type      int   `json:"type" xorm:"INT(3) not null default 0 comment('类型 1：计次 2：计时')"`
+	Value     int   `json:"value" xorm:"INT(11) not null default 0 comment('type=1 充值次数 type=2 结束时间')"`
+	CreatedAt int64 `json:"created_at" xorm:"INT(11) not null default 0"`
 }
 
 type MemberAddReq struct {
