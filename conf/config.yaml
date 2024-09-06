@@ -1,6 +1,0 @@
-mysql:
-  m: root:root@tcp(localhost:3307)/gpt
-  s: root:root@tcp(localhost:3307)/gpt
-
-gpt:
-  key: 

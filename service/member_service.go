@@ -40,6 +40,11 @@ func AddMember(c *gin.Context, member model.MemberAddReq) {
 	newMember := model.Member{
 		Name:      member.Name,
 		Card:      common.GetOneNewCard(24),
+		Phone:     member.Phone,
+		Emergency: member.Emergency,
+		Birthday:  member.Birthday,
+		Gender:    member.Gender,
+		Remark:    member.UserRemark,
 		CreatedAt: time.Now().Unix(),
 	}
 	_, err := conf.Mysql.Insert(&newMember)
@@ -49,10 +54,11 @@ func AddMember(c *gin.Context, member model.MemberAddReq) {
 	}
 	newMemberRecord := model.MemberRecord{
 		CardId:    newMember.Id,
+		PackageId: member.PackageId,
 		Type:      member.Type,
 		Price:     member.Price,
 		Cost:      member.Cost,
-		Remark:    member.Remark,
+		Remark:    member.RechargeRemark,
 		Pic:       member.Pic,
 		CreatedAt: time.Now().Unix(),
 	}
@@ -61,12 +67,18 @@ func AddMember(c *gin.Context, member model.MemberAddReq) {
 		common.ResError(c, "添加会员记录失败")
 		return
 	}
+	_, err = addRechargeDetail(newMemberRecord.Id, member.RechargeDetail)
+	if err != nil {
+		common.ResError(c, "添加充值记录详情失败")
+		return
+	}
 	common.ResOk(c, "ok", nil)
 }
 
 func Recharge(c *gin.Context, memberRecharge model.MemberRechargeReq) {
 	newMemberRecord := model.MemberRecord{
 		CardId:    memberRecharge.CardId,
+		PackageId: memberRecharge.PackageId,
 		Type:      memberRecharge.Type,
 		Price:     memberRecharge.Price,
 		Cost:      memberRecharge.Cost,
@@ -76,8 +88,31 @@ func Recharge(c *gin.Context, memberRecharge model.MemberRechargeReq) {
 	}
 	_, err := conf.Mysql.Insert(&newMemberRecord)
 	if err != nil {
-		common.ResError(c, "添加会员记录失败")
+		common.ResError(c, "添加充值记录失败")
+		return
+	}
+	_, err = addRechargeDetail(newMemberRecord.Id, memberRecharge.RechargeDetail)
+	if err != nil {
+		common.ResError(c, "添加充值记录详情失败")
 		return
 	}
 	common.ResOk(c, "ok", nil)
+}
+
+func addRechargeDetail(recordId int, rechargeDetail []model.MemberRecordDetailAdd) (int64, error) {
+	var insertData []model.MemberRecordDetail
+	for _, detail := range rechargeDetail {
+		insertData = append(insertData, model.MemberRecordDetail{
+			RecordId:  recordId,
+			DeviceId:  detail.DeviceId,
+			Type:      detail.Type,
+			Value:     detail.Value,
+			CreatedAt: time.Now().Unix(),
+		})
+	}
+	num, err := conf.Mysql.Insert(insertData)
+	if err != nil {
+		return -1, err
+	}
+	return num, nil
 }

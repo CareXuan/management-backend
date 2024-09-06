@@ -1,10 +1,16 @@
 package model
 
-const MEMBER_TYPE_TIMES = 1
-const MEMBER_TYPE_MONTHLY = 2
+const RECHARGE_TYPE_TIMES = 1
+const RECHARGE_TYPE_MONTHLY = 2
 
 const USE_STATUS_RESERVATION = 1
 const USE_STATUS_FINISH = 2
+
+const MEMBER_GENDER_MALE = 1
+const MEMBER_GENDER_FEMALE = 2
+
+const MEMBER_RECORD_TYPE_RECHARGE = 1
+const MEMBER_RECORD_TYPE_REFUND = 2
 
 type Member struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
@@ -33,6 +39,7 @@ type MemberRecord struct {
 type MemberRecordDetail struct {
 	Id        int   `json:"id" xorm:"pk autoincr INT(11)"`
 	RecordId  int   `json:"record_id" xorm:"INT(11) not null comment('充值记录ID')"`
+	DeviceId  int   `json:"device_id" xorm:"INT(10) not null comment('设备ID')"`
 	Type      int   `json:"type" xorm:"INT(3) not null default 0 comment('类型 1：计次 2：计时')"`
 	Value     int   `json:"value" xorm:"INT(11) not null default 0 comment('type=1 充值次数 type=2 结束时间')"`
 	CreatedAt int64 `json:"created_at" xorm:"INT(11) not null default 0"`
@@ -61,19 +68,34 @@ type MemberDeviceRecord struct {
 }
 
 type MemberAddReq struct {
-	Name   string `json:"name"`
-	Type   int    `json:"type"`
-	Price  int    `json:"price"`
-	Cost   int    `json:"cost"`
-	Remark string `json:"remark"`
-	Pic    string `json:"pic"`
+	Name           string                  `json:"name"`
+	Phone          string                  `json:"phone"`
+	Emergency      string                  `json:"emergency"`
+	Birthday       string                  `json:"birthday"`
+	Gender         int                     `json:"gender"`
+	UserRemark     string                  `json:"user_remark"`
+	PackageId      int                     `json:"package_id"`
+	Type           int                     `json:"type"`
+	Price          int                     `json:"price"`
+	Cost           int                     `json:"cost"`
+	RechargeRemark string                  `json:"recharge_remark"`
+	Pic            string                  `json:"pic"`
+	RechargeDetail []MemberRecordDetailAdd `json:"recharge_detail"`
 }
 
 type MemberRechargeReq struct {
-	CardId int    `json:"card_id"`
-	Type   int    `json:"type"`
-	Price  int    `json:"price"`
-	Cost   int    `json:"cost"`
-	Remark string `json:"remark"`
-	Pic    string `json:"pic"`
+	CardId         int                     `json:"card_id"`
+	PackageId      int                     `json:"package_id"`
+	Type           int                     `json:"type"`
+	Price          int                     `json:"price"`
+	Cost           int                     `json:"cost"`
+	Remark         string                  `json:"remark"`
+	Pic            string                  `json:"pic"`
+	RechargeDetail []MemberRecordDetailAdd `json:"recharge_detail"`
+}
+
+type MemberRecordDetailAdd struct {
+	DeviceId int `json:"device_id"`
+	Type     int `json:"type"`
+	Value    int `json:"value"`
 }

@@ -81,6 +81,7 @@ func syncTables() {
 		new(model.GptQuestion),
 		new(model.Member),
 		new(model.MemberRecord),
+		new(model.MemberRecordDetail),
 		new(model.MemberUseRecord),
 		new(model.MemberDeviceRecord),
 		new(model.Device),
