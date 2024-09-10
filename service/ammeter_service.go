@@ -449,8 +449,6 @@ func ConfigInfoSer(c *gin.Context, ammeterId int) {
 		common.ResError(c, "获取设备配置失败")
 		return
 	}
-	config.TimingOpenTimeStr = time.Unix(int64(config.TimingOpenTime), 0).Format("2006-01-02 15:04:05")
-	config.TimingCloseTimeStr = time.Unix(int64(config.TimingCloseTime), 0).Format("2006-01-02 15:04:05")
 	common.ResOk(c, "ok", config)
 }
 
