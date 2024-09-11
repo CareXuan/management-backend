@@ -63,3 +63,15 @@ type AmmeterConfig struct {
 	AntiIsolatedIslandTime    int `json:"anti_isolated_island_time" xorm:"int(11) not null default 0 comment('防孤岛保护检测时间')"`
 	AntiIsolatedIslandDeal    int `json:"anti_isolated_island_deal" xorm:"int(11) not null default 0 comment('防孤岛保护处理方式')"`
 }
+
+type ConfigUpdateReq struct {
+	AmmeterId   int    `json:"ammeter_id"`
+	UpdateType  string `json:"update_type"`
+	UpdateValue int    `json:"update_value"`
+}
+
+type ConfigUpdateMsgData struct {
+	Num        int    `json:"num"`
+	ParamType  string `json:"param_type"`
+	ParamValue string `json:"param_value"`
+}

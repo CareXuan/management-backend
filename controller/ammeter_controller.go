@@ -111,7 +111,7 @@ func Config(c *gin.Context) {
 }
 
 func UpdateConfig(c *gin.Context) {
-	var req ammeter.AmmeterConfig
+	var req ammeter.ConfigUpdateReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		return

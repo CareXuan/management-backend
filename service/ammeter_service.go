@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -452,12 +453,25 @@ func ConfigInfoSer(c *gin.Context, ammeterId int) {
 	common.ResOk(c, "ok", config)
 }
 
-func UpdateConfigSer(c *gin.Context, config ammeter.AmmeterConfig) {
-	_, err := conf.Mysql.Where("ammeter_id=?", config.AmmeterId).Update(&config)
+func UpdateConfigSer(c *gin.Context, configUpdate ammeter.ConfigUpdateReq) {
+	var deviceItem ammeter.Ammeter
+	_, err := conf.Mysql.Where("id=?", configUpdate.AmmeterId).Get(&deviceItem)
+	if err != nil {
+		common.ResError(c, "获取设备信息失败")
+		return
+	}
+	sqlStr := fmt.Sprintf("UPDATE ammeter_config SET %s=%d WHERE ammeter_id=%d", configUpdate.UpdateType, configUpdate.UpdateValue, configUpdate.AmmeterId)
+	_, err = conf.Mysql.Query(sqlStr)
 	if err != nil {
 		common.ResError(c, "修改配置失败")
 		return
 	}
+	updateValueHexString := common.DecimalToHex(configUpdate.UpdateValue)
+	reportType := 4
+	deviceIdInt, _ := strconv.Atoi(deviceItem.Card)
+	deviceNumInt, _ := strconv.Atoi(deviceItem.Num)
+	msgByte, _ := json.Marshal(ammeter.ConfigUpdateMsgData{Num: deviceNumInt, ParamType: utils.UPDATE_AMMETER_CONFIG_PARAMS[configUpdate.UpdateType], ParamValue: updateValueHexString})
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host, conf.Conf.Tcp.Port, reportType, deviceIdInt, 0, string(msgByte))
 	common.ResOk(c, "ok", nil)
 }
 
