@@ -24,6 +24,12 @@ func GetMemberDetail(c *gin.Context) {
 	service.GetMemberDetail(c, idInt)
 }
 
+func GetMemberRechargeDetail(c *gin.Context) {
+	id := c.Query("id")
+	idInt, _ := strconv.Atoi(id)
+	service.GetMemberRechargeDetail(c, idInt)
+}
+
 func AddMember(c *gin.Context) {
 	var member model.MemberAddReq
 	if err := c.ShouldBindJSON(&member); err != nil {

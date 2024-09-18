@@ -42,6 +42,7 @@ func InitRouter(r *gin.Engine) {
 		{
 			member.GET("/list", controller.GetMemberList)
 			member.GET("/detail", controller.GetMemberDetail)
+			member.GET("/recharge/detail", controller.GetMemberRechargeDetail)
 			member.POST("/add", controller.AddMember)
 			member.POST("/recharge", controller.MemberRecharge)
 		}

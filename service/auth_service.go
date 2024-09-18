@@ -195,7 +195,7 @@ func DeleteRoleSer(c *gin.Context, roleId int) {
 
 func AddPermissionSer(c *gin.Context, id int, parentId int, path string, icon string, sort int, label string, desc string, component string) {
 	if id != 0 {
-		_, err := conf.Mysql.Where("id = ?", id).Update(model.Permission{
+		_, err := conf.Mysql.Where("id = ?", id).Cols("path", "icon", "sort", "parent_id", "label", "desc", "component").Update(model.Permission{
 			Path:      path,
 			Icon:      icon,
 			Sort:      sort,
@@ -246,7 +246,7 @@ func RemovePermissionSer(c *gin.Context, id int) {
 		common.ResError(c, "节点删除失败")
 		return
 	}
-	_, err = conf.Mysql.In("permission_id", permissionIds).Where("deleted_at = 0").Where("deleted_at = 0").Delete(&model.RolePermission{DeletedAt: int(time.Now().Unix())})
+	_, err = conf.Mysql.In("permission_id", permissionIds).Where("deleted_at = 0").Delete(&model.RolePermission{DeletedAt: int(time.Now().Unix())})
 	if err != nil {
 		common.ResError(c, "节点关联角色信息删除失败")
 		return

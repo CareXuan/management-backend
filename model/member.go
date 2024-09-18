@@ -26,7 +26,7 @@ type Member struct {
 
 type MemberRecord struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
-	CardId    int    `json:"card_id" xorm:"INT(11) not null"`
+	MemberId  int    `json:"member_id" xorm:"INT(11) not null"`
 	Type      int    `json:"type" xorm:"INT(11) not null default 0 comment('记录类型 1：充值 2：退款')"`
 	Price     int    `json:"price" xorm:"INT(11) not null default 0 comment('原价')"`
 	Cost      int    `json:"cost" xorm:"INT(11) not null default 0 comment('实际支付价格')"`
@@ -47,8 +47,8 @@ type MemberRecordDetail struct {
 
 type MemberUseRecord struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
-	CardId    int    `json:"card_id" xorm:"INT(11) not null"`
-	UseType   int    `json:"use_type" xorm:"INT(5) not null"`
+	MemberId  int    `json:"member_id" xorm:"INT(11) not null"`
+	DeviceId  int    `json:"device_id" xorm:"INT(11) not null"`
 	Times     int    `json:"times" xorm:"INT(11) not null"`
 	StartTime int    `json:"start_time" xorm:"INT(11) not null"`
 	EndTime   int    `json:"end_time" xorm:"INT(11) not null"`
@@ -68,23 +68,23 @@ type MemberDeviceRecord struct {
 }
 
 type MemberAddReq struct {
-	Name           string                  `json:"name"`
-	Phone          string                  `json:"phone"`
-	Emergency      string                  `json:"emergency"`
-	Birthday       string                  `json:"birthday"`
-	Gender         int                     `json:"gender"`
-	UserRemark     string                  `json:"user_remark"`
-	PackageId      int                     `json:"package_id"`
-	Type           int                     `json:"type"`
-	Price          int                     `json:"price"`
-	Cost           int                     `json:"cost"`
-	RechargeRemark string                  `json:"recharge_remark"`
-	Pic            string                  `json:"pic"`
-	RechargeDetail []MemberRecordDetailAdd `json:"recharge_detail"`
+	Name       string `json:"name"`
+	Phone      string `json:"phone"`
+	Emergency  string `json:"emergency"`
+	Birthday   string `json:"birthday"`
+	Gender     int    `json:"gender"`
+	UserRemark string `json:"user_remark"`
+	//PackageId      int                     `json:"package_id"`
+	//Type           int                     `json:"type"`
+	//Price          int                     `json:"price"`
+	//Cost           int                     `json:"cost"`
+	//RechargeRemark string                  `json:"recharge_remark"`
+	//Pic            string                  `json:"pic"`
+	//RechargeDetail []MemberRecordDetailAdd `json:"recharge_detail"`
 }
 
 type MemberRechargeReq struct {
-	CardId         int                     `json:"card_id"`
+	MemberId       int                     `json:"member_id"`
 	PackageId      int                     `json:"package_id"`
 	Type           int                     `json:"type"`
 	Price          int                     `json:"price"`
@@ -98,4 +98,10 @@ type MemberRecordDetailAdd struct {
 	DeviceId int `json:"device_id"`
 	Type     int `json:"type"`
 	Value    int `json:"value"`
+}
+
+type MemberRechargeRecordRes struct {
+	Name          string `json:"name"`
+	TimesRemain   int    `json:"times_remain"`
+	MonthlyRemain string `json:"monthly_remain"`
 }

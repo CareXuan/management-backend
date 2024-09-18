@@ -2,16 +2,16 @@ package common
 
 import (
 	"crypto/rand"
-	"encoding/base64"
+	"math/big"
 )
 
 func GetOneNewCard(length int) string {
-	// 创建一个字节切片用于存储随机数据
-	byteSlice := make([]byte, length)
+	// 创建一个大整数，设置其为length位的随机数
+	randomInt, err := rand.Int(rand.Reader, big.NewInt(int64(10)).Exp(big.NewInt(10), big.NewInt(int64(length)), nil))
+	if err != nil {
+		return ""
+	}
 
-	// 使用加密安全的随机数填充字节切片
-	rand.Read(byteSlice)
-
-	// 使用base64编码将字节切片转换为字符串
-	return base64.URLEncoding.EncodeToString(byteSlice)
+	// 将大整数转换为字符串
+	return randomInt.String()
 }
