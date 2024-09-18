@@ -18,7 +18,7 @@ func GetDeviceList(c *gin.Context) {
 }
 
 func GetDeviceInfo(c *gin.Context) {
-	id := c.Param("id")
+	id := c.Query("id")
 	idInt, _ := strconv.Atoi(id)
 	service.GetDeviceInfoSer(c, idInt)
 }
@@ -44,7 +44,7 @@ func GetPackageList(c *gin.Context) {
 }
 
 func GetPackageInfo(c *gin.Context) {
-	id := c.Param("id")
+	id := c.Query("id")
 	idInt, _ := strconv.Atoi(id)
 	service.GetPackageInfoSer(c, idInt)
 }
