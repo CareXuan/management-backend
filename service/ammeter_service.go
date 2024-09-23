@@ -304,28 +304,45 @@ func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int) {
 }
 
 func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, startAt string, endAt string) {
-	startTime, _ := time.Parse("2006-01-02 15:04:05", startAt+" 00:00:00")
-	endTime, _ := time.Parse("2006-01-02 15:04:05", endAt+" 23:59:59")
-	var datas []ammeter.StatisticForm
+	startTime, _ := time.Parse("2006-01-02 15:04:05", startAt)
+	endTime, _ := time.Parse("2006-01-02 15:04:05", endAt)
+	var datas []ammeter.AmmeterData
 	sess := conf.Mysql.NewSession()
-	sess.Table("ammeter_data")
 	sess.Where("ammeter_id=?", ammeterId)
 	sess.Where("type=?", statisticsType)
 	sess.Where("create_time > ? AND create_time < ?", startTime.Unix(), endTime.Unix())
-	if statisticsType == utils.AMMETER_DATA_TYPE_CONSUMPTION {
-		sess.Select("DATE_FORMAT(FROM_UNIXTIME(create_time), '%Y-%m-%d %H') AS label,SUM(value) AS count")
-		sess.GroupBy("label")
-	} else {
-		sess.Select("DATE_FORMAT(FROM_UNIXTIME(create_time), '%Y-%m') AS label,SUM(value) AS count")
-		sess.GroupBy("label")
-	}
 	err := sess.Find(&datas)
 	if err != nil {
 		common.ResError(c, "获取设备统计数据失败")
 		return
 	}
+	var statisticData []ammeter.StatisticForm
+	for _, d := range datas {
+		if d.Type == utils.AMMETER_DATA_TYPE_LEAKAGE {
+			d.Value /= 10
+		}
+		if d.Type == utils.AMMETER_DATA_TYPE_CURRENT {
+			d.Value /= 1000
+		}
+		if d.Type == utils.AMMETER_DATA_TYPE_VOLTAGE {
+			d.Value /= 1000
+		}
+		if d.Type == utils.AMMETER_DATA_TYPE_TEMPERATURE {
+			d.Value /= 10
+		}
+		if d.Type == utils.AMMETER_DATA_TYPE_POWER {
+			d.Value /= 10
+		}
+		if d.Type == utils.AMMETER_DATA_TYPE_CONSUMPTION {
+			//d.Value /= 10
+		}
+		statisticData = append(statisticData, ammeter.StatisticForm{
+			Label: time.Unix(int64(d.CreateTime), 0).Format("2006-01-02 15:04:05"),
+			Count: d.Value,
+		})
+	}
 	var res ammeter.AmmeterStatisticRes
-	res.Data = datas
+	res.Data = statisticData
 	if statisticsType == utils.AMMETER_DATA_TYPE_CONSUMPTION {
 		var todayTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02")+" 00:00:00")
 		var yesterdayTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().AddDate(0, 0, -1).Format("2006-01-02")+" 00:00:00")
