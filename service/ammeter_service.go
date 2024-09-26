@@ -304,9 +304,10 @@ func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int) {
 }
 
 func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, startAt string, endAt string) {
-	startTime, _ := time.Parse("2006-01-02 15:04:05", startAt)
-	endTime, _ := time.Parse("2006-01-02 15:04:05", endAt)
-	var datas []ammeter.AmmeterData
+	location, _ := time.LoadLocation("Asia/Shanghai")
+	startTime, _ := time.ParseInLocation("2006-01-02 15:04:05", startAt, location)
+	endTime, _ := time.ParseInLocation("2006-01-02 15:04:05", endAt, location)
+	var datas []*ammeter.AmmeterData
 	sess := conf.Mysql.NewSession()
 	sess.Where("ammeter_id=?", ammeterId)
 	sess.Where("type=?", statisticsType)
