@@ -27,6 +27,6 @@ type AmmeterStatisticRes struct {
 }
 
 type StatisticForm struct {
-	Label string `json:"label"`
-	Count int    `json:"count"`
+	Label string  `json:"label"`
+	Count float64 `json:"count"`
 }

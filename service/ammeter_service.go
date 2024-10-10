@@ -305,80 +305,93 @@ func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int) {
 
 func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, startAt string, endAt string) {
 	location, _ := time.LoadLocation("Asia/Shanghai")
-	startTime, _ := time.ParseInLocation("2006-01-02 15:04:05", startAt, location)
-	endTime, _ := time.ParseInLocation("2006-01-02 15:04:05", endAt, location)
-	var datas []*ammeter.AmmeterData
-	sess := conf.Mysql.NewSession()
-	sess.Where("ammeter_id=?", ammeterId)
-	sess.Where("type=?", statisticsType)
-	sess.Where("create_time > ? AND create_time < ?", startTime.Unix(), endTime.Unix())
-	err := sess.Find(&datas)
-	if err != nil {
-		common.ResError(c, "获取设备统计数据失败")
-		return
-	}
-	var statisticData []ammeter.StatisticForm
-	for _, d := range datas {
-		if d.Type == utils.AMMETER_DATA_TYPE_LEAKAGE {
-			d.Value /= 10
-		}
-		if d.Type == utils.AMMETER_DATA_TYPE_CURRENT {
-			d.Value /= 1000
-		}
-		if d.Type == utils.AMMETER_DATA_TYPE_VOLTAGE {
-			d.Value /= 1000
-		}
-		if d.Type == utils.AMMETER_DATA_TYPE_TEMPERATURE {
-			d.Value /= 10
-		}
-		if d.Type == utils.AMMETER_DATA_TYPE_POWER {
-			d.Value /= 10
-		}
-		if d.Type == utils.AMMETER_DATA_TYPE_CONSUMPTION {
-			//d.Value /= 10
-		}
-		statisticData = append(statisticData, ammeter.StatisticForm{
-			Label: time.Unix(int64(d.CreateTime), 0).Format("2006-01-02 15:04:05"),
-			Count: d.Value,
-		})
-	}
 	var res ammeter.AmmeterStatisticRes
-	res.Data = statisticData
 	if statisticsType == utils.AMMETER_DATA_TYPE_CONSUMPTION {
-		var todayTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02")+" 00:00:00")
-		var yesterdayTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().AddDate(0, 0, -1).Format("2006-01-02")+" 00:00:00")
-		var thisMonthTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01")+"-01 00:00:00")
-		var lastMonthTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().AddDate(0, -1, 0).Format("2006-01")+"-01 00:00:00")
-		var thisYearTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006")+"-01-01 00:00:00")
-		var lastYearTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().AddDate(-1, 0, 0).Format("2006")+"-01-01 00:00:00")
-		var statisticsData []*ammeter.AmmeterData
-		lastYearTimeStamp := time.Date(time.Now().Year()-1, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()
-		err := conf.Mysql.Where("create_time > ?", lastYearTimeStamp).Where("ammeter_id=?", ammeterId).Where("type=?", statisticsType).Find(&statisticsData)
+		var todayTime, _ = time.ParseInLocation("2006-01-02 15:04:05", time.Now().Format("2006-01-02")+" 00:00:00", location)
+		var yesterdayTime, _ = time.ParseInLocation("2006-01-02 15:04:05", time.Now().AddDate(0, 0, -1).Format("2006-01-02")+" 00:00:00", location)
+		var thisMonthTime, _ = time.ParseInLocation("2006-01-02 15:04:05", time.Now().Format("2006-01")+"-01 00:00:00", location)
+		var lastMonthTime, _ = time.ParseInLocation("2006-01-02 15:04:05", time.Now().AddDate(0, -1, 0).Format("2006-01")+"-01 00:00:00", location)
+		var thisYearTime, _ = time.ParseInLocation("2006-01-02 15:04:05", time.Now().Format("2006")+"-01-01 00:00:00", location)
+		var lastYearTime, _ = time.ParseInLocation("2006-01-02 15:04:05", time.Now().AddDate(-1, 0, 0).Format("2006")+"-01-01 00:00:00", location)
+		var todayStatistic ammeter.AmmeterData
+		_, err := conf.Mysql.Select("max(value) - min(value) AS value").Where("ammeter_id = ?", ammeterId).Where("type = 6").Where("create_time > ?", todayTime.Unix()).Get(&todayStatistic)
 		if err != nil {
 			common.ResError(c, "获取统计数据失败")
 			return
 		}
-		for _, sd := range statisticsData {
-			cTime := int64(sd.CreateTime)
-			if cTime > todayTime.Unix() {
-				res.TodayElectricityConsumption += sd.Value
-			}
-			if cTime < todayTime.Unix() && cTime > yesterdayTime.Unix() {
-				res.YesterdayElectricityConsumption += sd.Value
-			}
-			if cTime > thisMonthTime.Unix() {
-				res.MonthElectricityConsumption += sd.Value
-			}
-			if cTime < thisMonthTime.Unix() && cTime > lastMonthTime.Unix() {
-				res.LastMonthElectricityConsumption += sd.Value
-			}
-			if cTime > thisYearTime.Unix() {
-				res.YearElectricityConsumption += sd.Value
-			}
-			if cTime < thisYearTime.Unix() && cTime > lastYearTime.Unix() {
-				res.LastYearElectricityConsumption += sd.Value
-			}
+		var yesterdayStatistic ammeter.AmmeterData
+		_, err = conf.Mysql.Select("max(value) - min(value) AS value").Where("ammeter_id = ?", ammeterId).Where("type = 6").Where("create_time > ?", yesterdayTime.Unix()).Where("create_time < ?", todayTime.Unix()).Get(&yesterdayStatistic)
+		if err != nil {
+			common.ResError(c, "获取统计数据失败")
+			return
 		}
+		var monthStatistic ammeter.AmmeterData
+		_, err = conf.Mysql.Select("max(value) - min(value) AS value").Where("ammeter_id = ?", ammeterId).Where("type = 6").Where("create_time > ?", thisMonthTime.Unix()).Get(&monthStatistic)
+		if err != nil {
+			common.ResError(c, "获取统计数据失败")
+			return
+		}
+		var lastMonthStatistic ammeter.AmmeterData
+		_, err = conf.Mysql.Select("max(value) - min(value) AS value").Where("ammeter_id = ?", ammeterId).Where("type = 6").Where("create_time > ?", lastMonthTime.Unix()).Where("create_time < ?", thisMonthTime.Unix()).Get(&lastMonthStatistic)
+		if err != nil {
+			common.ResError(c, "获取统计数据失败")
+			return
+		}
+		var yearStatistic ammeter.AmmeterData
+		_, err = conf.Mysql.Select("max(value) - min(value) AS value").Where("ammeter_id = ?", ammeterId).Where("type = 6").Where("create_time > ?", thisYearTime.Unix()).Get(&yearStatistic)
+		if err != nil {
+			common.ResError(c, "获取统计数据失败")
+			return
+		}
+		var lastYearStatistic ammeter.AmmeterData
+		_, err = conf.Mysql.Select("max(value) - min(value) AS value").Where("ammeter_id = ?", ammeterId).Where("type = 6").Where("create_time > ?", lastYearTime.Unix()).Where("create_time < ?", thisYearTime.Unix()).Get(&lastYearStatistic)
+		if err != nil {
+			common.ResError(c, "获取统计数据失败")
+			return
+		}
+		res.TodayElectricityConsumption = todayStatistic.Value
+		res.YesterdayElectricityConsumption = yesterdayStatistic.Value
+		res.MonthElectricityConsumption = monthStatistic.Value
+		res.LastMonthElectricityConsumption = lastMonthStatistic.Value
+		res.YearElectricityConsumption = yearStatistic.Value
+		res.LastYearElectricityConsumption = lastYearStatistic.Value
+	} else {
+		startTime, _ := time.ParseInLocation("2006-01-02 15:04:05", startAt, location)
+		endTime, _ := time.ParseInLocation("2006-01-02 15:04:05", endAt, location)
+		var datas []*ammeter.AmmeterData
+		sess := conf.Mysql.NewSession()
+		sess.Where("ammeter_id=?", ammeterId)
+		sess.Where("type=?", statisticsType)
+		sess.Where("create_time > ? AND create_time < ?", startTime.Unix(), endTime.Unix())
+		err := sess.Find(&datas)
+		if err != nil {
+			common.ResError(c, "获取设备统计数据失败")
+			return
+		}
+		var statisticData []ammeter.StatisticForm
+		for _, d := range datas {
+			statisticValue := 0.0
+			if d.Type == utils.AMMETER_DATA_TYPE_LEAKAGE {
+				statisticValue = float64(d.Value) / 10
+			}
+			if d.Type == utils.AMMETER_DATA_TYPE_CURRENT {
+				statisticValue = float64(d.Value) / 1000
+			}
+			if d.Type == utils.AMMETER_DATA_TYPE_VOLTAGE {
+				statisticValue = float64(d.Value) / 1000
+			}
+			if d.Type == utils.AMMETER_DATA_TYPE_TEMPERATURE {
+				statisticValue = float64(d.Value) / 10
+			}
+			if d.Type == utils.AMMETER_DATA_TYPE_POWER {
+				statisticValue = float64(d.Value) / 10000
+			}
+			statisticData = append(statisticData, ammeter.StatisticForm{
+				Label: time.Unix(int64(d.CreateTime), 0).Format("2006-01-02 15:04:05"),
+				Count: statisticValue,
+			})
+		}
+		res.Data = statisticData
 	}
 	common.ResOk(c, "ok", res)
 }
@@ -423,8 +436,20 @@ func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, sta
 		return
 	}
 	var userIds []int
+	var ammeterIds []int
 	for _, w := range warnings {
 		userIds = append(userIds, w.DealUser)
+		ammeterIds = append(ammeterIds, w.AmmeterId)
+	}
+	var ammeterItems []*ammeter.Ammeter
+	var ammeterMapping = make(map[int]*ammeter.Ammeter)
+	err = conf.Mysql.In("id", ammeterIds).Find(&ammeterItems)
+	if err != nil {
+		common.ResError(c, "获取设备信息失败")
+		return
+	}
+	for _, item := range ammeterItems {
+		ammeterMapping[item.Id] = item
 	}
 	var users []*rbac.User
 	var userMapping = make(map[int]string)
@@ -438,6 +463,8 @@ func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, sta
 	}
 	for _, w := range warnings {
 		w.DealUserName = userMapping[w.DealUser]
+		w.AmmeterCard = ammeterMapping[w.AmmeterId].Card
+		w.AmmeterLocation = ammeterMapping[w.AmmeterId].Location
 		if w.DealTime == 0 {
 			w.DealTimeStr = "-"
 		} else {
