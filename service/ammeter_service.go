@@ -430,7 +430,7 @@ func WarningListSer(c *gin.Context, page int, pageSize int, warningType int, sta
 		}
 		sess.In("deal_user", userIds)
 	}
-	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&warnings)
+	count, err := sess.OrderBy("id DESC").Limit(pageSize, (page-1)*pageSize).FindAndCount(&warnings)
 	if err != nil {
 		common.ResError(c, "查询报警列表失败")
 		return
