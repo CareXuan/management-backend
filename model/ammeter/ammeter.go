@@ -34,4 +34,5 @@ type AmmeterNodeAdd struct {
 type ChangeSwitchReq struct {
 	AmmeterId int `json:"ammeter_id"`
 	Switch    int `json:"switch"`
+	Pwd       int `json:"pwd"`
 }

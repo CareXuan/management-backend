@@ -13,14 +13,14 @@ func List(c *gin.Context) {
 	pageInt, _ := strconv.Atoi(page)
 	pageSize := c.Query("page_size")
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	num := c.Query("num")
+	card := c.Query("card")
 	userId := c.Query("user_id")
 	userIdInt, _ := strconv.Atoi(userId)
 	status := c.Query("status")
 	statusInt, _ := strconv.Atoi(status)
 	ammeterType := c.Query("type")
 	ammeterTypeInt, _ := strconv.Atoi(ammeterType)
-	service.ListSer(c, pageInt, pageSizeInt, num, statusInt, ammeterTypeInt, userIdInt)
+	service.ListSer(c, pageInt, pageSizeInt, card, statusInt, ammeterTypeInt, userIdInt)
 }
 
 func Tree(c *gin.Context) {
@@ -63,7 +63,7 @@ func ChangeSwitch(c *gin.Context) {
 		log.Fatal(err)
 		return
 	}
-	service.ChangeAmmeterSwitchSer(c, req.AmmeterId, req.Switch)
+	service.ChangeAmmeterSwitchSer(c, req.AmmeterId, req.Switch, req.Pwd)
 }
 
 func Statistics(c *gin.Context) {

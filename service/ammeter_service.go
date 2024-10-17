@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func ListSer(c *gin.Context, page int, pageSize int, num string, status int, ammeterType int, userId int) {
+func ListSer(c *gin.Context, page int, pageSize int, card string, status int, ammeterType int, userId int) {
 	var userRole rbac.UserRole
 	_, err := conf.Mysql.Where("user_id=?", userId).Get(&userRole)
 	if err != nil {
@@ -27,8 +27,8 @@ func ListSer(c *gin.Context, page int, pageSize int, num string, status int, amm
 	}
 	var ammeters []*ammeter.Ammeter
 	sess := conf.Mysql.NewSession()
-	if num != "" {
-		sess.Where("num=?", num)
+	if card != "" {
+		sess.Where("card=?", card)
 	}
 	if status != 0 {
 		sess.Where("status=?", status)
@@ -294,23 +294,35 @@ func AmmeterInfoSer(c *gin.Context, ammeterId int) {
 	common.ResOk(c, "ok", ammeterInfo)
 }
 
-func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int) {
-	_, err := conf.Mysql.Where("id=?", ammeterId).Update(&ammeter.Ammeter{
+func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int, pwd int) {
+	var ammeterItem ammeter.Ammeter
+	_, err := conf.Mysql.Where("id=?", ammeterId).Get(&ammeterItem)
+	if err != nil {
+		common.ResError(c, "获取电表信息失败")
+		return
+	}
+	var boardItem ammeter.Board
+	_, err = conf.Mysql.Where("board_id = ?", ammeterItem.Card).Get(&boardItem)
+	if err != nil {
+		common.ResError(c, "获取主板信息失败")
+		return
+	}
+	if boardItem.Pwd3 != pwd {
+		common.ResForbidden(c, "密码错误，请重试！")
+		return
+	}
+	_, err = conf.Mysql.Where("id=?", ammeterId).Update(&ammeter.Ammeter{
 		Switch: ammeterSwitch,
 	})
 	if err != nil {
 		common.ResError(c, "修改开关状态失败")
 		return
 	}
-	var ammeterItem ammeter.Ammeter
-	_, err = conf.Mysql.Where("id=?", ammeterId).Get(&ammeterItem)
-	if err != nil {
-		common.ResError(c, "获取电表信息失败")
-		return
-	}
 	deviceId, _ := strconv.Atoi(ammeterItem.Card)
-	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host, conf.Conf.Tcp.Port, 1, deviceId, ammeterSwitch, ammeterItem.Num)
+	msg := "{\"num\":" + ammeterItem.Num + ",\"pwd\":" + strconv.Itoa(pwd) + "}"
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host, conf.Conf.Tcp.Port, 1, deviceId, ammeterSwitch, msg)
 	if err != nil {
+		fmt.Println(err)
 		common.ResError(c, "发送控制命令失败")
 		return
 	}
@@ -385,6 +397,7 @@ func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, sta
 		sess.Where("ammeter_id=?", ammeterId)
 		sess.Where("type=?", statisticsType)
 		sess.Where("create_time > ? AND create_time < ?", startTime.Unix(), endTime.Unix())
+		sess.OrderBy("create_time")
 		err := sess.Find(&datas)
 		if err != nil {
 			common.ResError(c, "获取设备统计数据失败")
