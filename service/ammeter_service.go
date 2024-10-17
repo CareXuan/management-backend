@@ -276,6 +276,21 @@ func AmmeterInfoSer(c *gin.Context, ammeterId int) {
 		common.ResError(c, "获取设备信息失败")
 		return
 	}
+	var boardInfo ammeter.Board
+	_, err = conf.Mysql.Where("board_id = ?", ammeterInfo.Card).Get(&boardInfo)
+	if err != nil {
+		fmt.Println(err)
+		common.ResError(c, "获取主板信息失败")
+		return
+	}
+	ammeterInfo.Iccid = boardInfo.Iccid
+	num := ""
+	if len(ammeterInfo.Num) == 1 {
+		num = "0" + ammeterInfo.Num
+	} else {
+		num = ammeterInfo.Num
+	}
+	ammeterInfo.Num = num
 	common.ResOk(c, "ok", ammeterInfo)
 }
 
@@ -349,12 +364,19 @@ func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, sta
 			common.ResError(c, "获取统计数据失败")
 			return
 		}
+		var mainStatistic ammeter.AmmeterData
+		_, err = conf.Mysql.Select("max(value) AS value").Where("ammeter_id = ?", ammeterId).Where("type = 6").Get(&mainStatistic)
+		if err != nil {
+			common.ResError(c, "获取统计数据失败")
+			return
+		}
 		res.TodayElectricityConsumption = todayStatistic.Value
 		res.YesterdayElectricityConsumption = yesterdayStatistic.Value
 		res.MonthElectricityConsumption = monthStatistic.Value
 		res.LastMonthElectricityConsumption = lastMonthStatistic.Value
 		res.YearElectricityConsumption = yearStatistic.Value
 		res.LastYearElectricityConsumption = lastYearStatistic.Value
+		res.MainElectricityConsumption = mainStatistic.Value
 	} else {
 		startTime, _ := time.ParseInLocation("2006-01-02 15:04:05", startAt, location)
 		endTime, _ := time.ParseInLocation("2006-01-02 15:04:05", endAt, location)
@@ -385,6 +407,15 @@ func AmmeterStatisticsSer(c *gin.Context, statisticsType int, ammeterId int, sta
 			}
 			if d.Type == utils.AMMETER_DATA_TYPE_POWER {
 				statisticValue = float64(d.Value) / 10000
+			}
+			if d.Type == utils.AMMETER_DATA_TYPE_QUANTITY {
+				statisticValue = float64(d.Value) / 100
+			}
+			if d.Type == utils.AMMETER_DATA_TYPE_SIGNAL_INTENSITY {
+				statisticValue = float64(d.Value)
+			}
+			if d.Type == utils.AMMETER_DATA_TYPE_SWITCH {
+				statisticValue = float64(d.Value)
 			}
 			statisticData = append(statisticData, ammeter.StatisticForm{
 				Label: time.Unix(int64(d.CreateTime), 0).Format("2006-01-02 15:04:05"),

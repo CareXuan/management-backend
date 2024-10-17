@@ -24,6 +24,7 @@ type AmmeterStatisticRes struct {
 	LastMonthElectricityConsumption int             `json:"last_month_electricity_consumption"`
 	YearElectricityConsumption      int             `json:"year_electricity_consumption"`
 	LastYearElectricityConsumption  int             `json:"last_year_electricity_consumption"`
+	MainElectricityConsumption      int             `json:"main_electricity_consumption"`
 }
 
 type StatisticForm struct {

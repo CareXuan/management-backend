@@ -17,6 +17,7 @@ type Ammeter struct {
 	Children        []*Ammeter `json:"children" xorm:"-"`
 	IsSupervisor    int        `json:"is_supervisor" xorm:"-"`
 	CreateTime      int        `json:"-" xorm:"int(11) not null default 0"`
+	Iccid           string     `json:"iccid" xorm:"-"`
 }
 
 type AmmeterNodeAdd struct {
