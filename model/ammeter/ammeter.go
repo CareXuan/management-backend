@@ -32,7 +32,15 @@ type AmmeterNodeAdd struct {
 }
 
 type ChangeSwitchReq struct {
-	AmmeterId int `json:"ammeter_id"`
-	Switch    int `json:"switch"`
-	Pwd       int `json:"pwd"`
+	AmmeterId int    `json:"ammeter_id"`
+	UserId    int    `json:"user_id"`
+	Switch    int    `json:"switch"`
+	Pwd       string `json:"pwd"`
+}
+
+type SetSwitchPwdReq struct {
+	AmmeterId int    `json:"ammeter_id"`
+	UserId    int    `json:"user_id"`
+	OldPwd    string `json:"old_pwd"`
+	Pwd       string `json:"pwd"`
 }

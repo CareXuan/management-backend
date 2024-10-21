@@ -19,6 +19,10 @@ const AMMETER_STATUS_OFFLINE = 2
 const AMMETER_STATUS_SWITCH_OPEN = 1
 const AMMETER_STATUS_SWITCH_CLOSE = 2
 
+const AMMETER_MANAGE_CONFIG_TYPE_PWD = 1
+
+const AMMETER_MANAGE_CONFIG_DEFAULT_PWD = "123456"
+
 var UPDATE_AMMETER_CONFIG_PARAMS = map[string]string{
 	"overload_cd":                  "0220",
 	"overload_action":              "0221",

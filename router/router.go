@@ -53,6 +53,7 @@ func InitRouter(r *gin.Engine) {
 			ammeter.POST("/tree/add", controller.AddNode)
 			ammeter.POST("/tree/delete", controller.DeleteNode)
 			ammeter.GET("/info", controller.Info)
+			ammeter.POST("/switch/pwd", controller.SetSwitchPwd)
 			ammeter.POST("/switch", controller.ChangeSwitch)
 			ammeter.GET("/statistics", controller.Statistics)
 			ammeter.GET("/warning", controller.Warning)

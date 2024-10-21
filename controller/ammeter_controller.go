@@ -63,7 +63,16 @@ func ChangeSwitch(c *gin.Context) {
 		log.Fatal(err)
 		return
 	}
-	service.ChangeAmmeterSwitchSer(c, req.AmmeterId, req.Switch, req.Pwd)
+	service.ChangeAmmeterSwitchSer(c, req.AmmeterId, req.UserId, req.Switch, req.Pwd)
+}
+
+func SetSwitchPwd(c *gin.Context) {
+	var req ammeter.SetSwitchPwdReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.SetSwitchPwdSer(c, req.AmmeterId, req.UserId, req.OldPwd, req.Pwd)
 }
 
 func Statistics(c *gin.Context) {

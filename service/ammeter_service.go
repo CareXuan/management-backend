@@ -181,10 +181,18 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 			return
 		}
 		var addAmmeterManager []*ammeter.AmmeterManage
+		var addAmmeterManagerPwd []*ammeter.AmmeterManageConfig
 		for _, manager := range managers {
 			addAmmeterManager = append(addAmmeterManager, &ammeter.AmmeterManage{
 				AmmeterId:  insertAmmeter.Id,
 				UserId:     manager,
+				CreateTime: int(time.Now().Unix()),
+			})
+			addAmmeterManagerPwd = append(addAmmeterManagerPwd, &ammeter.AmmeterManageConfig{
+				AmmeterId:  insertAmmeter.Id,
+				UserId:     manager,
+				Type:       utils.AMMETER_MANAGE_CONFIG_TYPE_PWD,
+				Value:      utils.AMMETER_MANAGE_CONFIG_DEFAULT_PWD,
 				CreateTime: int(time.Now().Unix()),
 			})
 			if parentId != 0 {
@@ -193,11 +201,23 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 					UserId:     manager,
 					CreateTime: int(time.Now().Unix()),
 				})
+				addAmmeterManagerPwd = append(addAmmeterManagerPwd, &ammeter.AmmeterManageConfig{
+					AmmeterId:  parentId,
+					UserId:     manager,
+					Type:       utils.AMMETER_MANAGE_CONFIG_TYPE_PWD,
+					Value:      utils.AMMETER_MANAGE_CONFIG_DEFAULT_PWD,
+					CreateTime: int(time.Now().Unix()),
+				})
 			}
 		}
 		_, err = conf.Mysql.Insert(&addAmmeterManager)
 		if err != nil {
 			common.ResError(c, "添加管理员失败")
+			return
+		}
+		_, err = conf.Mysql.Insert(&addAmmeterManagerPwd)
+		if err != nil {
+			common.ResError(c, "添加管理员密码失败")
 			return
 		}
 	} else {
@@ -222,10 +242,18 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 			return
 		}
 		var addAmmeterManager []*ammeter.AmmeterManage
+		var addAmmeterManagerPwd []*ammeter.AmmeterManageConfig
 		for _, manager := range managers {
 			addAmmeterManager = append(addAmmeterManager, &ammeter.AmmeterManage{
 				AmmeterId:  nodeId,
 				UserId:     manager,
+				CreateTime: int(time.Now().Unix()),
+			})
+			addAmmeterManagerPwd = append(addAmmeterManagerPwd, &ammeter.AmmeterManageConfig{
+				AmmeterId:  nodeId,
+				UserId:     manager,
+				Type:       utils.AMMETER_MANAGE_CONFIG_TYPE_PWD,
+				Value:      utils.AMMETER_MANAGE_CONFIG_DEFAULT_PWD,
 				CreateTime: int(time.Now().Unix()),
 			})
 			if parentId != 0 {
@@ -234,11 +262,23 @@ func AddTreeNodeSer(c *gin.Context, nodeId int, nodeType int, nodeModel string, 
 					UserId:     manager,
 					CreateTime: int(time.Now().Unix()),
 				})
+				addAmmeterManagerPwd = append(addAmmeterManagerPwd, &ammeter.AmmeterManageConfig{
+					AmmeterId:  parentId,
+					UserId:     manager,
+					Type:       utils.AMMETER_MANAGE_CONFIG_TYPE_PWD,
+					Value:      utils.AMMETER_MANAGE_CONFIG_DEFAULT_PWD,
+					CreateTime: int(time.Now().Unix()),
+				})
 			}
 		}
 		_, err = conf.Mysql.Insert(&addAmmeterManager)
 		if err != nil {
 			common.ResError(c, "添加管理员失败")
+			return
+		}
+		_, err = conf.Mysql.Insert(&addAmmeterManagerPwd)
+		if err != nil {
+			common.ResError(c, "添加管理员密码失败")
 			return
 		}
 	}
@@ -294,20 +334,20 @@ func AmmeterInfoSer(c *gin.Context, ammeterId int) {
 	common.ResOk(c, "ok", ammeterInfo)
 }
 
-func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int, pwd int) {
+func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, userId int, ammeterSwitch int, pwd string) {
 	var ammeterItem ammeter.Ammeter
 	_, err := conf.Mysql.Where("id=?", ammeterId).Get(&ammeterItem)
 	if err != nil {
 		common.ResError(c, "获取电表信息失败")
 		return
 	}
-	var boardItem ammeter.Board
-	_, err = conf.Mysql.Where("board_id = ?", ammeterItem.Card).Get(&boardItem)
+	var ammeterManagePwd ammeter.AmmeterManageConfig
+	_, err = conf.Mysql.Where("ammeter_id=?", ammeterId).Where("user_id=?", userId).Where("type=?", utils.AMMETER_MANAGE_CONFIG_TYPE_PWD).Get(&ammeterManagePwd)
 	if err != nil {
-		common.ResError(c, "获取主板信息失败")
+		common.ResError(c, "获取电表配置信息失败")
 		return
 	}
-	if boardItem.Pwd3 != pwd {
+	if ammeterManagePwd.Value != pwd {
 		common.ResForbidden(c, "密码错误，请重试！")
 		return
 	}
@@ -318,15 +358,59 @@ func ChangeAmmeterSwitchSer(c *gin.Context, ammeterId int, ammeterSwitch int, pw
 		common.ResError(c, "修改开关状态失败")
 		return
 	}
+	_, err = conf.Mysql.Insert(ammeter.AmmeterManageLog{
+		AmmeterId:  ammeterId,
+		UserId:     userId,
+		Status:     ammeterSwitch,
+		CreateTime: int(time.Now().Unix()),
+	})
 	deviceId, _ := strconv.Atoi(ammeterItem.Card)
-	msg := "{\"num\":" + ammeterItem.Num + ",\"pwd\":" + strconv.Itoa(pwd) + "}"
+	msg := "{\"num\":" + ammeterItem.Num + "}"
 	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host, conf.Conf.Tcp.Port, 1, deviceId, ammeterSwitch, msg)
 	if err != nil {
-		fmt.Println(err)
 		common.ResError(c, "发送控制命令失败")
 		return
 	}
 
+	common.ResOk(c, "ok", nil)
+}
+
+func SetSwitchPwdSer(c *gin.Context, ammeterId int, userId int, oldPwd string, pwd string) {
+	var ammeterPwd ammeter.AmmeterManageConfig
+	_, err := conf.Mysql.Where("ammeter_id=?", ammeterId).Where("user_id=?", userId).Where("type=?", utils.AMMETER_MANAGE_CONFIG_TYPE_PWD).Get(&ammeterPwd)
+	if err != nil {
+		common.ResError(c, "获取设备配置信息失败")
+		return
+	}
+	if ammeterPwd.Value == "" {
+		_, err := conf.Mysql.Insert(ammeter.AmmeterManageConfig{
+			UserId:     userId,
+			AmmeterId:  ammeterId,
+			Type:       utils.AMMETER_MANAGE_CONFIG_TYPE_PWD,
+			Value:      utils.AMMETER_MANAGE_CONFIG_DEFAULT_PWD,
+			CreateTime: int(time.Now().Unix()),
+		})
+		if err != nil {
+			common.ResError(c, "设置默认密码失败")
+			return
+		}
+		_, err = conf.Mysql.Where("ammeter_id=?", ammeterId).Where("user_id=?", userId).Where("type=?", utils.AMMETER_MANAGE_CONFIG_TYPE_PWD).Get(&ammeterPwd)
+		if err != nil {
+			common.ResError(c, "获取设备配置信息失败")
+			return
+		}
+	}
+	if ammeterPwd.Value != "" && ammeterPwd.Value != oldPwd {
+		common.ResForbidden(c, "密码输入不正确，无法修改密码")
+		return
+	}
+	_, err = conf.Mysql.Where("ammeter_id=?", ammeterId).Where("user_id=?", userId).Where("type=?", utils.AMMETER_MANAGE_CONFIG_TYPE_PWD).Update(&ammeter.AmmeterManageConfig{
+		Value: pwd,
+	})
+	if err != nil {
+		common.ResError(c, "修改设备控制密码失败")
+		return
+	}
 	common.ResOk(c, "ok", nil)
 }
 

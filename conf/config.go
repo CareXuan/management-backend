@@ -118,6 +118,8 @@ func syncTables() {
 		new(ammeter.AmmeterConfig),
 		new(ammeter.AmmeterData),
 		new(ammeter.AmmeterManage),
+		new(ammeter.AmmeterManageConfig),
+		new(ammeter.AmmeterManageLog),
 		new(ammeter.AmmeterWarning),
 	)
 	if err != nil {
