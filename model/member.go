@@ -12,6 +12,10 @@ const MEMBER_GENDER_FEMALE = 2
 const MEMBER_RECORD_TYPE_RECHARGE = 1
 const MEMBER_RECORD_TYPE_REFUND = 2
 
+const MEMBER_USE_STATUS_WAITING = 1
+const MEMBER_USE_STATUS_PASS = 2
+const MEMBER_USE_STATUS_REFUSE = 3
+
 type Member struct {
 	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
 	Name      string `json:"name" xorm:"VARCHAR(64) not null default '' comment('姓名')"`
@@ -46,16 +50,18 @@ type MemberRecordDetail struct {
 }
 
 type MemberUseRecord struct {
-	Id        int    `json:"id" xorm:"pk autoincr INT(11)"`
-	MemberId  int    `json:"member_id" xorm:"INT(11) not null"`
-	DeviceId  int    `json:"device_id" xorm:"INT(11) not null"`
-	Times     int    `json:"times" xorm:"INT(11) not null"`
-	StartTime int    `json:"start_time" xorm:"INT(11) not null"`
-	EndTime   int    `json:"end_time" xorm:"INT(11) not null"`
-	Remark    string `json:"remark" xorm:"VARCHAR(256) not null"`
-	Pic       string `json:"pic" xorm:"VARCHAR(512) not null"`
-	Status    int    `json:"status" xorm:"INT(5) not null"`
-	CreatedAt int64  `json:"created_at" xorm:"INT(11) not null default 0"`
+	Id        int     `json:"id" xorm:"pk autoincr INT(11)"`
+	MemberId  int     `json:"member_id" xorm:"INT(11) not null"`
+	DeviceId  int     `json:"device_id" xorm:"INT(11) not null"`
+	Times     int     `json:"times" xorm:"INT(11) not null"`
+	StartTime int     `json:"start_time" xorm:"INT(11) not null"`
+	EndTime   int     `json:"end_time" xorm:"INT(11) not null"`
+	Remark    string  `json:"remark" xorm:"VARCHAR(256) not null"`
+	Pic       string  `json:"pic" xorm:"VARCHAR(512) not null"`
+	Status    int     `json:"status" xorm:"INT(5) not null"`
+	CreatedAt int64   `json:"created_at" xorm:"INT(11) not null default 0"`
+	Member    *Member `json:"member" xorm:"-"`
+	Device    *Device `json:"device" xorm:"-"`
 }
 
 type MemberDeviceRecord struct {

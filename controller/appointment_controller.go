@@ -2,6 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
+	"my-gpt-server/model"
 	"my-gpt-server/service"
 	"strconv"
 )
@@ -26,5 +28,19 @@ func GetAppointmentDetail(c *gin.Context) {
 }
 
 func AddAppointment(c *gin.Context) {
+	var addAppointmentReq model.AddAppointmentReq
+	if err := c.ShouldBindJSON(&addAppointmentReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AddAppointmentSer(c, addAppointmentReq)
+}
 
+func VerifyAppointment(c *gin.Context) {
+	var verifyAppointmentReq model.VerifyAppointmentReq
+	if err := c.ShouldBindJSON(&verifyAppointmentReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.VerifyAppointmentSer(c, verifyAppointmentReq)
 }

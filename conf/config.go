@@ -87,7 +87,6 @@ func syncTables() {
 		new(model.Device),
 		new(model.DevicePackage),
 		new(model.DevicePackageDetail),
-		new(model.Appointment),
 	)
 	if err != nil {
 		log.Fatal(err)

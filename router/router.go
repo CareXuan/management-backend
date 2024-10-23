@@ -65,6 +65,7 @@ func InitRouter(r *gin.Engine) {
 			appointment.GET("/list", controller.GetAppointmentList)
 			appointment.GET("/detail", controller.GetAppointmentDetail)
 			appointment.POST("/add", controller.AddAppointment)
+			appointment.POST("/verify", controller.VerifyAppointment)
 		}
 
 		// gpt
