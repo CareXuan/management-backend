@@ -1,3 +1,0 @@
-mysql:
-  m: root:root@tcp(1.92.71.193:3307)/management
-  s: root:root@tcp(1.92.71.193:3307)/management

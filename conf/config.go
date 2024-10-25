@@ -73,6 +73,10 @@ func syncTables() {
 		new(model.UserRole),
 		new(model.Permission),
 		new(model.RolePermission),
+		new(model.Device),
+		new(model.DeviceCommonData),
+		new(model.DeviceLocationHistory),
+		new(model.DeviceServiceData),
 	)
 	if err != nil {
 		log.Fatal(err)
