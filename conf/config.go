@@ -13,7 +13,13 @@ import (
 )
 
 type Config struct {
+<<<<<<< Updated upstream
 	Mysql MysqlConfig `yaml:"mysql"`
+=======
+	Mysql  MysqlConfig  `yaml:"mysql"`
+	Gpt    GptConfig    `yaml:"gpt"`
+	Upload UploadConfig `yaml:"upload"`
+>>>>>>> Stashed changes
 }
 
 type MysqlConfig struct {
@@ -21,6 +27,17 @@ type MysqlConfig struct {
 	S string `yaml:"s"`
 }
 
+<<<<<<< Updated upstream
+=======
+type GptConfig struct {
+	Key string `yaml:"key"`
+}
+
+type UploadConfig struct {
+	Url string `yaml:"url"`
+}
+
+>>>>>>> Stashed changes
 var (
 	Mysql *xorm.EngineGroup
 	Conf  *Config
