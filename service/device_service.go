@@ -56,7 +56,7 @@ func DeviceCommonDataSer(c *gin.Context, deviceId, page, pageSize int) {
 	var commonDatas []*model.DeviceCommonData
 	sess := conf.Mysql.NewSession()
 	sess.Where("device_id=?", deviceId)
-	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&commonDatas)
+	count, err := sess.OrderBy("id DESC").Limit(pageSize, (page-1)*pageSize).FindAndCount(&commonDatas)
 	if err != nil {
 		common.ResError(c, "获取通用数据失败")
 		return
@@ -68,7 +68,7 @@ func DeviceServiceDataSer(c *gin.Context, deviceId, page, pageSize int) {
 	var serviceDatas []*model.DeviceServiceData
 	sess := conf.Mysql.NewSession()
 	sess.Where("device_id=?", deviceId)
-	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&serviceDatas)
+	count, err := sess.OrderBy("id DESC").Limit(pageSize, (page-1)*pageSize).FindAndCount(&serviceDatas)
 	if err != nil {
 		common.ResError(c, "获取通用数据失败")
 		return
