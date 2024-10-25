@@ -75,5 +75,10 @@ func InitRouter(r *gin.Engine) {
 			gpt.GET("/list", controller.QuestionList)
 			gpt.GET("/detail", controller.QuestionDetail)
 		}
+
+		commonCtr := v1.Group("common")
+		{
+			commonCtr.POST("/upload", controller.Upload)
+		}
 	}
 }
