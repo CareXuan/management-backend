@@ -51,6 +51,10 @@ func GetOneDeviceServiceData(c *gin.Context) {
 	service.DeviceServiceDataSer(c, deviceIdInt, pageInt, pageSizeInt)
 }
 
+func GetAllDeviceLocation(c *gin.Context) {
+	service.AllDeviceLocationSer(c)
+}
+
 func GetDeviceLocationHistory(c *gin.Context) {
 	deviceId := c.Query("id")
 	deviceIdInt, _ := strconv.Atoi(deviceId)

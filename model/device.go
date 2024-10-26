@@ -55,3 +55,10 @@ type DeviceServiceData struct {
 type DeviceAddReq struct {
 	DeviceId int `json:"device_id"`
 }
+
+type DeviceLocationRes struct {
+	DeviceId int    `json:"device_id"`
+	Iccid    string `json:"iccid"`
+	Lat      string `json:"lat"`
+	Lng      string `json:"lng"`
+}

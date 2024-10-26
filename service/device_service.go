@@ -76,6 +76,28 @@ func DeviceServiceDataSer(c *gin.Context, deviceId, page, pageSize int) {
 	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: serviceDatas})
 }
 
+func AllDeviceLocationSer(c *gin.Context) {
+	var deviceItems []*model.Device
+	err := conf.Mysql.Find(&deviceItems)
+	if err != nil {
+		common.ResError(c, "获取设备信息失败")
+		return
+	}
+	var locationRes []model.DeviceLocationRes
+	for _, i := range deviceItems {
+		if i.Latitude == "" && i.Longitude == "" {
+			continue
+		}
+		locationRes = append(locationRes, model.DeviceLocationRes{
+			DeviceId: i.DeviceId,
+			Iccid:    i.Iccid,
+			Lat:      i.Latitude,
+			Lng:      i.Longitude,
+		})
+	}
+	common.ResOk(c, "ok", locationRes)
+}
+
 func DeviceLocationHistorySer(c *gin.Context, deviceId int) {
 
 }
