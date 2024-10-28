@@ -3,6 +3,7 @@ package conf
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 	"github.com/go-xorm/xorm"
 	"github.com/gomodule/redigo/redis"
 	"github.com/streadway/amqp"
@@ -30,6 +31,7 @@ type Config struct {
 	Admin   int           `yaml:"admin"`
 	Gpt    GptConfig    `yaml:"gpt"`
 	Upload UploadConfig `yaml:"upload"`
+	Wechat WechatConfig `yaml:"wechat"`
 }
 
 type MysqlConfig struct {
@@ -67,11 +69,17 @@ type UploadConfig struct {
 	Url string `yaml:"url"`
 }
 
+type WechatConfig struct {
+	AppId     string `yaml:"app_id"`
+	AppSecret string `yaml:"app_secret"`
+}
+
 var (
 	Mysql  *xorm.EngineGroup
 	Rabbit *amqp.Connection
 	Redis  redis.Conn
 	Conf   *Config
+	WechatApp *officialAccount.OfficialAccount
 )
 
 func NewConfig(configPath string) {
@@ -87,6 +95,7 @@ func NewConfig(configPath string) {
 		return
 	}
 	connectMysql()
+	initWechatApp()
 	connectRabbitMQ()
 	connectRedis()
 	//GetVehicleConfig(Conf.Vehicle.Host)
@@ -115,6 +124,26 @@ func connectMysql() {
 
 	// 同步表
 	syncTables()
+}
+
+func initWechatApp() {
+	OfficialAccountApp, err := officialAccount.NewOfficialAccount(&officialAccount.UserConfig{
+		AppID:  Conf.Wechat.AppId,     // 公众号、小程序的appid
+		Secret: Conf.Wechat.AppSecret, //
+
+		Log: officialAccount.Log{
+			Level:  "debug",
+			File:   "./wechat.log",
+			Stdout: false, //  是否打印在终端
+		},
+
+		HttpDebug: true,
+		Debug:     false,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	WechatApp = OfficialAccountApp
 }
 
 func syncTables() {
