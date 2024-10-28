@@ -55,6 +55,16 @@ func GetAllDeviceLocation(c *gin.Context) {
 	service.AllDeviceLocationSer(c)
 }
 
+func GetDeviceStatistic(c *gin.Context) {
+	startTime := c.Query("start_at")
+	endTime := c.Query("end_at")
+	deviceId := c.Query("device_id")
+	deviceIdInt, _ := strconv.Atoi(deviceId)
+	statisticType := c.Query("statistics_type")
+	statisticTypeInt, _ := strconv.Atoi(statisticType)
+	service.DeviceStatisticSer(c, deviceIdInt, statisticTypeInt, startTime, endTime)
+}
+
 func GetDeviceLocationHistory(c *gin.Context) {
 	deviceId := c.Query("id")
 	deviceIdInt, _ := strconv.Atoi(deviceId)

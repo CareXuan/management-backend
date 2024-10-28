@@ -62,3 +62,8 @@ type DeviceLocationRes struct {
 	Lat      string `json:"lat"`
 	Lng      string `json:"lng"`
 }
+
+type DeviceStatisticRes struct {
+	Columns []string `json:"columns"`
+	Datas   [][]int  `json:"datas"`
+}

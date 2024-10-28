@@ -98,6 +98,37 @@ func AllDeviceLocationSer(c *gin.Context) {
 	common.ResOk(c, "ok", locationRes)
 }
 
+func DeviceStatisticSer(c *gin.Context, deviceId, statisticType int, startTime, endTime string) {
+	var serviceDatas []*model.DeviceServiceData
+	sess := conf.Mysql.NewSession()
+	sess.Where("device_id = ?", deviceId)
+	sess.Where("ts >= ? and ts <= ?", startTime, endTime)
+	err := sess.Find(&serviceDatas)
+	if err != nil {
+		common.ResError(c, "获取数据失败")
+		return
+	}
+	var statisticRes model.DeviceStatisticRes
+	var datah []int
+	var datal []int
+	for _, i := range serviceDatas {
+		statisticRes.Columns = append(statisticRes.Columns, i.Ts)
+		switch statisticType {
+		case 1:
+			datah = append(datah, i.HighVoltageH)
+			datal = append(datal, i.HighVoltageL)
+		case 2:
+			datah = append(datah, i.HighCurrentH)
+			datal = append(datal, i.HighCurrentL)
+		case 3:
+			datah = append(datah, i.SwitchCurrent)
+		}
+	}
+	statisticRes.Datas = append(statisticRes.Datas, datah)
+	statisticRes.Datas = append(statisticRes.Datas, datal)
+	common.ResOk(c, "ok", statisticRes)
+}
+
 func DeviceLocationHistorySer(c *gin.Context, deviceId int) {
 
 }
