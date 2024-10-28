@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 	"github.com/go-xorm/xorm"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
@@ -16,6 +17,7 @@ type Config struct {
 	Mysql  MysqlConfig  `yaml:"mysql"`
 	Gpt    GptConfig    `yaml:"gpt"`
 	Upload UploadConfig `yaml:"upload"`
+	Wechat WechatConfig `yaml:"wechat"`
 }
 
 type MysqlConfig struct {
@@ -31,9 +33,15 @@ type UploadConfig struct {
 	Url string `yaml:"url"`
 }
 
+type WechatConfig struct {
+	AppId     string `yaml:"app_id"`
+	AppSecret string `yaml:"app_secret"`
+}
+
 var (
-	Mysql *xorm.EngineGroup
-	Conf  *Config
+	Mysql     *xorm.EngineGroup
+	WechatApp *officialAccount.OfficialAccount
+	Conf      *Config
 )
 
 func NewConfig(configPath string) {
@@ -49,6 +57,7 @@ func NewConfig(configPath string) {
 		return
 	}
 	connectMysql()
+	initWechatApp()
 }
 
 func connectMysql() {
@@ -74,6 +83,26 @@ func connectMysql() {
 
 	// 同步表
 	syncTables()
+}
+
+func initWechatApp() {
+	OfficialAccountApp, err := officialAccount.NewOfficialAccount(&officialAccount.UserConfig{
+		AppID:  Conf.Wechat.AppId,     // 公众号、小程序的appid
+		Secret: Conf.Wechat.AppSecret, //
+
+		Log: officialAccount.Log{
+			Level:  "debug",
+			File:   "./wechat.log",
+			Stdout: false, //  是否打印在终端
+		},
+
+		HttpDebug: true,
+		Debug:     false,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	WechatApp = OfficialAccountApp
 }
 
 func syncTables() {
