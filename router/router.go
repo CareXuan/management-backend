@@ -14,7 +14,7 @@ func InitRouter(r *gin.Engine) {
 		v1.GET("/", func(c *gin.Context) { common.ResOk(c, "Hello World!", nil) })
 
 		// 用户相关
-		user := v1.Group("user")
+		user := v1.Group("user").Use(middleware.AuthCheck())
 		{
 			user.GET("/info", controller.GetUserInfo)
 			user.GET("/list", controller.GetUserList)
@@ -27,18 +27,18 @@ func InitRouter(r *gin.Engine) {
 		auth := v1.Group("auth")
 		{
 			auth.POST("/login", controller.Login)
-			auth.GET("/permission", controller.AllPermission)
-			auth.GET("/permission/detail", controller.PermissionDetail)
-			auth.POST("/permission/add", controller.AddPermission)
-			auth.POST("/permission/delete", controller.RemovePermission)
-			auth.GET("/roles", controller.AllRoles)
-			auth.GET("/roles/info", controller.GetRoleInfo)
-			auth.POST("/roles/add", controller.AddRole)
-			auth.POST("/roles/delete", controller.DeleteRole)
+			auth.GET("/permission", controller.AllPermission).Use(middleware.AuthCheck())
+			auth.GET("/permission/detail", controller.PermissionDetail).Use(middleware.AuthCheck())
+			auth.POST("/permission/add", controller.AddPermission).Use(middleware.AuthCheck())
+			auth.POST("/permission/delete", controller.RemovePermission).Use(middleware.AuthCheck())
+			auth.GET("/roles", controller.AllRoles).Use(middleware.AuthCheck())
+			auth.GET("/roles/info", controller.GetRoleInfo).Use(middleware.AuthCheck())
+			auth.POST("/roles/add", controller.AddRole).Use(middleware.AuthCheck())
+			auth.POST("/roles/delete", controller.DeleteRole).Use(middleware.AuthCheck())
 		}
 
 		// 会员
-		member := v1.Group("member")
+		member := v1.Group("member").Use(middleware.AuthCheck())
 		{
 			member.GET("/list", controller.GetMemberList)
 			member.GET("/detail", controller.GetMemberDetail)
@@ -48,7 +48,7 @@ func InitRouter(r *gin.Engine) {
 		}
 
 		// 设备
-		device := v1.Group("device")
+		device := v1.Group("device").Use(middleware.AuthCheck())
 		{
 			device.GET("/list", controller.GetDeviceList)
 			device.GET("/info", controller.GetDeviceInfo)
@@ -60,7 +60,7 @@ func InitRouter(r *gin.Engine) {
 		}
 
 		// 预约
-		appointment := v1.Group("appointment")
+		appointment := v1.Group("appointment").Use(middleware.AuthCheck())
 		{
 			appointment.GET("/list", controller.GetAppointmentList)
 			appointment.GET("/detail", controller.GetAppointmentDetail)
@@ -69,7 +69,7 @@ func InitRouter(r *gin.Engine) {
 		}
 
 		// gpt
-		gpt := v1.Group("gpt")
+		gpt := v1.Group("gpt").Use(middleware.AuthCheck())
 		{
 			gpt.GET("/one", controller.GetOneAnswer)
 			gpt.GET("/list", controller.QuestionList)

@@ -13,7 +13,7 @@ import (
 )
 
 type Config struct {
-	Mysql MysqlConfig `yaml:"mysql"`
+	Mysql  MysqlConfig  `yaml:"mysql"`
 	Gpt    GptConfig    `yaml:"gpt"`
 	Upload UploadConfig `yaml:"upload"`
 }
@@ -30,6 +30,7 @@ type GptConfig struct {
 type UploadConfig struct {
 	Url string `yaml:"url"`
 }
+
 var (
 	Mysql *xorm.EngineGroup
 	Conf  *Config
