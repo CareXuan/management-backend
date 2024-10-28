@@ -41,7 +41,7 @@ func InitRouter(r *gin.Engine) {
 		}
 
 		// 设备
-		device := v1.Group("device")
+		device := v1.Group("device").Use(middleware.AuthCheck())
 		{
 			device.GET("/list", controller.GetDeviceList)
 			device.GET("/info", controller.GetOneDeviceInfo)
