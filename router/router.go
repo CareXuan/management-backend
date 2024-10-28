@@ -14,7 +14,7 @@ func InitRouter(r *gin.Engine) {
 		v1.GET("/", func(c *gin.Context) { common.ResOk(c, "Hello World!", nil) })
 
 		// 用户相关
-		user := v1.Group("user")
+		user := v1.Group("user").Use(middleware.AuthCheck())
 		{
 			user.GET("/info", controller.GetUserInfo)
 			user.GET("/list", controller.GetUserList)
@@ -26,14 +26,19 @@ func InitRouter(r *gin.Engine) {
 		auth := v1.Group("auth")
 		{
 			auth.POST("/login", controller.Login)
-			auth.GET("/permission", controller.AllPermission)
-			auth.GET("/permission/detail", controller.GetPermissionDetail)
-			auth.POST("/permission/add", controller.AddPermission)
-			auth.POST("/permission/delete", controller.RemovePermission)
-			auth.GET("/roles", controller.AllRoles)
-			auth.GET("/roles/info", controller.GetRoleInfo)
-			auth.POST("/roles/add", controller.AddRole)
-			auth.POST("/roles/delete", controller.DeleteRole)
+			auth.GET("/permission", controller.AllPermission).Use(middleware.AuthCheck())
+			auth.GET("/permission/detail", controller.GetPermissionDetail).Use(middleware.AuthCheck())
+			auth.POST("/permission/add", controller.AddPermission).Use(middleware.AuthCheck())
+			auth.POST("/permission/delete", controller.RemovePermission).Use(middleware.AuthCheck())
+			auth.GET("/roles", controller.AllRoles).Use(middleware.AuthCheck())
+			auth.GET("/roles/info", controller.GetRoleInfo).Use(middleware.AuthCheck())
+			auth.POST("/roles/add", controller.AddRole).Use(middleware.AuthCheck())
+			auth.POST("/roles/delete", controller.DeleteRole).Use(middleware.AuthCheck())
+		}
+
+		commonCtr := v1.Group("common")
+		{
+			commonCtr.POST("/upload", controller.Upload)
 		}
 
 		// 电动车设备

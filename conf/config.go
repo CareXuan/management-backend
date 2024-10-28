@@ -28,6 +28,8 @@ type Config struct {
 	Tcp     TcpConfig     `yaml:"tcp"`
 	Ammeter AmmeterConfig `yaml:"ammeter"`
 	Admin   int           `yaml:"admin"`
+	Gpt    GptConfig    `yaml:"gpt"`
+	Upload UploadConfig `yaml:"upload"`
 }
 
 type MysqlConfig struct {
@@ -55,6 +57,14 @@ type TcpConfig struct {
 type AmmeterConfig struct {
 	Supervisor int `yaml:"supervisor"`
 	Manager    int `yaml:"manager"`
+}
+
+type GptConfig struct {
+	Key string `yaml:"key"`
+}
+
+type UploadConfig struct {
+	Url string `yaml:"url"`
 }
 
 var (

@@ -9,8 +9,8 @@ func ResOk(c *gin.Context, msg string, data interface{}) {
 	commonResponse(c, utils.RESPONSE_OK, msg, data)
 }
 
-func ResUnauthorized(c *gin.Context, msg string) {
-	commonResponse(c, utils.RESPONSE_UNAUTHORIZED, msg, nil)
+func ResAuthorized(c *gin.Context, msg string) {
+	commonResponse(c, utils.RESPONSE_AUTHORIZATION, msg, nil)
 }
 
 func ResForbidden(c *gin.Context, msg string) {
