@@ -38,6 +38,7 @@ func InitRouter(r *gin.Engine) {
 		commonCtr := v1.Group("common")
 		{
 			commonCtr.POST("/upload", controller.Upload)
+			commonCtr.GET("/wechat_check", controller.WechatCheck)
 		}
 
 		// 设备
