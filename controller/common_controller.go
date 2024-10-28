@@ -3,8 +3,8 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"my-gpt-server/common"
-	"my-gpt-server/conf"
+	"management-backend/common"
+	"management-backend/conf"
 	"net/http"
 )
 

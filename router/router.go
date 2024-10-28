@@ -34,52 +34,10 @@ func InitRouter(r *gin.Engine) {
 			auth.POST("/roles/add", controller.AddRole).Use(middleware.AuthCheck())
 			auth.POST("/roles/delete", controller.DeleteRole).Use(middleware.AuthCheck())
 		}
-<<<<<<< Updated upstream
-=======
-
-		// 会员
-		member := v1.Group("member")
-		{
-			member.GET("/list", controller.GetMemberList)
-			member.GET("/detail", controller.GetMemberDetail)
-			member.GET("/recharge/detail", controller.GetMemberRechargeDetail)
-			member.POST("/add", controller.AddMember)
-			member.POST("/recharge", controller.MemberRecharge)
-		}
-
-		// 设备
-		device := v1.Group("device")
-		{
-			device.GET("/list", controller.GetDeviceList)
-			device.GET("/info", controller.GetDeviceInfo)
-			device.GET("/package/list", controller.GetPackageList)
-			device.GET("/package/info", controller.GetPackageInfo)
-			device.POST("/add", controller.AddDevice)
-			device.POST("/package/add", controller.AddPackage)
-			device.POST("/package/status", controller.PackageChangeStatus)
-		}
-
-		// 预约
-		appointment := v1.Group("appointment")
-		{
-			appointment.GET("/list", controller.GetAppointmentList)
-			appointment.GET("/detail", controller.GetAppointmentDetail)
-			appointment.POST("/add", controller.AddAppointment)
-			appointment.POST("/verify", controller.VerifyAppointment)
-		}
-
-		// gpt
-		gpt := v1.Group("gpt")
-		{
-			gpt.GET("/one", controller.GetOneAnswer)
-			gpt.GET("/list", controller.QuestionList)
-			gpt.GET("/detail", controller.QuestionDetail)
-		}
 
 		commonCtr := v1.Group("common")
 		{
 			commonCtr.POST("/upload", controller.Upload)
 		}
->>>>>>> Stashed changes
 	}
 }
