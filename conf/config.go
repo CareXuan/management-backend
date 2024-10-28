@@ -13,12 +13,22 @@ import (
 )
 
 type Config struct {
-	Mysql MysqlConfig `yaml:"mysql"`
+	Mysql  MysqlConfig  `yaml:"mysql"`
+	Gpt    GptConfig    `yaml:"gpt"`
+	Upload UploadConfig `yaml:"upload"`
 }
 
 type MysqlConfig struct {
 	M string `yaml:"m"`
 	S string `yaml:"s"`
+}
+
+type GptConfig struct {
+	Key string `yaml:"key"`
+}
+
+type UploadConfig struct {
+	Url string `yaml:"url"`
 }
 
 var (
