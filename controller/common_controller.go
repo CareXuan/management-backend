@@ -36,3 +36,7 @@ func Upload(c *gin.Context) {
 	c.SaveUploadedFile(file, dst)
 	common.ResOk(c, "ok", conf.Conf.Upload.Url+"/"+fileName)
 }
+
+func WechatCheck(c *gin.Context) {
+	common.ResOk(c, "ok", nil)
+}
