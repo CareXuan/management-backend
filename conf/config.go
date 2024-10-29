@@ -34,8 +34,13 @@ type UploadConfig struct {
 }
 
 type WechatConfig struct {
-	AppId     string `yaml:"app_id"`
-	AppSecret string `yaml:"app_secret"`
+	AppId     string        `yaml:"app_id"`
+	AppSecret string        `yaml:"app_secret"`
+	Wechat    wechatWarning `yaml:"wechat"`
+}
+
+type wechatWarning struct {
+	Common string `yaml:"common"`
 }
 
 var (
