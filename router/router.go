@@ -55,6 +55,7 @@ func InitRouter(r *gin.Engine) {
 			device.GET("/package/list", controller.GetPackageList)
 			device.GET("/package/info", controller.GetPackageInfo)
 			device.POST("/add", controller.AddDevice)
+			device.POST("/status", controller.ChangeStatus)
 			device.POST("/package/add", controller.AddPackage)
 			device.POST("/package/status", controller.PackageChangeStatus)
 		}

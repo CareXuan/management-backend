@@ -106,8 +106,18 @@ func GetAppointmentDetailSer(c *gin.Context, appointmentId int) {
 }
 
 func AddAppointmentSer(c *gin.Context, req model.AddAppointmentReq) {
+	var deviceItem model.Device
+	_, err := conf.Mysql.Where("id=?", req.DeviceId).Get(&deviceItem)
+	if err != nil {
+		common.ResError(c, "获取设备详情失败")
+		return
+	}
+	if deviceItem.Status == model.DEVICE_STATUS_CLOSE {
+		common.ResForbidden(c, "当前设备不可用，请联系商家")
+		return
+	}
 	var deviceRecord []*model.MemberDeviceRecord
-	err := conf.Mysql.Where("device_id = ?", req.DeviceId).Where("member_id = ?", req.MemberId).Find(&deviceRecord)
+	err = conf.Mysql.Where("device_id = ?", req.DeviceId).Where("member_id = ?", req.MemberId).Find(&deviceRecord)
 	if err != nil {
 		common.ResError(c, "获取设备储值记录失败")
 		return

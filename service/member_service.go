@@ -227,7 +227,7 @@ func updateDeviceRecord(memberId int, rechargeDetail []model.MemberRecordDetailA
 			}
 		}
 		if detail.Type == model.RECHARGE_TYPE_MONTHLY {
-			if _, ok := monthlyRecord[detail.DeviceId]; ok {
+			if _, ok := monthlyRecord[detail.DeviceId]; ok && monthlyRecord[detail.DeviceId] > int(time.Now().Unix()) {
 				_, err := conf.Mysql.Where("member_id = ?", memberId).Where("device_id = ?", detail.DeviceId).Where("type = ?", model.RECHARGE_TYPE_MONTHLY).Update(model.MemberDeviceRecord{
 					Value: monthlyRecord[detail.DeviceId] + detail.Value*86400,
 				})

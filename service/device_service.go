@@ -9,11 +9,14 @@ import (
 	"time"
 )
 
-func GetDeviceListSer(c *gin.Context, name string, page, pageSize int) {
+func GetDeviceListSer(c *gin.Context, name, searchType string, page, pageSize int) {
 	var devices []*model.Device
 	sess := conf.Mysql.NewSession()
 	if name != "" {
 		sess.Where("name like ?", "%"+name+"%")
+	}
+	if searchType == "appointment" {
+		sess.Where("status=?", model.DEVICE_STATUS_OPEN)
 	}
 	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&devices)
 	if err != nil {
@@ -56,6 +59,17 @@ func AddDeviceSer(c *gin.Context, device model.Device) {
 	common.ResOk(c, "ok", nil)
 }
 
+func ChangeStatusSer(c *gin.Context, req model.DeviceChangeStatusReq) {
+	_, err := conf.Mysql.Where("id=?", req.Id).Update(model.Device{
+		Status: req.Status,
+	})
+	if err != nil {
+		common.ResError(c, "更新设备状态失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
 // ================================== 套餐 ==================================
 
 func GetPackageListSer(c *gin.Context, name string, page, pageSize int) {
@@ -79,11 +93,28 @@ func GetPackageInfoSer(c *gin.Context, id int) {
 		common.ResError(c, "获取套餐详情失败")
 		return
 	}
-	var details []model.DevicePackageDetail
+	var details []*model.DevicePackageDetail
 	err = conf.Mysql.Where("package_id = ?", packageInfo.Id).Find(&details)
 	if err != nil {
 		common.ResError(c, "获取套餐详情失败")
 		return
+	}
+	var deviceIds []int
+	for _, i := range details {
+		deviceIds = append(deviceIds, i.DeviceId)
+	}
+	var deviceMapping = make(map[int]*model.Device)
+	var deviceItems []*model.Device
+	err = conf.Mysql.In("id", deviceIds).Find(&deviceItems)
+	if err != nil {
+		common.ResError(c, "获取设备信息失败")
+		return
+	}
+	for _, i := range deviceItems {
+		deviceMapping[i.Id] = i
+	}
+	for _, i := range details {
+		i.Device = deviceMapping[i.DeviceId]
 	}
 	packageInfo.Details = details
 	common.ResOk(c, "ok", packageInfo)

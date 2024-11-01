@@ -10,11 +10,12 @@ import (
 
 func GetDeviceList(c *gin.Context) {
 	name := c.Query("name")
+	searchType := c.Query("search_type")
 	page := c.Query("page")
 	pageInt, _ := strconv.Atoi(page)
 	pageSize := c.Query("pageSize")
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	service.GetDeviceListSer(c, name, pageInt, pageSizeInt)
+	service.GetDeviceListSer(c, name, searchType, pageInt, pageSizeInt)
 }
 
 func GetDeviceInfo(c *gin.Context) {
@@ -30,6 +31,15 @@ func AddDevice(c *gin.Context) {
 		return
 	}
 	service.AddDeviceSer(c, device)
+}
+
+func ChangeStatus(c *gin.Context) {
+	var req model.DeviceChangeStatusReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.ChangeStatusSer(c, req)
 }
 
 // ================================== 套餐 ==================================
