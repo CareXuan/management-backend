@@ -46,8 +46,8 @@ type DeviceServiceData struct {
 	HighCurrentH  int    `json:"high_current_h" xorm:"INT(10) not null default 0"`
 	HighCurrentL  int    `json:"high_current_l" xorm:"INT(10) not null default 0"`
 	SwitchCurrent int    `json:"switch_current" xorm:"INT(0) not null default 0"`
-	CurrentBak1   int    `json:"current_bak_1" xorm:"INT(10) not null default 0"`
-	CurrentBak2   int    `json:"current_bak_2" xorm:"INT(10) not null default 0"`
+	CurrentBak1   int    `json:"current_bak_1" xorm:"current_bak_1 INT(10) not null default 0"`
+	CurrentBak2   int    `json:"current_bak_2" xorm:"current_bak_2 INT(10) not null default 0"`
 	DataTime      string `json:"data_time" xorm:"VARCHAR(12) not null default ''"`
 	Ts            string `json:"ts" xorm:"timestamp not null"`
 }
