@@ -6,6 +6,7 @@ import (
 	"my-gpt-server/conf"
 	"my-gpt-server/model"
 	"my-gpt-server/utils"
+	"strconv"
 	"time"
 )
 
@@ -105,6 +106,81 @@ func GetAppointmentDetailSer(c *gin.Context, appointmentId int) {
 	common.ResOk(c, "ok", appointment)
 }
 
+func GetAppointmentChartSer(c *gin.Context, appointmentIds []string, date string) {
+	var allAppointment []*model.MemberUseRecord
+	location, _ := time.LoadLocation("Asia/Shanghai")
+	startTime, _ := time.ParseInLocation("2006-01-02 15:04:05", date+" 00:00:00", location)
+	endTime, _ := time.ParseInLocation("2006-01-02 15:04:05", date+" 23:59:59", location)
+	if len(appointmentIds) <= 0 || appointmentIds[0] == "" {
+		var allDevices []*model.Device
+		err := conf.Mysql.Find(&allDevices)
+		if err != nil {
+			common.ResError(c, "获取设备信息失败")
+			return
+		}
+		for _, i := range allDevices {
+			appointmentIds = append(appointmentIds, strconv.Itoa(i.Id))
+		}
+	}
+	err := conf.Mysql.In("device_id", appointmentIds).In("status", []int{model.MEMBER_USE_STATUS_PASS, model.MEMBER_USE_STATUS_WAITING}).Where("start_time > ?", startTime.Unix()).Where("end_time < ?", endTime.Unix()).OrderBy("start_time").Find(&allAppointment)
+	if err != nil {
+		common.ResError(c, "获取预约信息失败")
+		return
+	}
+	var memberIds []int
+	var deviceIds []int
+	for _, i := range allAppointment {
+		memberIds = append(memberIds, i.MemberId)
+		deviceIds = append(deviceIds, i.DeviceId)
+	}
+	var memberItems []*model.Member
+	err = conf.Mysql.In("id", memberIds).Find(&memberItems)
+	if err != nil {
+		common.ResError(c, "获取用户信息失败")
+		return
+	}
+	var memberMapping = make(map[int]*model.Member)
+	for _, i := range memberItems {
+		memberMapping[i.Id] = i
+	}
+	var deviceItems []*model.Device
+	var deviceMapping = make(map[int]*model.Device)
+	err = conf.Mysql.In("id", deviceIds).Find(&deviceItems)
+	if err != nil {
+		common.ResError(c, "获取设备信息失败")
+		return
+	}
+	for _, i := range deviceItems {
+		deviceMapping[i.Id] = i
+	}
+	var res = make(map[int]*model.MemberAppointmentData)
+	for _, i := range allAppointment {
+		if _, ok := res[i.DeviceId]; !ok {
+			res[i.DeviceId] = &model.MemberAppointmentData{
+				DeviceId:   i.DeviceId,
+				DeviceName: deviceMapping[i.DeviceId].Name,
+				Data:       []model.AppointmentDataTimes{},
+			}
+		}
+		res[i.DeviceId].Data = append(res[i.DeviceId].Data, model.AppointmentDataTimes{
+			StartTime: i.StartTime,
+			Duration:  (float64(i.EndTime) - float64(i.StartTime)) / 3600.0,
+			EndTime:   i.EndTime,
+			Member: model.AppointmentMember{
+				MemberId:     i.MemberId,
+				MemberName:   memberMapping[i.MemberId].Name,
+				MemberColor:  "#000000",
+				MemberRemark: memberMapping[i.MemberId].Remark,
+			},
+		})
+	}
+	var response []*model.MemberAppointmentData
+	for _, i := range res {
+		response = append(response, i)
+	}
+	common.ResOk(c, "ok", response)
+}
+
 func AddAppointmentSer(c *gin.Context, req model.AddAppointmentReq) {
 	var deviceItem model.Device
 	_, err := conf.Mysql.Where("id=?", req.DeviceId).Get(&deviceItem)
@@ -146,8 +222,9 @@ func AddAppointmentSer(c *gin.Context, req model.AddAppointmentReq) {
 		return
 	}
 
-	startTimeInt, _ := time.Parse("2006-01-02 15:04:05", req.StartTime)
-	endTimeInt, _ := time.Parse("2006-01-02 15:04:05", req.EndTime)
+	location, _ := time.LoadLocation("Asia/Shanghai")
+	startTimeInt, _ := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, location)
+	endTimeInt, _ := time.ParseInLocation("2006-01-02 15:04:05", req.EndTime, location)
 
 	var deviceUseExist []*model.MemberUseRecord
 	var memberUseExist []*model.MemberUseRecord
@@ -191,6 +268,7 @@ func AddAppointmentSer(c *gin.Context, req model.AddAppointmentReq) {
 func VerifyAppointmentSer(c *gin.Context, req model.VerifyAppointmentReq) {
 	_, err := conf.Mysql.Where("id=?", req.AppointmentId).Update(&model.MemberUseRecord{
 		Status: req.Status,
+		Reason: req.Reason,
 	})
 	if err != nil {
 		common.ResError(c, "修改预约状态失败")

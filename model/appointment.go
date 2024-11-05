@@ -11,6 +11,7 @@ type AddAppointmentReq struct {
 }
 
 type VerifyAppointmentReq struct {
-	AppointmentId int `json:"appointment_id"`
-	Status        int `json:"status"`
+	AppointmentId int    `json:"appointment_id"`
+	Status        int    `json:"status"`
+	Reason        string `json:"reason"`
 }

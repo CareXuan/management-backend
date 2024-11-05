@@ -57,6 +57,7 @@ type MemberUseRecord struct {
 	StartTime int     `json:"start_time" xorm:"INT(11) not null"`
 	EndTime   int     `json:"end_time" xorm:"INT(11) not null"`
 	Remark    string  `json:"remark" xorm:"VARCHAR(256) not null"`
+	Reason    string  `json:"reason" xorm:"VARCHAR(256) not null"`
 	Pic       string  `json:"pic" xorm:"VARCHAR(512) not null"`
 	Status    int     `json:"status" xorm:"INT(5) not null"`
 	CreatedAt int64   `json:"created_at" xorm:"INT(11) not null default 0"`
@@ -110,4 +111,24 @@ type MemberRechargeRecordRes struct {
 	Name          string `json:"name"`
 	TimesRemain   int    `json:"times_remain"`
 	MonthlyRemain string `json:"monthly_remain"`
+}
+
+type MemberAppointmentData struct {
+	DeviceId   int                    `json:"device_id"`
+	DeviceName string                 `json:"device_name"`
+	Data       []AppointmentDataTimes `json:"data"`
+}
+
+type AppointmentDataTimes struct {
+	StartTime int               `json:"start_time"`
+	Duration  float64           `json:"duration"`
+	EndTime   int               `json:"end_time"`
+	Member    AppointmentMember `json:"member"`
+}
+
+type AppointmentMember struct {
+	MemberId     int    `json:"member_id"`
+	MemberName   string `json:"member_name"`
+	MemberColor  string `json:"member_color"`
+	MemberRemark string `json:"member_remark"`
 }

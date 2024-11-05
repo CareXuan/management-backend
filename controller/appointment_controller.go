@@ -6,6 +6,7 @@ import (
 	"my-gpt-server/model"
 	"my-gpt-server/service"
 	"strconv"
+	"strings"
 )
 
 func GetAppointmentList(c *gin.Context) {
@@ -25,6 +26,13 @@ func GetAppointmentDetail(c *gin.Context) {
 	id := c.Query("id")
 	idInt, _ := strconv.Atoi(id)
 	service.GetAppointmentDetailSer(c, idInt)
+}
+
+func GetAppointmentChart(c *gin.Context) {
+	ids := c.Query("ids")
+	date := c.Query("date")
+	idsArr := strings.Split(ids, ",")
+	service.GetAppointmentChartSer(c, idsArr, date)
 }
 
 func AddAppointment(c *gin.Context) {

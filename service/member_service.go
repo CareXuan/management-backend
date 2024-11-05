@@ -128,6 +128,11 @@ func AddMember(c *gin.Context, member model.MemberAddReq) {
 }
 
 func Recharge(c *gin.Context, memberRecharge model.MemberRechargeReq) {
+	_, errMsg := updateDeviceRecord(memberRecharge.MemberId, memberRecharge.RechargeDetail)
+	if errMsg != "" {
+		common.ResForbidden(c, errMsg)
+		return
+	}
 	newMemberRecord := model.MemberRecord{
 		MemberId:  memberRecharge.MemberId,
 		PackageId: memberRecharge.PackageId,
@@ -146,11 +151,6 @@ func Recharge(c *gin.Context, memberRecharge model.MemberRechargeReq) {
 	_, err = addRechargeDetail(newMemberRecord.Id, memberRecharge.RechargeDetail)
 	if err != nil {
 		common.ResError(c, "添加充值记录详情失败")
-		return
-	}
-	_, errMsg := updateDeviceRecord(memberRecharge.MemberId, memberRecharge.RechargeDetail)
-	if errMsg != "" {
-		common.ResForbidden(c, errMsg)
 		return
 	}
 	common.ResOk(c, "ok", nil)
