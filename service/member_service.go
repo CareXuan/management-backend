@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func GetMemberList(c *gin.Context, name, card string, page, pageSize int) {
+func GetMemberList(c *gin.Context, name, card, phone string, page, pageSize int) {
 	var members []*model.Member
 	sess := conf.Mysql.NewSession()
 	if name != "" {
@@ -17,6 +17,9 @@ func GetMemberList(c *gin.Context, name, card string, page, pageSize int) {
 	}
 	if card != "" {
 		sess.Where("card = ?", card)
+	}
+	if phone != "" {
+		sess.Where("phone = ?", phone)
 	}
 	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&members)
 	if err != nil {

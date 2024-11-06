@@ -1,7 +1,7 @@
 package model
 
 const PACKAGE_STATUS_OPEN = 1
-const PACKAGE_STATUS_CLOSE = 0
+const PACKAGE_STATUS_CLOSE = 2
 
 const DEVICE_STATUS_OPEN = 1
 const DEVICE_STATUS_CLOSE = 2

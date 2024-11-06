@@ -13,9 +13,10 @@ func GetMemberList(c *gin.Context) {
 	pageSize := c.Query("page_size")
 	card := c.Query("card")
 	name := c.Query("name")
+	phone := c.Query("phone")
 	pageInt, _ := strconv.Atoi(page)
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	service.GetMemberList(c, name, card, pageInt, pageSizeInt)
+	service.GetMemberList(c, name, card, phone, pageInt, pageSizeInt)
 }
 
 func GetMemberDetail(c *gin.Context) {

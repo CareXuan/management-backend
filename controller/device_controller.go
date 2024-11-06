@@ -11,11 +11,12 @@ import (
 func GetDeviceList(c *gin.Context) {
 	name := c.Query("name")
 	searchType := c.Query("search_type")
+	status := c.Query("status")
 	page := c.Query("page")
 	pageInt, _ := strconv.Atoi(page)
 	pageSize := c.Query("pageSize")
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	service.GetDeviceListSer(c, name, searchType, pageInt, pageSizeInt)
+	service.GetDeviceListSer(c, name, searchType, status, pageInt, pageSizeInt)
 }
 
 func GetDeviceInfo(c *gin.Context) {
@@ -46,11 +47,13 @@ func ChangeStatus(c *gin.Context) {
 
 func GetPackageList(c *gin.Context) {
 	name := c.Query("name")
+	searchType := c.Query("search_type")
+	status := c.Query("status")
 	page := c.Query("page")
 	pageInt, _ := strconv.Atoi(page)
 	pageSize := c.Query("pageSize")
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	service.GetPackageListSer(c, name, pageInt, pageSizeInt)
+	service.GetPackageListSer(c, name, searchType, status, pageInt, pageSizeInt)
 }
 
 func GetPackageInfo(c *gin.Context) {

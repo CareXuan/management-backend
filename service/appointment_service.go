@@ -41,7 +41,7 @@ func GetAppointmentListSer(c *gin.Context, deviceId int, memberName, memberPhone
 	if len(memberIds) > 0 {
 		sess.In("member_id", memberIds)
 	}
-	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&appointments)
+	count, err := sess.Limit(pageSize, (page-1)*pageSize).OrderBy("start_time desc").FindAndCount(&appointments)
 	if err != nil {
 		common.ResError(c, "获取预约信息失败")
 		return

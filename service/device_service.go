@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func GetDeviceListSer(c *gin.Context, name, searchType string, page, pageSize int) {
+func GetDeviceListSer(c *gin.Context, name, searchType, status string, page, pageSize int) {
 	var devices []*model.Device
 	sess := conf.Mysql.NewSession()
 	if name != "" {
@@ -17,6 +17,9 @@ func GetDeviceListSer(c *gin.Context, name, searchType string, page, pageSize in
 	}
 	if searchType == "appointment" {
 		sess.Where("status=?", model.DEVICE_STATUS_OPEN)
+	}
+	if status != "" {
+		sess.Where("status=?", status)
 	}
 	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&devices)
 	if err != nil {
@@ -72,11 +75,20 @@ func ChangeStatusSer(c *gin.Context, req model.DeviceChangeStatusReq) {
 
 // ================================== 套餐 ==================================
 
-func GetPackageListSer(c *gin.Context, name string, page, pageSize int) {
+func GetPackageListSer(c *gin.Context, name, searchType, status string, page, pageSize int) {
 	var packages []*model.DevicePackage
 	sess := conf.Mysql.NewSession()
 	if name != "" {
 		sess.Where("name like ?", "%"+name+"%")
+	}
+	if searchType != "" {
+		switch searchType {
+		case "recharge":
+			sess.Where("status = ?", model.PACKAGE_STATUS_OPEN)
+		}
+	}
+	if status != "" {
+		sess.Where("status=?", status)
 	}
 	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&packages)
 	if err != nil {
