@@ -1,10 +1,10 @@
 package router
 
 import (
+	"data_verify/common"
+	"data_verify/controller"
+	"data_verify/middleware"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/controller"
-	"management-backend/middleware"
 )
 
 func InitRouter(r *gin.Engine) {
@@ -37,8 +37,9 @@ func InitRouter(r *gin.Engine) {
 
 		commonCtr := v1.Group("common")
 		{
-			commonCtr.POST("/upload", controller.Upload)
-			commonCtr.GET("/wechat_check", controller.WechatCheck)
+			commonCtr.GET("/")
+			//commonCtr.POST("/upload", controller.Upload)
+			//commonCtr.GET("/wechat_check", controller.WechatCheck)
 		}
 	}
 }

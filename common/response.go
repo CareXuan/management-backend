@@ -1,8 +1,8 @@
 package common
 
 import (
+	"data_verify/utils"
 	"github.com/gin-gonic/gin"
-	"management-backend/utils"
 )
 
 func ResOk(c *gin.Context, msg string, data interface{}) {

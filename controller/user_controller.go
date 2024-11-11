@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"data_verify/model"
+	"data_verify/service"
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
-	"management-backend/service"
 	"strconv"
 )
 

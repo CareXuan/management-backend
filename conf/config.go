@@ -1,12 +1,11 @@
 package conf
 
 import (
-	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
+	"data_verify/model"
 	"github.com/go-xorm/xorm"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
-	"management-backend/model"
 	"time"
 	"xorm.io/core"
 
@@ -14,10 +13,7 @@ import (
 )
 
 type Config struct {
-	Mysql  MysqlConfig  `yaml:"mysql"`
-	Gpt    GptConfig    `yaml:"gpt"`
-	Upload UploadConfig `yaml:"upload"`
-	Wechat WechatConfig `yaml:"wechat"`
+	Mysql MysqlConfig `yaml:"mysql"`
 }
 
 type MysqlConfig struct {
@@ -25,28 +21,9 @@ type MysqlConfig struct {
 	S string `yaml:"s"`
 }
 
-type GptConfig struct {
-	Key string `yaml:"key"`
-}
-
-type UploadConfig struct {
-	Url string `yaml:"url"`
-}
-
-type WechatConfig struct {
-	AppId     string        `yaml:"app_id"`
-	AppSecret string        `yaml:"app_secret"`
-	Wechat    wechatWarning `yaml:"wechat"`
-}
-
-type wechatWarning struct {
-	Common string `yaml:"common"`
-}
-
 var (
-	Mysql     *xorm.EngineGroup
-	WechatApp *officialAccount.OfficialAccount
-	Conf      *Config
+	Mysql *xorm.EngineGroup
+	Conf  *Config
 )
 
 func NewConfig(configPath string) {
@@ -62,7 +39,6 @@ func NewConfig(configPath string) {
 		return
 	}
 	connectMysql()
-	initWechatApp()
 }
 
 func connectMysql() {
@@ -90,26 +66,6 @@ func connectMysql() {
 	syncTables()
 }
 
-func initWechatApp() {
-	OfficialAccountApp, err := officialAccount.NewOfficialAccount(&officialAccount.UserConfig{
-		AppID:  Conf.Wechat.AppId,     // 公众号、小程序的appid
-		Secret: Conf.Wechat.AppSecret, //
-
-		Log: officialAccount.Log{
-			Level:  "debug",
-			File:   "./wechat.log",
-			Stdout: false, //  是否打印在终端
-		},
-
-		HttpDebug: true,
-		Debug:     false,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	WechatApp = OfficialAccountApp
-}
-
 func syncTables() {
 	err := Mysql.Sync2(
 		new(model.User),
@@ -117,6 +73,9 @@ func syncTables() {
 		new(model.UserRole),
 		new(model.Permission),
 		new(model.RolePermission),
+		new(model.History),
+		new(model.SbkData),
+		new(model.CheckData),
 	)
 	if err != nil {
 		log.Fatal(err)

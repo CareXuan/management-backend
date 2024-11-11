@@ -1,9 +1,9 @@
 package main
 
 import (
+	"data_verify/conf"
+	"data_verify/router"
 	"github.com/gin-gonic/gin"
-	"management-backend/conf"
-	"management-backend/router"
 	"net/http"
 )
 
@@ -11,7 +11,7 @@ func main() {
 	r := gin.Default()
 	router.InitRouter(r)
 	conf.NewConfig("./conf/config.yaml")
-	err := http.ListenAndServe(":8586", r)
+	err := http.ListenAndServe(":8080", r)
 	if err != nil {
 		return
 	}

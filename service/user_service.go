@@ -1,12 +1,12 @@
 package service
 
 import (
+	"data_verify/common"
+	"data_verify/conf"
+	"data_verify/model"
+	"data_verify/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
-	"management-backend/utils"
 )
 
 func GetUserInfoSer(c *gin.Context, userId int) {

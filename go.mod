@@ -1,4 +1,4 @@
-module management-backend
+module data_verify
 
 go 1.18
 

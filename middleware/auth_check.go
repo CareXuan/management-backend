@@ -2,10 +2,10 @@ package middleware
 
 import "C"
 import (
+	"data_verify/common"
+	"data_verify/conf"
+	"data_verify/model"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
 	"strings"
 )
 
