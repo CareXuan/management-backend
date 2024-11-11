@@ -76,6 +76,9 @@ func syncTables() {
 		new(model.History),
 		new(model.SbkData),
 		new(model.CheckData),
+		new(model.Group),
+		new(model.GroupData),
+		new(model.GroupUser),
 	)
 	if err != nil {
 		log.Fatal(err)
