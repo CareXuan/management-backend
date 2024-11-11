@@ -35,6 +35,12 @@ func InitRouter(r *gin.Engine) {
 			auth.POST("/roles/delete", controller.DeleteRole).Use(middleware.AuthCheck())
 		}
 
+		// 数据
+		data := v1.Group("data")
+		{
+			data.POST("/sbk/upload", controller.UploadAndReadDBF).Use(middleware.LimitUploadSize(int64(100 << 20)))
+		}
+
 		commonCtr := v1.Group("common")
 		{
 			commonCtr.GET("/")

@@ -12,12 +12,12 @@ type SbkData struct {
 	Kmdm    string `json:"kmdm" xorm:"VARCHAR(4) not null default '' comment('科目代码')"`
 	Kmmc    string `json:"kmmc" xorm:"VARCHAR(64) not null default '' comment('科目名称')"`
 	Kmdy    string `json:"kmdy" xorm:"VARCHAR(2) not null default '' comment('科目单元')"`
-	Dy2     int    `json:"dy2" xorm:"INT(2) not null default 0 comment('单元2')"`
-	Dy3     int    `json:"dy3" xorm:"INT(2) not null default 0 comment('单元3')"`
-	Dy4     int    `json:"dy4" xorm:"INT(2) not null default 0 comment('单元4')"`
+	Dy2     int64  `json:"dy2" xorm:"INT(2) not null default 0 comment('单元2')"`
+	Dy3     int64  `json:"dy3" xorm:"INT(2) not null default 0 comment('单元3')"`
+	Dy4     int64  `json:"dy4" xorm:"INT(2) not null default 0 comment('单元4')"`
 	Kssj    string `json:"kssj" xorm:"VARCHAR(32) not null default '' comment('考试时间')"`
-	Xlsh    int    `json:"xlsh" xorm:"INT(8) not null default 0 comment('小流水号')"`
-	Dlsh    int    `json:"dlsh" xorm:"INT(8) not null default 0 comment('大流水号')"`
+	Xlsh    int64  `json:"xlsh" xorm:"INT(8) not null default 0 comment('小流水号')"`
+	Dlsh    int64  `json:"dlsh" xorm:"INT(8) not null default 0 comment('大流水号')"`
 	Djtxm1  string `json:"djtxm1" xorm:"djtxm1 VARCHAR(16) not null default '' comment('djtxm1')"`
 	Djtxm2  string `json:"djtxm2" xorm:"djtxm2 VARCHAR(16) not null default '' comment('djtxm2')"`
 	Djtxm3  string `json:"djtxm3" xorm:"djtxm3 VARCHAR(16) not null default '' comment('djtxm3')"`

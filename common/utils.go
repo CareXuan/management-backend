@@ -15,3 +15,7 @@ func GetOneNewCard(length int) string {
 	// 使用base64编码将字节切片转换为字符串
 	return base64.URLEncoding.EncodeToString(byteSlice)
 }
+
+func IgnoreError[T any](value T, _ error) T {
+	return value
+}
