@@ -36,7 +36,7 @@ func InitRouter(r *gin.Engine) {
 		}
 
 		// 数据
-		data := v1.Group("data")
+		data := v1.Group("data").Use(middleware.AuthCheck())
 		{
 			data.POST("/sbk/upload", controller.UploadAndReadDBF).Use(middleware.LimitUploadSize(int64(100 << 20)))
 		}
