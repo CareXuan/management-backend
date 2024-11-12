@@ -218,3 +218,116 @@ func RemovePermissionSer(c *gin.Context, id int) {
 
 	common.ResOk(c, "ok", nil)
 }
+
+func AllGroupSer(c *gin.Context, name string, page, pageSize int) {
+	sess := conf.Mysql.NewSession()
+	var groupItems []*model.Group
+	if name != "" {
+		sess.Where("name like ?", "%"+name+"%")
+	}
+	count, err := sess.OrderBy("id DESC").Limit(pageSize, (page-1)*pageSize).FindAndCount(&groupItems)
+	if err != nil {
+		common.ResError(c, "获取组别列表失败")
+		return
+	}
+	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: groupItems})
+}
+
+func GroupInfoSer(c *gin.Context, id int) {
+	var groupInfo model.Group
+	_, err := conf.Mysql.Where("id = ?", id).Get(&groupInfo)
+	if err != nil {
+		common.ResError(c, "获取组别详情失败")
+		return
+	}
+	groupId := groupInfo.Id
+	var groupUsers []*model.GroupUser
+	err = conf.Mysql.Where("group_id = ?", groupId).Find(&groupUsers)
+	if err != nil {
+		common.ResError(c, "获取组别用户关联关系失败")
+		return
+	}
+	var userIds []int
+	for _, i := range groupUsers {
+		userIds = append(userIds, i.UserId)
+	}
+	var userItems []*model.User
+	err = conf.Mysql.In("id", userIds).Find(&userItems)
+	if err != nil {
+		common.ResError(c, "获取用户信息失败")
+		return
+	}
+	groupInfo.Users = userItems
+	common.ResOk(c, "ok", groupInfo)
+}
+
+func AddGroupSer(c *gin.Context, req model.GroupAddReq) {
+	if req.Id == 0 {
+		var newGroupData = model.Group{Name: req.Name}
+		_, err := conf.Mysql.Insert(&newGroupData)
+		if err != nil {
+			common.ResError(c, "添加组别失败")
+			return
+		}
+		var groupUserData []*model.GroupUser
+		for _, i := range req.UserIds {
+			groupUserData = append(groupUserData, &model.GroupUser{
+				GroupId: newGroupData.Id,
+				UserId:  i,
+			})
+		}
+		_, err = conf.Mysql.Insert(&groupUserData)
+		if err != nil {
+			common.ResError(c, "添加组别用户关联关系失败")
+			return
+		}
+
+	} else {
+		sess := conf.Mysql.NewSession()
+		_, err := sess.Where("group_id = ?", req.Id).Delete(&model.GroupUser{})
+		if err != nil {
+			sess.Rollback()
+			common.ResError(c, "删除组别用户关联关系失败")
+			return
+		}
+		_, err = sess.Where("id = ?", req.Id).Update(&model.Group{Name: req.Name})
+		if err != nil {
+			sess.Rollback()
+			common.ResError(c, "修改组别信息失败")
+			return
+		}
+		var groupUserData []*model.GroupUser
+		for _, i := range req.UserIds {
+			groupUserData = append(groupUserData, &model.GroupUser{
+				GroupId: req.Id,
+				UserId:  i,
+			})
+		}
+		_, err = conf.Mysql.Insert(&groupUserData)
+		if err != nil {
+			sess.Rollback()
+			common.ResError(c, "写入组别用户关联数据失败")
+			return
+		}
+		sess.Commit()
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func DeleteGroupSer(c *gin.Context, id int) {
+	sess := conf.Mysql.NewSession()
+	_, err := sess.Where("id = ?", id).Delete(&model.Group{})
+	if err != nil {
+		sess.Rollback()
+		common.ResError(c, "删除组别失败")
+		return
+	}
+	_, err = conf.Mysql.Where("group_id = ?", id).Delete(&model.GroupUser{})
+	if err != nil {
+		sess.Rollback()
+		common.ResError(c, "删除组别用户关联关系失败")
+		return
+	}
+	sess.Commit()
+	common.ResOk(c, "ok", nil)
+}

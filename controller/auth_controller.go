@@ -84,3 +84,33 @@ func RemovePermission(c *gin.Context) {
 	}
 	service.RemovePermissionSer(c, permissionReq.Id)
 }
+
+func AllGroups(c *gin.Context) {
+	name := c.Query("name")
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	service.AllGroupSer(c, name, pageInt, pageSizeInt)
+}
+
+func GroupInfo(c *gin.Context) {
+	id := c.Query("id")
+	idInt, _ := strconv.Atoi(id)
+	service.GroupInfoSer(c, idInt)
+}
+
+func AddGroup(c *gin.Context) {
+	var groupAddReq model.GroupAddReq
+	if err := c.ShouldBindJSON(&groupAddReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AddGroupSer(c, groupAddReq)
+}
+
+func DeleteGroup(c *gin.Context) {
+	id := c.Query("id")
+	idInt, _ := strconv.Atoi(id)
+	service.DeleteGroupSer(c, idInt)
+}

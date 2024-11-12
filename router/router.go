@@ -35,6 +35,10 @@ func InitRouter(r *gin.Engine) {
 				authCheck.GET("/roles/info", controller.GetRoleInfo)
 				authCheck.POST("/roles/add", controller.AddRole)
 				authCheck.POST("/roles/delete", controller.DeleteRole)
+				authCheck.GET("/group", controller.AllGroups)
+				authCheck.GET("/group/info", controller.GroupInfo)
+				authCheck.POST("/group/add", controller.AddGroup)
+				authCheck.POST("/group/delete", controller.DeleteGroup)
 			}
 		}
 
