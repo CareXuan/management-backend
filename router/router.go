@@ -26,13 +26,16 @@ func InitRouter(r *gin.Engine) {
 		auth := v1.Group("auth")
 		{
 			auth.POST("/login", controller.Login)
-			auth.GET("/permission", controller.AllPermission).Use(middleware.AuthCheck())
-			auth.POST("/permission/add", controller.AddPermission).Use(middleware.AuthCheck())
-			auth.POST("/permission/delete", controller.RemovePermission).Use(middleware.AuthCheck())
-			auth.GET("/roles", controller.AllRoles).Use(middleware.AuthCheck())
-			auth.GET("/roles/info", controller.GetRoleInfo).Use(middleware.AuthCheck())
-			auth.POST("/roles/add", controller.AddRole).Use(middleware.AuthCheck())
-			auth.POST("/roles/delete", controller.DeleteRole).Use(middleware.AuthCheck())
+			authCheck := auth.Group("/").Use(middleware.AuthCheck())
+			{
+				authCheck.GET("/permission", controller.AllPermission)
+				authCheck.POST("/permission/add", controller.AddPermission)
+				authCheck.POST("/permission/delete", controller.RemovePermission)
+				authCheck.GET("/roles", controller.AllRoles)
+				authCheck.GET("/roles/info", controller.GetRoleInfo)
+				authCheck.POST("/roles/add", controller.AddRole)
+				authCheck.POST("/roles/delete", controller.DeleteRole)
+			}
 		}
 
 		commonCtr := v1.Group("common")
