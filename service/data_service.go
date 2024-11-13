@@ -98,7 +98,7 @@ func StepInfoSer(c *gin.Context, step int) {
 	sess.Where("bmddm >= ?", groupUser.BmdStart)
 	sess.Where("bmddm <= ?", groupUser.BmdEnd)
 	sess.Where("step = ?", step)
-	sess.Where("status IN (?,?)", model.CHECK_STATUS_WAITING, model.CHECK_STATUS_ERROR)
+	sess.Where("status != ?", model.CHECK_STATUS_PASS)
 	_, err = sess.OrderBy("bmddm").Get(&stepCheckData)
 	if err != nil {
 		common.ResError(c, "获取数据失败")
@@ -114,7 +114,117 @@ func StepInfoSer(c *gin.Context, step int) {
 }
 
 func CheckSer(c *gin.Context, req model.CheckReq) {
-
+	year, err := common.GetCurrentYear()
+	if err != nil {
+		common.ResError(c, "获取年份信息失败")
+		return
+	}
+	userId, userName, err := common.GetUserIdByToken(c)
+	if err != nil {
+		common.ResError(c, "获取用户ID失败")
+		return
+	}
+	var groupUser model.GroupUser
+	_, err = conf.Mysql.Where("user_id = ?", userId).Get(&groupUser)
+	if err != nil {
+		common.ResError(c, "获取组配置失败")
+		return
+	}
+	bmdStart, _ := strconv.Atoi(groupUser.BmdStart)
+	bmdEnd, _ := strconv.Atoi(groupUser.BmdEnd)
+	bmdNow, _ := strconv.Atoi(req.Bmddm)
+	if bmdNow < bmdStart || bmdNow > bmdEnd {
+		common.ResForbidden(c, "您无权处理此报名点")
+		return
+	}
+	var existCheckItem model.StepCheckData
+	_, err = conf.Mysql.Where("bmddm = ?", req.Bmddm).Where("step = ?", req.Step).Where("year = ?", year).Get(&existCheckItem)
+	if err != nil {
+		common.ResError(c, "获取当前阶段配置失败")
+		return
+	}
+	if existCheckItem.Id == 0 {
+		common.ResForbidden(c, "当前报名点尚未到达此阶段")
+		return
+	}
+	if existCheckItem.Status == model.CHECK_STATUS_PASS {
+		common.ResForbidden(c, "当前报名点此阶段已校验通过")
+		return
+	}
+	var checkDataItem model.CheckData
+	_, err = conf.Mysql.Where("bmddm = ?", req.Bmddm).Where("year = ?", year).Get(&checkDataItem)
+	if err != nil {
+		common.ResError(c, "获取校验数据失败")
+		return
+	}
+	switch req.Step {
+	case model.CHECK_STEP_FIRST:
+		allCnt := req.Data[0]
+		if checkDataItem.EnvelopeCnt != allCnt {
+			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, userName, userName+"检查此阶段失败", year)
+			_, err := conf.Mysql.Where("bmddm = ?", req.Bmddm).Where("step = ?", req.Step).Where("year = ?", year).Update(model.StepCheckData{
+				Status: model.CHECK_STATUS_ERROR,
+			})
+			if err != nil {
+				common.ResError(c, "修改检查状态失败")
+				return
+			}
+			common.ResForbidden(c, "校验失败")
+			return
+		}
+	case model.CHECK_STEP_SECOND:
+		startCnt := req.Data[0]
+		endCnt := req.Data[1]
+		if checkDataItem.FirstCnt != startCnt || checkDataItem.LastCnt != endCnt {
+			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, userName, userName+"检查此阶段失败", year)
+			_, err := conf.Mysql.Where("bmddm = ?", req.Bmddm).Where("step = ?", req.Step).Where("year = ?", year).Update(model.StepCheckData{
+				Status: model.CHECK_STATUS_ERROR,
+			})
+			if err != nil {
+				common.ResError(c, "修改检查状态失败")
+				return
+			}
+			common.ResForbidden(c, "校验失败")
+			return
+		}
+	case model.CHECK_STEP_THIRD:
+		blueCnt := req.Data[0]
+		redCnt := req.Data[1]
+		blackCnt := req.Data[2]
+		if checkDataItem.BlueCnt != blueCnt || checkDataItem.RedCnt != redCnt || checkDataItem.BlackCnt != blackCnt {
+			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, userName, userName+"检查此阶段失败", year)
+			errStatus := model.CHECK_STATUS_ERROR
+			if checkDataItem.BlueCnt != blueCnt && checkDataItem.RedCnt == redCnt && checkDataItem.BlackCnt == blackCnt {
+				errStatus = model.CHECK_STATUS_BLUE_ERROR
+			}
+			if checkDataItem.BlueCnt == blueCnt && checkDataItem.RedCnt != redCnt && checkDataItem.BlackCnt == blackCnt {
+				errStatus = model.CHECK_STATUS_RED_ERROR
+			}
+			if checkDataItem.BlueCnt == blueCnt && checkDataItem.RedCnt == redCnt && checkDataItem.BlackCnt != blackCnt {
+				errStatus = model.CHECK_STATUS_BLACK_ERROR
+			}
+			if checkDataItem.BlueCnt != blueCnt && checkDataItem.RedCnt != redCnt && checkDataItem.BlackCnt == blackCnt {
+				errStatus = model.CHECK_STATUS_RED_BLUE_ERROR
+			}
+			if checkDataItem.BlueCnt == blueCnt && checkDataItem.RedCnt != redCnt && checkDataItem.BlackCnt != blackCnt {
+				errStatus = model.CHECK_STATUS_BLACK_RED_ERROR
+			}
+			if checkDataItem.BlueCnt != blueCnt && checkDataItem.RedCnt == redCnt && checkDataItem.BlackCnt != blackCnt {
+				errStatus = model.CHECK_STATUS_BLACK_BLUE_ERROR
+			}
+			if checkDataItem.BlueCnt != blueCnt && checkDataItem.RedCnt != redCnt && checkDataItem.BlackCnt != blackCnt {
+				errStatus = model.CHECK_STATUS_ALL_ERROR
+			}
+			_, err := conf.Mysql.Where("bmddm = ?", req.Bmddm).Where("step = ?", req.Step).Where("year = ?", year).Update(model.StepCheckData{
+				Status: errStatus,
+			})
+			if err != nil {
+				common.ResError(c, "修改检查状态失败")
+				return
+			}
+			common.ResForbidden(c, "校验失败")
+		}
+	}
 }
 
 func NextSer(c *gin.Context, req model.NextStepReq) {
