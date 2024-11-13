@@ -1,29 +1,17 @@
 package model
 
-type SbkData struct {
-	Id      int    `json:"id" xorm:"pk autoincr INT(11)"`
-	Idxx    string `json:"idxx" xorm:"VARCHAR(128) not null default '' comment('ID')"`
-	Bxyj    string `json:"bxyj" xorm:"VARCHAR(2) not null default '' comment('BXYJ')"`
-	Bmddm   string `json:"bmddm" xorm:"VARCHAR(4) not null default '' comment('报名点代码')"`
-	Bmdmc   string `json:"bmdmc" xorm:"VARCHAR(64) not null default '' comment('报名点名称')"`
-	Hbbmdmc string `json:"hbbmdmc" xorm:"VARCHAR(64) not null default '' comment('合并报名点名称')"`
-	Xm      string `json:"xm" xorm:"VARCHAR(64) not null default '' comment('姓名')"`
-	Ksbh    string `json:"ksbh" xorm:"VARCHAR(16) not null default '' comment('考生编号')"`
-	Kmdm    string `json:"kmdm" xorm:"VARCHAR(4) not null default '' comment('科目代码')"`
-	Kmmc    string `json:"kmmc" xorm:"VARCHAR(64) not null default '' comment('科目名称')"`
-	Kmdy    string `json:"kmdy" xorm:"VARCHAR(2) not null default '' comment('科目单元')"`
-	Dy2     int64  `json:"dy2" xorm:"INT(2) not null default 0 comment('单元2')"`
-	Dy3     int64  `json:"dy3" xorm:"INT(2) not null default 0 comment('单元3')"`
-	Dy4     int64  `json:"dy4" xorm:"INT(2) not null default 0 comment('单元4')"`
-	Kssj    string `json:"kssj" xorm:"VARCHAR(32) not null default '' comment('考试时间')"`
-	Xlsh    int64  `json:"xlsh" xorm:"INT(8) not null default 0 comment('小流水号')"`
-	Dlsh    int64  `json:"dlsh" xorm:"INT(8) not null default 0 comment('大流水号')"`
-	Djtxm1  string `json:"djtxm1" xorm:"djtxm1 VARCHAR(16) not null default '' comment('djtxm1')"`
-	Djtxm2  string `json:"djtxm2" xorm:"djtxm2 VARCHAR(16) not null default '' comment('djtxm2')"`
-	Djtxm3  string `json:"djtxm3" xorm:"djtxm3 VARCHAR(16) not null default '' comment('djtxm3')"`
-	Djtxm4  string `json:"djtxm4" xorm:"djtxm4 VARCHAR(16) not null default '' comment('djtxm4')"`
-	Year    int    `json:"year" xorm:"int(4) not null default 0 comment('年份')"`
-}
+const CHECK_STEP_WAITING = 1
+const CHECK_STEP_FIRST = 2
+const CHECK_STEP_SECOND = 3
+const CHECK_STEP_THIRD = 4
+const CHECK_STEP_FOURTH = 5
+
+const CHECK_STATUS_WAITING = 1
+const CHECK_STATUS_PASS = 2
+const CHECK_STATUS_ERROR = 3
+
+const STEP_STATUS_WAITING = 1
+const STEP_STATUS_PASS = 2
 
 type CheckData struct {
 	Id          int    `json:"id" xorm:"pk autoincr INT(11)"`
@@ -36,4 +24,34 @@ type CheckData struct {
 	RedCnt      int    `json:"red_cnt" xorm:"INT(8) not null default 0 comment('红封数量')"`
 	BlackCnt    int    `json:"black_cnt" xorm:"INT(8) not null default 0 comment('黑封数量')"`
 	Step        int    `json:"step" xorm:"INT(4) not null default 0 comment('步骤号')"`
+	Year        string `json:"year" xorm:"VARCHAR(4) not null default 0 comment('年份')"`
+}
+
+type StepCheckData struct {
+	Id     int    `json:"id" xorm:"pk autoincr INT(11)"`
+	Bmddm  string `json:"bmddm" xorm:"VARCHAR(4) not null default '' comment('报名点代码')"`
+	Step   int    `json:"step" xorm:"INT(4) not null default 0 comment('步骤号')"`
+	Status int    `json:"status" xorm:"INT(4) not null default 0 comment('检查状态 1:未检查 2:检查通过 3:检查不通过')"`
+	Year   string `json:"year" xorm:"VARCHAR(4) not null default 0 comment('年份')"`
+}
+
+type NextStepReq struct {
+	Bmddm string `json:"bmddm"`
+	Step  int    `json:"step"`
+}
+
+type CheckReq struct {
+	Bmddm string `json:"bmddm"`
+	Step  int    `json:"step"`
+	Data  []int  `json:"data"`
+}
+
+type CheckListRes struct {
+	Bmddm string `json:"bmddm"`
+	Bmdmc string `json:"bmdmc"`
+	Step1 int    `json:"step1"`
+	Step2 int    `json:"step2"`
+	Step3 int    `json:"step3"`
+	Step4 int    `json:"step4"`
+	Step5 int    `json:"step5"`
 }

@@ -74,11 +74,11 @@ func syncTables() {
 		new(model.Permission),
 		new(model.RolePermission),
 		new(model.History),
-		new(model.SbkData),
 		new(model.CheckData),
+		new(model.StepCheckData),
 		new(model.Group),
-		new(model.GroupData),
 		new(model.GroupUser),
+		new(model.Config),
 	)
 	if err != nil {
 		log.Fatal(err)

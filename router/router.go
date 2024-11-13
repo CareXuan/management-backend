@@ -45,7 +45,19 @@ func InitRouter(r *gin.Engine) {
 		// 数据
 		data := v1.Group("data").Use(middleware.AuthCheck())
 		{
-			data.POST("/sbk/upload", controller.UploadAndReadDBF).Use(middleware.LimitUploadSize(int64(100 << 20)))
+			data.GET("/list", controller.GetCheckList)
+			data.GET("/info", controller.GetCheckInfo)
+			data.POST("/next", controller.NextStep)
+			data.POST("/check", controller.Check)
+			data.POST("/sbk/upload", controller.UploadSbkDBF).Use(middleware.LimitUploadSize(int64(50 << 20)))
+			data.POST("/bkd/upload", controller.UploadBkdDBF).Use(middleware.LimitUploadSize(int64(50 << 20)))
+		}
+
+		// 配置
+		config := v1.Group("config").Use(middleware.AuthCheck())
+		{
+			config.GET("/", controller.GetConfig)
+			config.POST("/add", controller.SetConfig)
 		}
 
 		commonCtr := v1.Group("common")

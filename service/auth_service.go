@@ -230,23 +230,17 @@ func AllGroupSer(c *gin.Context, name string, page, pageSize int) {
 		common.ResError(c, "获取组别列表失败")
 		return
 	}
-	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: groupItems})
-}
-
-func GroupInfoSer(c *gin.Context, id int) {
-	var groupInfo model.Group
-	_, err := conf.Mysql.Where("id = ?", id).Get(&groupInfo)
-	if err != nil {
-		common.ResError(c, "获取组别详情失败")
-		return
-	}
-	groupId := groupInfo.Id
 	var groupUsers []*model.GroupUser
-	err = conf.Mysql.Where("group_id = ?", groupId).Find(&groupUsers)
+	var groupIds []int
+	for _, i := range groupItems {
+		groupIds = append(groupIds, i.Id)
+	}
+	err = conf.Mysql.In("group_id", groupIds).Find(&groupUsers)
 	if err != nil {
 		common.ResError(c, "获取组别用户关联关系失败")
 		return
 	}
+	var groupUserMapping = make(map[int][]string)
 	var userIds []int
 	for _, i := range groupUsers {
 		userIds = append(userIds, i.UserId)
@@ -257,11 +251,56 @@ func GroupInfoSer(c *gin.Context, id int) {
 		common.ResError(c, "获取用户信息失败")
 		return
 	}
-	groupInfo.Users = userItems
+	var userMapping = make(map[int]*model.User)
+	for _, i := range userItems {
+		userMapping[i.Id] = i
+	}
+	for _, i := range groupUsers {
+		if _, ok := groupUserMapping[i.GroupId]; ok {
+			groupUserMapping[i.GroupId] = append(groupUserMapping[i.GroupId], userMapping[i.UserId].Name)
+		} else {
+			groupUserMapping[i.GroupId] = []string{userMapping[i.UserId].Name}
+		}
+	}
+	for _, i := range groupItems {
+		i.UserNames = groupUserMapping[i.Id]
+	}
+	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: groupItems})
+}
+
+func GroupInfoSer(c *gin.Context, id int) {
+	year, err := common.GetCurrentYear()
+	if err != nil {
+		common.ResError(c, "获取年份信息失败")
+		return
+	}
+	var groupInfo model.Group
+	_, err = conf.Mysql.Where("id = ?", id).Get(&groupInfo)
+	if err != nil {
+		common.ResError(c, "获取组别详情失败")
+		return
+	}
+	groupId := groupInfo.Id
+	var groupUsers []*model.GroupUser
+	err = conf.Mysql.Where("group_id = ?", groupId).Where("year = ?", year).Find(&groupUsers)
+	if err != nil {
+		common.ResError(c, "获取组别用户关联关系失败")
+		return
+	}
+	var userIds []int
+	for _, i := range groupUsers {
+		userIds = append(userIds, i.UserId)
+	}
+	groupInfo.Users = userIds
 	common.ResOk(c, "ok", groupInfo)
 }
 
 func AddGroupSer(c *gin.Context, req model.GroupAddReq) {
+	year, err := common.GetCurrentYear()
+	if err != nil {
+		common.ResError(c, "获取年份信息失败")
+		return
+	}
 	if req.Id == 0 {
 		var newGroupData = model.Group{Name: req.Name}
 		_, err := conf.Mysql.Insert(&newGroupData)
@@ -272,8 +311,11 @@ func AddGroupSer(c *gin.Context, req model.GroupAddReq) {
 		var groupUserData []*model.GroupUser
 		for _, i := range req.UserIds {
 			groupUserData = append(groupUserData, &model.GroupUser{
-				GroupId: newGroupData.Id,
-				UserId:  i,
+				GroupId:  newGroupData.Id,
+				UserId:   i,
+				BmdStart: req.BmdStart,
+				BmdEnd:   req.BmdEnd,
+				Year:     year,
 			})
 		}
 		_, err = conf.Mysql.Insert(&groupUserData)
@@ -299,8 +341,11 @@ func AddGroupSer(c *gin.Context, req model.GroupAddReq) {
 		var groupUserData []*model.GroupUser
 		for _, i := range req.UserIds {
 			groupUserData = append(groupUserData, &model.GroupUser{
-				GroupId: req.Id,
-				UserId:  i,
+				GroupId:  req.Id,
+				UserId:   i,
+				BmdStart: req.BmdStart,
+				BmdEnd:   req.BmdEnd,
+				Year:     year,
 			})
 		}
 		_, err = conf.Mysql.Insert(&groupUserData)
@@ -314,15 +359,15 @@ func AddGroupSer(c *gin.Context, req model.GroupAddReq) {
 	common.ResOk(c, "ok", nil)
 }
 
-func DeleteGroupSer(c *gin.Context, id int) {
+func DeleteGroupSer(c *gin.Context, req model.GroupDeleteReq) {
 	sess := conf.Mysql.NewSession()
-	_, err := sess.Where("id = ?", id).Delete(&model.Group{})
+	_, err := sess.Where("id = ?", req.Id).Delete(&model.Group{})
 	if err != nil {
 		sess.Rollback()
 		common.ResError(c, "删除组别失败")
 		return
 	}
-	_, err = conf.Mysql.Where("group_id = ?", id).Delete(&model.GroupUser{})
+	_, err = conf.Mysql.Where("group_id = ?", req.Id).Delete(&model.GroupUser{})
 	if err != nil {
 		sess.Rollback()
 		common.ResError(c, "删除组别用户关联关系失败")

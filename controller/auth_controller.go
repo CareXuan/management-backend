@@ -110,7 +110,10 @@ func AddGroup(c *gin.Context) {
 }
 
 func DeleteGroup(c *gin.Context) {
-	id := c.Query("id")
-	idInt, _ := strconv.Atoi(id)
-	service.DeleteGroupSer(c, idInt)
+	var groupDeleteReq model.GroupDeleteReq
+	if err := c.ShouldBindJSON(&groupDeleteReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.DeleteGroupSer(c, groupDeleteReq)
 }
