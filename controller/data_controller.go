@@ -6,7 +6,6 @@ import (
 	"data_verify/conf"
 	"data_verify/model"
 	"data_verify/service"
-	"fmt"
 	dbf "github.com/SebastiaanKlippert/go-foxpro-dbf"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/text/encoding/simplifiedchinese"
@@ -14,6 +13,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -33,11 +33,11 @@ func (d *GBKDecoder) Decode(b []byte) ([]byte, error) {
 
 // UploadSbkDBF 上传文件并读取内容
 func UploadSbkDBF(c *gin.Context) {
-	//year, err := common.GetCurrentYear()
-	//if err != nil {
-	//	common.ResError(c, "获取年份信息失败")
-	//	return
-	//}
+	year, err := common.GetCurrentYear()
+	if err != nil {
+		common.ResError(c, "获取年份信息失败")
+		return
+	}
 	// 获取上传的文件
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -80,6 +80,8 @@ func UploadSbkDBF(c *gin.Context) {
 		bkdMapping[i.Bmddm]["kmdy4"] = []string{}
 	}
 
+	var bmddmList []string
+
 	// 遍历并输出记录内容
 	for !dbfTable.EOF() {
 		record, err := dbfTable.Record()
@@ -107,10 +109,44 @@ func UploadSbkDBF(c *gin.Context) {
 		if strings.HasPrefix(ywk2m, "40") && wgym != "-" {
 			bkdMapping[bmddm]["kmdy4"] = append(bkdMapping[bmddm]["kmdy4"], ksbh)
 		}
+		needAdd := true
+		for _, i := range bmddmList {
+			if i == bmddm {
+				needAdd = false
+				break
+			}
+		}
+		if needAdd {
+			bmddmList = append(bmddmList, bmddm)
+		}
 	}
-	fmt.Println(len(bkdMapping["2105"]["kmdy2"]), len(bkdMapping["2105"]["kmdy3"]), len(bkdMapping["2105"]["kmdy4"]))
-	fmt.Println(len(bkdMapping["2106"]["kmdy2"]), len(bkdMapping["2106"]["kmdy3"]), len(bkdMapping["2106"]["kmdy4"]))
-	fmt.Println(len(bkdMapping["2107"]["kmdy2"]), len(bkdMapping["2107"]["kmdy3"]), len(bkdMapping["2107"]["kmdy4"]))
+
+	sort.Strings(bmddmList)
+
+	startNum := 1
+	endNum := 1
+	for _, bmddm := range bmddmList {
+		blueCnt := len(bkdMapping[bmddm]["kmdy2"])
+		redCnt := len(bkdMapping[bmddm]["kmdy3"])
+		blackCnt := len(bkdMapping[bmddm]["kmdy4"])
+		allCnt := blueCnt + redCnt + blackCnt
+		if allCnt > 0 {
+			endNum = startNum + allCnt - 1
+			_, err := conf.Mysql.Where("bmddm = ?", bmddm).Where("year = ?", year).Update(&model.CheckData{
+				EnvelopeCnt: allCnt,
+				FirstCnt:    startNum,
+				LastCnt:     endNum,
+				BlueCnt:     blueCnt,
+				RedCnt:      redCnt,
+				BlackCnt:    blackCnt,
+			})
+			if err != nil {
+				common.ResError(c, "修改数量失败")
+				return
+			}
+		}
+		startNum += allCnt
+	}
 
 	// 返回 DBF 文件的读取内容
 	common.ResOk(c, "ok", nil)
@@ -240,4 +276,12 @@ func NextStep(c *gin.Context) {
 		return
 	}
 	service.NextSer(c, nextStepReq)
+}
+
+func HistoryList(c *gin.Context) {
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	service.HistoryListSer(c, pageInt, pageSizeInt)
 }

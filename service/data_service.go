@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"sort"
 	"strconv"
+	"time"
 )
 
 func StepListSer(c *gin.Context, bmddm, bmdmc string, page, pageSize int) {
@@ -104,12 +105,30 @@ func StepInfoSer(c *gin.Context, step int) {
 		common.ResError(c, "获取数据失败")
 		return
 	}
+	selectString := "bmddm,bmdmc"
+	if step == model.CHECK_STEP_FOURTH {
+		selectString = "bmddm,bmdmc,envelope_cnt,first_cnt,last_cnt,blue_cnt,red_cnt,black_cnt"
+	}
 	var bmdItem model.CheckData
-	_, err = conf.Mysql.Select("bmddm,bmdmc").Where("bmddm = ?", stepCheckData.Bmddm).Get(&bmdItem)
+	_, err = conf.Mysql.Select(selectString).Where("bmddm = ?", stepCheckData.Bmddm).Where("year = ?", year).Get(&bmdItem)
 	if err != nil {
 		common.ResError(c, "获取报名点信息失败")
 		return
 	}
+	var bmdCountItems []*model.CheckData
+	err = conf.Mysql.Where("year = ?", year).Where("bmddm >= ?", groupUser.BmdStart).Where("bmddm <= ?", groupUser.BmdEnd).Find(&bmdCountItems)
+	if err != nil {
+		common.ResError(c, "获取报名点数量失败")
+		return
+	}
+	var finishBmdCountItems []*model.StepCheckData
+	err = conf.Mysql.Where("year = ?", year).Where("bmddm >= ?", groupUser.BmdStart).Where("bmddm <= ?", groupUser.BmdEnd).Where("step = ?", step).Where("status = ?", model.CHECK_STATUS_PASS).Find(&finishBmdCountItems)
+	if err != nil {
+		common.ResError(c, "获取报名点完成数量失败")
+		return
+	}
+	bmdItem.ProgressCnt = len(bmdCountItems)
+	bmdItem.RemainCnt = len(bmdCountItems) - len(finishBmdCountItems)
 	common.ResOk(c, "ok", bmdItem)
 }
 
@@ -161,7 +180,7 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 	case model.CHECK_STEP_FIRST:
 		allCnt := req.Data[0]
 		if checkDataItem.EnvelopeCnt != allCnt {
-			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, userName, userName+"检查此阶段失败", year)
+			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, req.Bmddm, userName, userName+"检查此阶段失败", year)
 			_, err := conf.Mysql.Where("bmddm = ?", req.Bmddm).Where("step = ?", req.Step).Where("year = ?", year).Update(model.StepCheckData{
 				Status: model.CHECK_STATUS_ERROR,
 			})
@@ -176,7 +195,7 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 		startCnt := req.Data[0]
 		endCnt := req.Data[1]
 		if checkDataItem.FirstCnt != startCnt || checkDataItem.LastCnt != endCnt {
-			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, userName, userName+"检查此阶段失败", year)
+			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, req.Bmddm, userName, userName+"检查此阶段失败", year)
 			_, err := conf.Mysql.Where("bmddm = ?", req.Bmddm).Where("step = ?", req.Step).Where("year = ?", year).Update(model.StepCheckData{
 				Status: model.CHECK_STATUS_ERROR,
 			})
@@ -192,7 +211,7 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 		redCnt := req.Data[1]
 		blackCnt := req.Data[2]
 		if checkDataItem.BlueCnt != blueCnt || checkDataItem.RedCnt != redCnt || checkDataItem.BlackCnt != blackCnt {
-			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, userName, userName+"检查此阶段失败", year)
+			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, req.Bmddm, userName, userName+"检查此阶段失败", year)
 			errStatus := model.CHECK_STATUS_ERROR
 			if checkDataItem.BlueCnt != blueCnt && checkDataItem.RedCnt == redCnt && checkDataItem.BlackCnt == blackCnt {
 				errStatus = model.CHECK_STATUS_BLUE_ERROR
@@ -225,6 +244,15 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 			common.ResForbidden(c, "校验失败")
 		}
 	}
+	common.SetHistory(req.Step, model.CHECK_STATUS_PASS, userId, req.Bmddm, userName, userName+"检查此阶段通过", year)
+	_, err = conf.Mysql.Where("bmddm = ?", req.Bmddm).Where("step = ?", req.Step).Where("year = ?", year).Update(model.StepCheckData{
+		Status: model.CHECK_STATUS_PASS,
+	})
+	if err != nil {
+		common.ResError(c, "修改检查状态失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
 }
 
 func NextSer(c *gin.Context, req model.NextStepReq) {
@@ -261,7 +289,7 @@ func NextSer(c *gin.Context, req model.NextStepReq) {
 		common.ResForbidden(c, "您尚未进入此阶段")
 		return
 	}
-	if stepCheckData.Step != model.CHECK_STEP_WAITING {
+	if stepCheckData.Step != model.CHECK_STEP_WAITING && stepCheckData.Step != model.CHECK_STEP_FOURTH {
 		if stepCheckData.Status != model.CHECK_STATUS_PASS {
 			common.ResForbidden(c, "您的当前流程尚未校验通过")
 			return
@@ -296,10 +324,46 @@ func NextSer(c *gin.Context, req model.NextStepReq) {
 		return
 	}
 	sess.Commit()
-	err = common.SetHistory(req.Step, 0, userId, userName, userName+"确认了当前阶段", year)
+	err = common.SetHistory(req.Step, 0, userId, req.Bmddm, userName, userName+"确认了当前阶段", year)
 	if err != nil {
 		common.ResError(c, "记录操作失败")
 		return
 	}
 	common.ResOk(c, "ok", nil)
+}
+
+func HistoryListSer(c *gin.Context, page, pageSize int) {
+	year, err := common.GetCurrentYear()
+	if err != nil {
+		common.ResError(c, "获取年份信息失败")
+		return
+	}
+	var historyItems []*model.History
+	sess := conf.Mysql.NewSession()
+	sess.Where("year = ?", year)
+	count, err := sess.Limit(pageSize, (page-1)*pageSize).OrderBy("create_time DESC").FindAndCount(&historyItems)
+	if err != nil {
+		common.ResError(c, "获取操作历史失败")
+		return
+	}
+	var bmddms []string
+	for _, i := range historyItems {
+		bmddms = append(bmddms, i.Bmddm)
+	}
+	var bmdItems []*model.CheckData
+	err = conf.Mysql.In("bmddm", bmddms).Where("year = ?", year).Find(&bmdItems)
+	if err != nil {
+		common.ResError(c, "获取报名点信息失败")
+		return
+	}
+	var bmdMapping = make(map[string]string)
+	for _, i := range bmdItems {
+		bmdMapping[i.Bmddm] = i.Bmdmc
+	}
+	for _, i := range historyItems {
+		i.Bmdmc = bmdMapping[i.Bmddm]
+		i.CreateTimeStr = time.Unix(int64(i.CreateTime), 0).Format("2006-01-02 15:04:05")
+		i.StepName = model.CHECK_STEP_NAME_MAPPING[i.Step]
+	}
+	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: historyItems})
 }

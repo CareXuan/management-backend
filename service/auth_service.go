@@ -220,6 +220,11 @@ func RemovePermissionSer(c *gin.Context, id int) {
 }
 
 func AllGroupSer(c *gin.Context, name string, page, pageSize int) {
+	year, err := common.GetCurrentYear()
+	if err != nil {
+		common.ResError(c, "获取年份信息失败")
+		return
+	}
 	sess := conf.Mysql.NewSession()
 	var groupItems []*model.Group
 	if name != "" {
@@ -235,7 +240,7 @@ func AllGroupSer(c *gin.Context, name string, page, pageSize int) {
 	for _, i := range groupItems {
 		groupIds = append(groupIds, i.Id)
 	}
-	err = conf.Mysql.In("group_id", groupIds).Find(&groupUsers)
+	err = conf.Mysql.In("group_id", groupIds).Where("year=?", year).Find(&groupUsers)
 	if err != nil {
 		common.ResError(c, "获取组别用户关联关系失败")
 		return
@@ -290,6 +295,8 @@ func GroupInfoSer(c *gin.Context, id int) {
 	var userIds []int
 	for _, i := range groupUsers {
 		userIds = append(userIds, i.UserId)
+		groupInfo.BmdStart = i.BmdStart
+		groupInfo.BmdEnd = i.BmdEnd
 	}
 	groupInfo.Users = userIds
 	common.ResOk(c, "ok", groupInfo)

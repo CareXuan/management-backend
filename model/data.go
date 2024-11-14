@@ -20,6 +20,14 @@ const CHECK_STATUS_ALL_ERROR = 10
 const STEP_STATUS_WAITING = 1
 const STEP_STATUS_PASS = 2
 
+var CHECK_STEP_NAME_MAPPING = map[int]string{
+	CHECK_STEP_WAITING: "封装流程开始",
+	CHECK_STEP_FIRST:   "总数清点",
+	CHECK_STEP_SECOND:  "单元清点",
+	CHECK_STEP_THIRD:   "首末号核对",
+	CHECK_STEP_FOURTH:  "封装确认",
+}
+
 type CheckData struct {
 	Id          int    `json:"id" xorm:"pk autoincr INT(11)"`
 	Bmddm       string `json:"bmddm" xorm:"VARCHAR(4) not null default '' comment('报名点代码')"`
@@ -32,6 +40,8 @@ type CheckData struct {
 	BlackCnt    int    `json:"black_cnt" xorm:"INT(8) not null default 0 comment('黑封数量')"`
 	Step        int    `json:"step" xorm:"INT(4) not null default 0 comment('步骤号')"`
 	Year        string `json:"year" xorm:"VARCHAR(4) not null default 0 comment('年份')"`
+	ProgressCnt int    `json:"progress_cnt" xorm:"-"`
+	RemainCnt   int    `json:"remain_cnt" xorm:"-"`
 }
 
 type StepCheckData struct {

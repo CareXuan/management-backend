@@ -5,6 +5,8 @@ type Group struct {
 	Name      string   `json:"name" xorm:"VARCHAR(64) not null default '' comment('组名')"`
 	Users     []int    `json:"users" xorm:"-"`
 	UserNames []string `json:"user_names" xorm:"-"`
+	BmdStart  string   `json:"bmd_start" xorm:"-"`
+	BmdEnd    string   `json:"bmd_end" xorm:"-"`
 }
 
 type GroupUser struct {

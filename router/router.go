@@ -47,6 +47,7 @@ func InitRouter(r *gin.Engine) {
 		{
 			data.GET("/list", controller.GetCheckList)
 			data.GET("/info", controller.GetCheckInfo)
+			data.GET("/history", controller.HistoryList)
 			data.POST("/next", controller.NextStep)
 			data.POST("/check", controller.Check)
 			data.POST("/sbk/upload", controller.UploadSbkDBF).Use(middleware.LimitUploadSize(int64(50 << 20)))

@@ -45,11 +45,12 @@ func GetUserIdByToken(c *gin.Context) (int, string, error) {
 	return user.Id, user.Name, nil
 }
 
-func SetHistory(step, status, userId int, userName, remark, year string) error {
+func SetHistory(step, status, userId int, bmddm, userName, remark, year string) error {
 	_, err := conf.Mysql.Insert(model.History{
 		Step:       step,
 		Status:     status,
 		UserId:     userId,
+		Bmddm:      bmddm,
 		UserName:   userName,
 		Remark:     remark,
 		Year:       year,
