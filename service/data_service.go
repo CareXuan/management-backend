@@ -93,14 +93,13 @@ func StepInfoSer(c *gin.Context, step int) {
 		common.ResError(c, "获取组配置失败")
 		return
 	}
-	var stepCheckData model.StepCheckData
+	var checkDataItem model.CheckData
 	sess := conf.Mysql.NewSession()
 	sess.Where("year = ?", year)
 	sess.Where("bmddm >= ?", groupUser.BmdStart)
 	sess.Where("bmddm <= ?", groupUser.BmdEnd)
 	sess.Where("step = ?", step)
-	sess.Where("status != ?", model.CHECK_STATUS_PASS)
-	_, err = sess.OrderBy("bmddm").Get(&stepCheckData)
+	_, err = sess.OrderBy("bmddm").Get(&checkDataItem)
 	if err != nil {
 		common.ResError(c, "获取数据失败")
 		return
@@ -110,7 +109,7 @@ func StepInfoSer(c *gin.Context, step int) {
 		selectString = "bmddm,bmdmc,envelope_cnt,first_cnt,last_cnt,blue_cnt,red_cnt,black_cnt"
 	}
 	var bmdItem model.CheckData
-	_, err = conf.Mysql.Select(selectString).Where("bmddm = ?", stepCheckData.Bmddm).Where("year = ?", year).Get(&bmdItem)
+	_, err = conf.Mysql.Select(selectString).Where("bmddm = ?", checkDataItem.Bmddm).Where("year = ?", year).Get(&bmdItem)
 	if err != nil {
 		common.ResError(c, "获取报名点信息失败")
 		return
@@ -191,7 +190,7 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 			common.ResForbidden(c, "校验失败")
 			return
 		}
-	case model.CHECK_STEP_SECOND:
+	case model.CHECK_STEP_THIRD:
 		startCnt := req.Data[0]
 		endCnt := req.Data[1]
 		if checkDataItem.FirstCnt != startCnt || checkDataItem.LastCnt != endCnt {
@@ -206,13 +205,25 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 			common.ResForbidden(c, "校验失败")
 			return
 		}
-	case model.CHECK_STEP_THIRD:
+	case model.CHECK_STEP_SECOND:
 		blueCnt := req.Data[0]
 		redCnt := req.Data[1]
 		blackCnt := req.Data[2]
 		if checkDataItem.BlueCnt != blueCnt || checkDataItem.RedCnt != redCnt || checkDataItem.BlackCnt != blackCnt {
 			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, req.Bmddm, userName, userName+"检查此阶段失败", year)
 			errStatus := model.CHECK_STATUS_ERROR
+			blueStatus := "1"
+			redStatus := "1"
+			blackStatus := "1"
+			if checkDataItem.BlueCnt != blueCnt {
+				blueStatus = "2"
+			}
+			if checkDataItem.RedCnt != redCnt {
+				redStatus = "2"
+			}
+			if checkDataItem.BlackCnt != blackCnt {
+				blackStatus = "2"
+			}
 			if checkDataItem.BlueCnt != blueCnt && checkDataItem.RedCnt == redCnt && checkDataItem.BlackCnt == blackCnt {
 				errStatus = model.CHECK_STATUS_BLUE_ERROR
 			}
@@ -241,7 +252,8 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 				common.ResError(c, "修改检查状态失败")
 				return
 			}
-			common.ResForbidden(c, "校验失败")
+			common.ResForbidden(c, "{\"blue_status\": "+blueStatus+",\"red_status\": "+redStatus+",\"black_status\": "+blackStatus+"}")
+			return
 		}
 	}
 	common.SetHistory(req.Step, model.CHECK_STATUS_PASS, userId, req.Bmddm, userName, userName+"检查此阶段通过", year)

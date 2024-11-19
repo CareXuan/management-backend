@@ -185,6 +185,17 @@ func UploadBkdDBF(c *gin.Context) {
 	}
 	defer dbfTable.Close()
 
+	_, sqlErr := conf.Mysql.Where("year=?", year).Delete(&model.CheckData{})
+	if sqlErr != nil {
+		common.ResError(c, "删除基础数据失败")
+		return
+	}
+	_, sqlErr = conf.Mysql.Where("year=?", year).Delete(&model.StepCheckData{})
+	if sqlErr != nil {
+		common.ResError(c, "删除基础数据失败")
+		return
+	}
+
 	// 遍历并输出记录内容
 	var insertData []*model.CheckData
 	var insertCheckData []*model.StepCheckData
