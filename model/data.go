@@ -20,6 +20,8 @@ const CHECK_STATUS_ALL_ERROR = 10
 const STEP_STATUS_WAITING = 1
 const STEP_STATUS_PASS = 2
 
+const CHECK_NEED_CHECK = 1
+
 var CHECK_STEP_NAME_MAPPING = map[int]string{
 	CHECK_STEP_WAITING: "封装流程开始",
 	CHECK_STEP_FIRST:   "总数清点",
@@ -30,7 +32,7 @@ var CHECK_STEP_NAME_MAPPING = map[int]string{
 
 type CheckData struct {
 	Id          int    `json:"id" xorm:"pk autoincr INT(11)"`
-	Bmddm       string `json:"bmddm" xorm:"VARCHAR(4) not null default '' comment('报名点代码')"`
+	Bmddm       string `json:"bmddm" xorm:"VARCHAR(10) not null default '' comment('报名点代码')"`
 	Bmdmc       string `json:"bmdmc" xorm:"VARCHAR(64) not null default '' comment('报名点名称')"`
 	EnvelopeCnt int    `json:"envelope_cnt" xorm:"INT(8) not null default 0 comment('信封数')"`
 	FirstCnt    int    `json:"first_cnt" xorm:"INT(8) not null default 0 comment('信封首号')"`
@@ -39,6 +41,7 @@ type CheckData struct {
 	RedCnt      int    `json:"red_cnt" xorm:"INT(8) not null default 0 comment('红封数量')"`
 	BlackCnt    int    `json:"black_cnt" xorm:"INT(8) not null default 0 comment('黑封数量')"`
 	Step        int    `json:"step" xorm:"INT(4) not null default 0 comment('步骤号')"`
+	NeedCheck   int    `json:"need_check" xorm:"INT(4) not null default 0 comment('是否有报名')"`
 	Year        string `json:"year" xorm:"VARCHAR(4) not null default 0 comment('年份')"`
 	ProgressCnt int    `json:"progress_cnt" xorm:"-"`
 	RemainCnt   int    `json:"remain_cnt" xorm:"-"`
@@ -46,7 +49,7 @@ type CheckData struct {
 
 type StepCheckData struct {
 	Id     int    `json:"id" xorm:"pk autoincr INT(11)"`
-	Bmddm  string `json:"bmddm" xorm:"VARCHAR(4) not null default '' comment('报名点代码')"`
+	Bmddm  string `json:"bmddm" xorm:"VARCHAR(10) not null default '' comment('报名点代码')"`
 	Step   int    `json:"step" xorm:"INT(4) not null default 0 comment('步骤号')"`
 	Status int    `json:"status" xorm:"INT(4) not null default 0 comment('检查状态 1:未检查 2:检查通过 3:检查不通过')"`
 	Year   string `json:"year" xorm:"VARCHAR(4) not null default 0 comment('年份')"`

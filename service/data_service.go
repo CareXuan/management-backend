@@ -19,6 +19,7 @@ func StepListSer(c *gin.Context, bmddm, bmdmc string, page, pageSize int) {
 	}
 	sess := conf.Mysql.NewSession()
 	sess.Where("year = ?", year)
+	sess.Where("need_check = ?", model.CHECK_NEED_CHECK)
 	if bmddm != "" {
 		sess.Where("bmddm = ?", bmddm)
 	}
@@ -99,6 +100,7 @@ func StepInfoSer(c *gin.Context, step int) {
 	sess.Where("bmddm >= ?", groupUser.BmdStart)
 	sess.Where("bmddm <= ?", groupUser.BmdEnd)
 	sess.Where("step = ?", step)
+	sess.Where("need_check = ?", model.CHECK_NEED_CHECK)
 	_, err = sess.OrderBy("bmddm").Get(&checkDataItem)
 	if err != nil {
 		common.ResError(c, "获取数据失败")
@@ -115,7 +117,7 @@ func StepInfoSer(c *gin.Context, step int) {
 		return
 	}
 	var bmdCountItems []*model.CheckData
-	err = conf.Mysql.Where("year = ?", year).Where("bmddm >= ?", groupUser.BmdStart).Where("bmddm <= ?", groupUser.BmdEnd).Find(&bmdCountItems)
+	err = conf.Mysql.Where("year = ?", year).Where("need_check = ?", model.CHECK_NEED_CHECK).Where("bmddm >= ?", groupUser.BmdStart).Where("bmddm <= ?", groupUser.BmdEnd).Find(&bmdCountItems)
 	if err != nil {
 		common.ResError(c, "获取报名点数量失败")
 		return
@@ -150,7 +152,7 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 	}
 	bmdStart, _ := strconv.Atoi(groupUser.BmdStart)
 	bmdEnd, _ := strconv.Atoi(groupUser.BmdEnd)
-	bmdNow, _ := strconv.Atoi(req.Bmddm)
+	bmdNow, _ := strconv.Atoi(req.Bmddm[0:4])
 	if bmdNow < bmdStart || bmdNow > bmdEnd {
 		common.ResForbidden(c, "您无权处理此报名点")
 		return
@@ -202,7 +204,15 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 				common.ResError(c, "修改检查状态失败")
 				return
 			}
-			common.ResForbidden(c, "校验失败")
+			firstStatus := "1"
+			lastStatus := "1"
+			if checkDataItem.FirstCnt != startCnt {
+				firstStatus = "2"
+			}
+			if checkDataItem.LastCnt != endCnt {
+				lastStatus = "2"
+			}
+			common.ResForbidden(c, "{\"first_status\": "+firstStatus+",\"last_status\": "+lastStatus+"}")
 			return
 		}
 	case model.CHECK_STEP_SECOND:
@@ -286,7 +296,7 @@ func NextSer(c *gin.Context, req model.NextStepReq) {
 	}
 	bmdStart, _ := strconv.Atoi(groupUser.BmdStart)
 	bmdEnd, _ := strconv.Atoi(groupUser.BmdEnd)
-	bmdNow, _ := strconv.Atoi(req.Bmddm)
+	bmdNow, _ := strconv.Atoi(req.Bmddm[0:4])
 	if bmdNow < bmdStart || bmdNow > bmdEnd {
 		common.ResForbidden(c, "您无权处理此报名点")
 		return

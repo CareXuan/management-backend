@@ -74,10 +74,21 @@ func UploadSbkDBF(c *gin.Context) {
 	}
 	var bkdMapping = make(map[string]map[string][]string)
 	for _, i := range bkdItems {
-		bkdMapping[i.Bmddm] = make(map[string][]string)
-		bkdMapping[i.Bmddm]["kmdy2"] = []string{}
-		bkdMapping[i.Bmddm]["kmdy3"] = []string{}
-		bkdMapping[i.Bmddm]["kmdy4"] = []string{}
+		if i.Bmddm == "2101" || i.Bmddm == "2144" {
+			bkdMapping[i.Bmddm+"A"] = make(map[string][]string)
+			bkdMapping[i.Bmddm+"A"]["kmdy2"] = []string{}
+			bkdMapping[i.Bmddm+"A"]["kmdy3"] = []string{}
+			bkdMapping[i.Bmddm+"A"]["kmdy4"] = []string{}
+			bkdMapping[i.Bmddm+"B"] = make(map[string][]string)
+			bkdMapping[i.Bmddm+"B"]["kmdy2"] = []string{}
+			bkdMapping[i.Bmddm+"B"]["kmdy3"] = []string{}
+			bkdMapping[i.Bmddm+"B"]["kmdy4"] = []string{}
+		} else {
+			bkdMapping[i.Bmddm] = make(map[string][]string)
+			bkdMapping[i.Bmddm]["kmdy2"] = []string{}
+			bkdMapping[i.Bmddm]["kmdy3"] = []string{}
+			bkdMapping[i.Bmddm]["kmdy4"] = []string{}
+		}
 	}
 
 	var bmddmList []string
@@ -100,15 +111,26 @@ func UploadSbkDBF(c *gin.Context) {
 		wgym := strings.ReplaceAll(common.IgnoreError(record.Field(dbfTable.FieldPos("WGYM"))).(string), " ", "")
 		ywk1m := strings.ReplaceAll(common.IgnoreError(record.Field(dbfTable.FieldPos("YWK1M"))).(string), " ", "")
 		ywk2m := strings.ReplaceAll(common.IgnoreError(record.Field(dbfTable.FieldPos("YWK2M"))).(string), " ", "")
-		if strings.HasPrefix(wgym, "20") && wgym != "-" {
+		bydwm := strings.ReplaceAll(common.IgnoreError(record.Field(dbfTable.FieldPos("BYDWM"))).(string), " ", "")
+		bydw := strings.ReplaceAll(common.IgnoreError(record.Field(dbfTable.FieldPos("BYDW"))).(string), " ", "")
+		byny := strings.ReplaceAll(common.IgnoreError(record.Field(dbfTable.FieldPos("BYNY"))).(string), " ", "")
+		if bmddm == "2101" || bmddm == "2144" {
+			if ((bydwm == "10145" && bydw == "东北大学") || (bydw == "宁夏理工学院")) && strings.HasPrefix(byny, year) {
+				bmddm += "A"
+			} else {
+				bmddm += "B"
+			}
+		}
+		if !strings.HasPrefix(wgym, "20") && wgym != "-" {
 			bkdMapping[bmddm]["kmdy2"] = append(bkdMapping[bmddm]["kmdy2"], ksbh)
 		}
-		if strings.HasPrefix(ywk1m, "30") && wgym != "-" {
+		if !strings.HasPrefix(ywk1m, "30") && ywk1m != "-" {
 			bkdMapping[bmddm]["kmdy3"] = append(bkdMapping[bmddm]["kmdy3"], ksbh)
 		}
-		if strings.HasPrefix(ywk2m, "40") && wgym != "-" {
+		if !strings.HasPrefix(ywk2m, "40") && ywk2m != "-" && ywk2m != "--" {
 			bkdMapping[bmddm]["kmdy4"] = append(bkdMapping[bmddm]["kmdy4"], ksbh)
 		}
+
 		needAdd := true
 		for _, i := range bmddmList {
 			if i == bmddm {
@@ -122,6 +144,9 @@ func UploadSbkDBF(c *gin.Context) {
 	}
 
 	sort.Strings(bmddmList)
+	_, err = conf.Mysql.In("bmddm", bmddmList).Where("year = ?", year).Update(&model.CheckData{
+		NeedCheck: model.CHECK_NEED_CHECK,
+	})
 
 	startNum := 1
 	endNum := 1
@@ -213,18 +238,45 @@ func UploadBkdDBF(c *gin.Context) {
 		}
 		bmddm := strings.ReplaceAll(common.IgnoreError(record.Field(dbfTable.FieldPos("BMDDM"))).(string), " ", "")
 		bmdmc := strings.ReplaceAll(common.IgnoreError(record.Field(dbfTable.FieldPos("BMDMC"))).(string), " ", "")
-		insertData = append(insertData, &model.CheckData{
-			Bmddm: bmddm,
-			Bmdmc: bmdmc,
-			Step:  model.CHECK_STEP_WAITING,
-			Year:  year,
-		})
-		insertCheckData = append(insertCheckData, &model.StepCheckData{
-			Bmddm:  bmddm,
-			Step:   model.CHECK_STEP_WAITING,
-			Status: model.CHECK_STATUS_WAITING,
-			Year:   year,
-		})
+		if bmddm == "2101" || bmddm == "2144" {
+			insertData = append(insertData, &model.CheckData{
+				Bmddm: bmddm + "A",
+				Bmdmc: bmdmc + "【本校】",
+				Step:  model.CHECK_STEP_WAITING,
+				Year:  year,
+			})
+			insertCheckData = append(insertCheckData, &model.StepCheckData{
+				Bmddm:  bmddm + "A",
+				Step:   model.CHECK_STEP_WAITING,
+				Status: model.CHECK_STATUS_WAITING,
+				Year:   year,
+			})
+			insertData = append(insertData, &model.CheckData{
+				Bmddm: bmddm + "B",
+				Bmdmc: bmdmc + "【非本校】",
+				Step:  model.CHECK_STEP_WAITING,
+				Year:  year,
+			})
+			insertCheckData = append(insertCheckData, &model.StepCheckData{
+				Bmddm:  bmddm + "B",
+				Step:   model.CHECK_STEP_WAITING,
+				Status: model.CHECK_STATUS_WAITING,
+				Year:   year,
+			})
+		} else {
+			insertData = append(insertData, &model.CheckData{
+				Bmddm: bmddm,
+				Bmdmc: bmdmc,
+				Step:  model.CHECK_STEP_WAITING,
+				Year:  year,
+			})
+			insertCheckData = append(insertCheckData, &model.StepCheckData{
+				Bmddm:  bmddm,
+				Step:   model.CHECK_STEP_WAITING,
+				Status: model.CHECK_STATUS_WAITING,
+				Year:   year,
+			})
+		}
 		if len(insertData) >= 1000 {
 			_, err := conf.Mysql.Insert(&insertData)
 			if err != nil {
