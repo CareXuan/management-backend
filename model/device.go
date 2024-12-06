@@ -7,6 +7,7 @@ type Device struct {
 	Latitude        string `json:"latitude" xorm:"VARCHAR(12) not null default '0'"`
 	Longitude       string `json:"longitude" xorm:"VARCHAR(12) not null default '0'"`
 	SignalIntensity int    `json:"signal_intensity" xorm:"INT(10) not null default 0"`
+	Status          int    `json:"status" xorm:"INT(10) not null default 0"`
 	Pwd1            int    `json:"-" xorm:"INT(10) not null default 0"`
 	Pwd1Base        int    `json:"-" xorm:"INT(10) not null default 0"`
 	Pwd2            int    `json:"-" xorm:"INT(10) not null default 0"`
@@ -63,7 +64,12 @@ type DeviceLocationRes struct {
 	Lng      string `json:"lng"`
 }
 
+type DeviceStatisticFourRes struct {
+	Hour string `json:"hour"`
+	Sum  int    `json:"sum"`
+}
+
 type DeviceStatisticRes struct {
-	Columns []string `json:"columns"`
-	Datas   [][]int  `json:"datas"`
+	Columns []string        `json:"columns"`
+	Datas   [][]interface{} `json:"datas"`
 }

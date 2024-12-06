@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"management-backend/common"
 	"management-backend/conf"
@@ -98,9 +99,14 @@ func AllDeviceLocationSer(c *gin.Context) {
 	common.ResOk(c, "ok", locationRes)
 }
 
-func DeviceStatisticSer(c *gin.Context, deviceId, statisticType int, startTime, endTime string) {
+func DeviceStatisticSer(c *gin.Context, deviceId int, startTime, endTime string) {
 	var serviceDatas []*model.DeviceServiceData
+	var statisticRes model.DeviceStatisticRes
 	sess := conf.Mysql.NewSession()
+	var dataVoltage []interface{}
+	var dataElectric []interface{}
+	var dataSwitchCurrent []interface{}
+	var errorCnt []interface{}
 	sess.Where("device_id = ?", deviceId)
 	sess.Where("ts >= ? and ts <= ?", startTime, endTime)
 	err := sess.Find(&serviceDatas)
@@ -108,24 +114,18 @@ func DeviceStatisticSer(c *gin.Context, deviceId, statisticType int, startTime, 
 		common.ResError(c, "获取数据失败")
 		return
 	}
-	var statisticRes model.DeviceStatisticRes
-	var datah []int
-	var datal []int
 	for _, i := range serviceDatas {
 		statisticRes.Columns = append(statisticRes.Columns, i.Ts)
-		switch statisticType {
-		case 1:
-			datah = append(datah, i.HighVoltageH)
-			datal = append(datal, i.HighVoltageL)
-		case 2:
-			datah = append(datah, i.HighCurrentH)
-			datal = append(datal, i.HighCurrentL)
-		case 3:
-			datah = append(datah, i.SwitchCurrent)
-		}
+		dataVoltage = append(dataVoltage, fmt.Sprintf("%.2f", float64((i.HighVoltageH<<8+i.HighVoltageL)*15)/4095.0))
+		dataElectric = append(dataElectric, fmt.Sprintf("%.2f", float64((i.HighCurrentH<<8+i.HighCurrentL)*20)/4095.0))
+		dataSwitchCurrent = append(dataSwitchCurrent, float64(i.SwitchCurrent)/100.0)
+		errorCnt = append(errorCnt, i.CurrentBak2)
+
 	}
-	statisticRes.Datas = append(statisticRes.Datas, datah)
-	statisticRes.Datas = append(statisticRes.Datas, datal)
+	statisticRes.Datas = append(statisticRes.Datas, dataVoltage)
+	statisticRes.Datas = append(statisticRes.Datas, dataElectric)
+	statisticRes.Datas = append(statisticRes.Datas, dataSwitchCurrent)
+	statisticRes.Datas = append(statisticRes.Datas, errorCnt)
 	common.ResOk(c, "ok", statisticRes)
 }
 
