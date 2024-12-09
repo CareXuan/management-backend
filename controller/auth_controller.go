@@ -91,3 +91,12 @@ func RemovePermission(c *gin.Context) {
 	}
 	service.RemovePermissionSer(c, permissionReq.Id)
 }
+
+func SmsCode(c *gin.Context) {
+	var req model.SmsReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.SmsCodeSer(c, req)
+}

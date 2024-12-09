@@ -48,3 +48,18 @@ func MemberRecharge(c *gin.Context) {
 	}
 	service.Recharge(c, memberRecharge)
 }
+
+func UniappLogin(c *gin.Context) {
+	var req model.UniappLoginReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.UniappLoginSer(c, req)
+}
+
+func UniappInfo(c *gin.Context) {
+	userId := c.Query("user_id")
+	userIdInt, _ := strconv.Atoi(userId)
+	service.UniappInfoSer(c, userIdInt)
+}

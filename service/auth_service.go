@@ -254,3 +254,35 @@ func RemovePermissionSer(c *gin.Context, id int) {
 
 	common.ResOk(c, "ok", nil)
 }
+
+func SmsCodeSer(c *gin.Context, req model.SmsReq) {
+	var existSms []*model.Sms
+	err := conf.Mysql.Where("expired_at > ?", time.Now().Unix()).Find(&existSms)
+	if err != nil {
+		common.ResError(c, "获取短信信息失败")
+		return
+	}
+	if len(existSms) > 0 {
+		common.ResForbidden(c, "验证码有效时间5分钟，不可重复发送")
+		return
+	}
+	smsCode := common.GetOneNewCard(4)
+	data := "{\"code\":\"" + smsCode + "\"}"
+	err = common.SendSms(req.Phone, conf.Conf.Sms.CodeTemplate, conf.Conf.Sms.CodeSign, data)
+	if err != nil {
+		common.ResError(c, "发送短信失败")
+		return
+	}
+	_, err = conf.Mysql.Insert(model.Sms{
+		Phone:     req.Phone,
+		Code:      smsCode,
+		UseAt:     0,
+		ExpiredAt: int(time.Now().Unix()) + 300,
+		CreateAt:  int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "添加短信发送记录失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}

@@ -18,6 +18,7 @@ type Config struct {
 	Gpt    GptConfig    `yaml:"gpt"`
 	Upload UploadConfig `yaml:"upload"`
 	Wechat WechatConfig `yaml:"wechat"`
+	Sms    SmsConfig    `yaml:"sms"`
 }
 
 type MysqlConfig struct {
@@ -36,6 +37,13 @@ type UploadConfig struct {
 type WechatConfig struct {
 	AppId     string `yaml:"app_id"`
 	AppSecret string `yaml:"app_secret"`
+}
+
+type SmsConfig struct {
+	AccessKeyId     string `yaml:"access_key_id"`
+	AccessKeySecret string `yaml:"access_key_secret"`
+	CodeSign        string `yaml:"code_sign"`
+	CodeTemplate    string `yaml:"code_template"`
 }
 
 var (
@@ -121,6 +129,7 @@ func syncTables() {
 		new(model.Device),
 		new(model.DevicePackage),
 		new(model.DevicePackageDetail),
+		new(model.Sms),
 	)
 	if err != nil {
 		log.Fatal(err)

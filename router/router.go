@@ -82,5 +82,20 @@ func InitRouter(r *gin.Engine) {
 		{
 			commonCtr.POST("/upload", controller.Upload)
 		}
+
+		uniApp := v1.Group("uni_app")
+		{
+			// 权限
+			auth := uniApp.Group("auth")
+			{
+				auth.POST("/sms", controller.SmsCode)
+			}
+			// 用户
+			member := uniApp.Group("user")
+			{
+				member.GET("/info", controller.UniappInfo)
+				member.POST("/login", controller.UniappLogin)
+			}
+		}
 	}
 }

@@ -25,6 +25,7 @@ type Member struct {
 	Birthday  string `json:"birthday" xorm:"VARCHAR(16) not null default '' comment('生日')"`
 	Gender    int    `json:"gender" xorm:"INT(3) not null default 0 comment('性别 1：男 2：女')"`
 	Remark    string `json:"remark" xorm:"VARCHAR(256) not null default '' comment('备注')"`
+	OpenId    string `json:"open_id" xorm:"varchar(128) not null default '' comment('微信ID')"`
 	CreatedAt int64  `json:"created_at" xorm:"INT(11) not null default 0"`
 }
 
@@ -131,4 +132,15 @@ type AppointmentMember struct {
 	MemberName   string `json:"member_name"`
 	MemberColor  string `json:"member_color"`
 	MemberRemark string `json:"member_remark"`
+}
+
+type UniappLoginReq struct {
+	Code string `json:"code"`
+}
+
+type WeChatLoginResponse struct {
+	OpenID     string `json:"openid"`
+	SessionKey string `json:"session_key"`
+	ErrCode    int    `json:"errcode"`
+	ErrMsg     string `json:"errmsg"`
 }

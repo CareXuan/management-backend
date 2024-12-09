@@ -1,11 +1,15 @@
 package service
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
 	"my-gpt-server/common"
 	"my-gpt-server/conf"
 	"my-gpt-server/model"
 	"my-gpt-server/utils"
+	"net/http"
 	"time"
 )
 
@@ -107,26 +111,6 @@ func AddMember(c *gin.Context, member model.MemberAddReq) {
 		common.ResError(c, "添加新会员失败")
 		return
 	}
-	//newMemberRecord := model.MemberRecord{
-	//	CardId:    newMember.Id,
-	//	PackageId: member.PackageId,
-	//	Type:      member.Type,
-	//	Price:     member.Price,
-	//	Cost:      member.Cost,
-	//	Remark:    member.RechargeRemark,
-	//	Pic:       member.Pic,
-	//	CreatedAt: time.Now().Unix(),
-	//}
-	//_, err = conf.Mysql.Insert(&newMemberRecord)
-	//if err != nil {
-	//	common.ResError(c, "添加会员记录失败")
-	//	return
-	//}
-	//_, err = addRechargeDetail(newMemberRecord.Id, member.RechargeDetail)
-	//if err != nil {
-	//	common.ResError(c, "添加充值记录详情失败")
-	//	return
-	//}
 	common.ResOk(c, "ok", nil)
 }
 
@@ -258,4 +242,72 @@ func updateDeviceRecord(memberId int, rechargeDetail []model.MemberRecordDetailA
 		return -1, "提交事务失败"
 	}
 	return 0, ""
+}
+
+func UniappLoginSer(c *gin.Context, req model.UniappLoginReq) {
+	// 请求微信 API 获取 openid 和 session_key
+	resp, err := http.Get(fmt.Sprintf(
+		"https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
+		conf.Conf.Wechat.AppId, conf.Conf.Wechat.AppSecret, req.Code,
+	))
+	if err != nil {
+		common.ResError(c, "请求微信失败")
+		return
+	}
+	defer resp.Body.Close()
+
+	// 解析微信 API 返回的 JSON 数据
+	body, _ := ioutil.ReadAll(resp.Body)
+	var weChatResp model.WeChatLoginResponse
+	err = json.Unmarshal(body, &weChatResp)
+	if err != nil {
+		common.ResError(c, "解析返回数据失败")
+		return
+	}
+
+	// 处理错误
+	if weChatResp.ErrCode != 0 {
+		common.ResError(c, "处理错误")
+		return
+	}
+
+	fmt.Println(weChatResp)
+
+	var wechatUser model.Member
+	_, err = conf.Mysql.Where("open_id = ?", weChatResp.OpenID).Get(&wechatUser)
+	if err != nil {
+		common.ResError(c, "获取用户信息失败")
+		return
+	}
+	if wechatUser.Id == 0 {
+		userAdd := model.Member{
+			Name:      "微信用户" + common.GetOneNewCard(12),
+			Card:      common.GetOneNewCard(12),
+			Phone:     "",
+			Emergency: "",
+			Birthday:  "",
+			Gender:    0,
+			Remark:    "",
+			OpenId:    weChatResp.OpenID,
+			CreatedAt: time.Now().Unix(),
+		}
+		_, err := conf.Mysql.Insert(userAdd)
+		if err != nil {
+			common.ResError(c, "添加用户失败")
+			return
+		}
+		common.ResOk(c, "ok", userAdd)
+	}
+
+	common.ResOk(c, "ok", wechatUser)
+}
+
+func UniappInfoSer(c *gin.Context, userId int) {
+	var memberInfo model.Member
+	_, err := conf.Mysql.Where("id = ?", userId).Get(&memberInfo)
+	if err != nil {
+		common.ResError(c, "获取用户信息失败")
+		return
+	}
+	common.ResOk(c, "ok", memberInfo)
 }

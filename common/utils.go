@@ -2,6 +2,7 @@ package common
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
 )
 
@@ -13,5 +14,6 @@ func GetOneNewCard(length int) string {
 	}
 
 	// 将大整数转换为字符串
-	return randomInt.String()
+	format := fmt.Sprintf("%%0%dd", length) // 动态生成格式字符串
+	return fmt.Sprintf(format, randomInt)
 }
