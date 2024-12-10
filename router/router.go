@@ -95,6 +95,8 @@ func InitRouter(r *gin.Engine) {
 			{
 				member.GET("/info", controller.UniappInfo)
 				member.POST("/login", controller.UniappLogin)
+				member.POST("/update", controller.UniappUpdate)
+				member.POST("/phone_bind", controller.UniappPhoneBind)
 			}
 		}
 	}

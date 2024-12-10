@@ -138,6 +138,20 @@ type UniappLoginReq struct {
 	Code string `json:"code"`
 }
 
+type UniappUpdateReq struct {
+	UserId    int    `json:"user_id"`
+	Emergency string `json:"emergency"`
+	Birthday  string `json:"birthday"`
+	Gender    int    `json:"gender"`
+	Remark    string `json:"remark"`
+}
+
+type UniappPhoneBindReq struct {
+	UserId int    `json:"user_id"`
+	Phone  string `json:"phone"`
+	Code   string `json:"code"`
+}
+
 type WeChatLoginResponse struct {
 	OpenID     string `json:"openid"`
 	SessionKey string `json:"session_key"`

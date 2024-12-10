@@ -302,6 +302,83 @@ func UniappLoginSer(c *gin.Context, req model.UniappLoginReq) {
 	common.ResOk(c, "ok", wechatUser)
 }
 
+func UniappUpdateSer(c *gin.Context, req model.UniappUpdateReq) {
+	_, err := conf.Mysql.Where("id = ?", req.UserId).Update(model.Member{
+		Emergency: req.Emergency,
+		Birthday:  req.Birthday,
+		Gender:    req.Gender,
+		Remark:    req.Remark,
+	})
+	if err != nil {
+		common.ResError(c, "修改用户信息失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func UniappPhoneBindSer(c *gin.Context, req model.UniappPhoneBindReq) {
+	var nowSms model.Sms
+	has, err := conf.Mysql.Where("phone = ?", req.Phone).Where("use_at = 0").Where("expired_at > ?", time.Now().Unix()).OrderBy("create_at DESC").Get(&nowSms)
+	if err != nil {
+		common.ResError(c, "获取验证码信息失败")
+		return
+	}
+	if !has {
+		common.ResForbidden(c, "请先发送验证码")
+		return
+	}
+	_, err = conf.Mysql.Where("phone = ?", req.Phone).Where("use_at = 0").Update(model.Sms{
+		UseAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "修改使用时间失败")
+		return
+	}
+	if nowSms.Code != req.Code {
+		common.ResForbidden(c, "验证码错误")
+		return
+	}
+	var existMember model.Member
+	has, err = conf.Mysql.Where("phone = ?", req.Phone).Get(&existMember)
+	if err != nil {
+		common.ResError(c, "获取用户信息失败")
+		return
+	}
+	if has {
+		var wechatMember model.Member
+		_, err := conf.Mysql.Where("id = ?", req.UserId).Get(&wechatMember)
+		if err != nil {
+			common.ResError(c, "获取微信绑定用户失败")
+			return
+		}
+		sess := conf.Mysql.NewSession()
+		_, err = sess.Where("phone = ?", req.Phone).Update(model.Member{
+			OpenId: wechatMember.OpenId,
+		})
+		if err != nil {
+			common.ResError(c, "修改用户信息失败")
+			sess.Rollback()
+			return
+		}
+		_, err = sess.Where("id = ?", req.UserId).Delete(&model.Member{})
+		if err != nil {
+			common.ResError(c, "删除微信绑定用户失败")
+			sess.Rollback()
+			return
+		}
+		sess.Commit()
+	} else {
+		_, err := conf.Mysql.Where("id = ?", req.UserId).Update(model.Member{
+			Phone: req.Phone,
+		})
+		if err != nil {
+			common.ResError(c, "修改用户信息失败")
+			return
+		}
+	}
+	common.ResOk(c, "ok", nil)
+}
+
 func UniappInfoSer(c *gin.Context, userId int) {
 	var memberInfo model.Member
 	_, err := conf.Mysql.Where("id = ?", userId).Get(&memberInfo)

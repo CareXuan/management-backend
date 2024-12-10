@@ -58,6 +58,24 @@ func UniappLogin(c *gin.Context) {
 	service.UniappLoginSer(c, req)
 }
 
+func UniappUpdate(c *gin.Context) {
+	var req model.UniappUpdateReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.UniappUpdateSer(c, req)
+}
+
+func UniappPhoneBind(c *gin.Context) {
+	var req model.UniappPhoneBindReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.UniappPhoneBindSer(c, req)
+}
+
 func UniappInfo(c *gin.Context) {
 	userId := c.Query("user_id")
 	userIdInt, _ := strconv.Atoi(userId)
