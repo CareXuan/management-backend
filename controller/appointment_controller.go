@@ -52,3 +52,38 @@ func VerifyAppointment(c *gin.Context) {
 	}
 	service.VerifyAppointmentSer(c, verifyAppointmentReq)
 }
+
+func UniappAppointment(c *gin.Context) {
+	memberId := c.Query("member_id")
+	memberIdInt, _ := strconv.Atoi(memberId)
+	searchType := c.Query("type")
+	page := c.Query("page")
+	pageInt, _ := strconv.Atoi(page)
+	pageSize := c.Query("page_size")
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	service.UniappAppointmentSer(c, memberIdInt, pageInt, pageSizeInt, searchType)
+}
+
+func UniappAppointmentDevice(c *gin.Context) {
+	memberId := c.Query("member_id")
+	memberIdInt, _ := strconv.Atoi(memberId)
+	service.UniappAppointmentDeviceSer(c, memberIdInt)
+}
+
+func UniappAppointmentAdd(c *gin.Context) {
+	var addAppointmentReq model.AddAppointmentReq
+	if err := c.ShouldBindJSON(&addAppointmentReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AddAppointmentSer(c, addAppointmentReq)
+}
+
+func UniappAppointmentCancel(c *gin.Context) {
+	var uniappAppointmentCancel model.UniappAppointmentCancelReq
+	if err := c.ShouldBindJSON(&uniappAppointmentCancel); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.UniappAppointmentCancelSer(c, uniappAppointmentCancel)
+}

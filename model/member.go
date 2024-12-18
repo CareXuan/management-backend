@@ -82,13 +82,6 @@ type MemberAddReq struct {
 	Birthday   string `json:"birthday"`
 	Gender     int    `json:"gender"`
 	UserRemark string `json:"user_remark"`
-	//PackageId      int                     `json:"package_id"`
-	//Type           int                     `json:"type"`
-	//Price          int                     `json:"price"`
-	//Cost           int                     `json:"cost"`
-	//RechargeRemark string                  `json:"recharge_remark"`
-	//Pic            string                  `json:"pic"`
-	//RechargeDetail []MemberRecordDetailAdd `json:"recharge_detail"`
 }
 
 type MemberRechargeReq struct {
@@ -110,6 +103,7 @@ type MemberRecordDetailAdd struct {
 
 type MemberRechargeRecordRes struct {
 	Name          string `json:"name"`
+	Src           string `json:"src"`
 	TimesRemain   int    `json:"times_remain"`
 	MonthlyRemain string `json:"monthly_remain"`
 }
@@ -139,7 +133,8 @@ type UniappLoginReq struct {
 }
 
 type UniappUpdateReq struct {
-	UserId    int    `json:"user_id"`
+	MemberId  int    `json:"member_id"`
+	Name      string `json:"name"`
 	Emergency string `json:"emergency"`
 	Birthday  string `json:"birthday"`
 	Gender    int    `json:"gender"`
@@ -147,9 +142,9 @@ type UniappUpdateReq struct {
 }
 
 type UniappPhoneBindReq struct {
-	UserId int    `json:"user_id"`
-	Phone  string `json:"phone"`
-	Code   string `json:"code"`
+	MemberId int    `json:"member_id"`
+	Phone    string `json:"phone"`
+	Code     string `json:"code"`
 }
 
 type WeChatLoginResponse struct {

@@ -94,9 +94,14 @@ func InitRouter(r *gin.Engine) {
 			member := uniApp.Group("user")
 			{
 				member.GET("/info", controller.UniappInfo)
+				member.GET("/recharge/detail", controller.UniappGetMemberRechargeDetail)
+				member.GET("/appointment", controller.UniappAppointment)
+				member.GET("/appointment/device", controller.UniappAppointmentDevice)
 				member.POST("/login", controller.UniappLogin)
 				member.POST("/update", controller.UniappUpdate)
 				member.POST("/phone_bind", controller.UniappPhoneBind)
+				member.POST("/appointment/add", controller.UniappAppointmentAdd)
+				member.POST("/appointment/cancel", controller.UniappAppointmentCancel)
 			}
 		}
 	}

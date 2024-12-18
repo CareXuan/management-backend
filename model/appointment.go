@@ -15,3 +15,8 @@ type VerifyAppointmentReq struct {
 	Status        int    `json:"status"`
 	Reason        string `json:"reason"`
 }
+
+type UniappAppointmentCancelReq struct {
+	MemberId      int `json:"member_id"`
+	AppointmentId int `json:"appointment_id"`
+}

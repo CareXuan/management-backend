@@ -77,7 +77,13 @@ func UniappPhoneBind(c *gin.Context) {
 }
 
 func UniappInfo(c *gin.Context) {
-	userId := c.Query("user_id")
-	userIdInt, _ := strconv.Atoi(userId)
-	service.UniappInfoSer(c, userIdInt)
+	memberId := c.Query("member_id")
+	memberIdInt, _ := strconv.Atoi(memberId)
+	service.UniappInfoSer(c, memberIdInt)
+}
+
+func UniappGetMemberRechargeDetail(c *gin.Context) {
+	id := c.Query("member_id")
+	idInt, _ := strconv.Atoi(id)
+	service.GetMemberRechargeDetail(c, idInt)
 }

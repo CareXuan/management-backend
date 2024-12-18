@@ -78,6 +78,7 @@ func GetMemberRechargeDetail(c *gin.Context, memberId int) {
 		}
 		recordRes = append(recordRes, model.MemberRechargeRecordRes{
 			Name:          device.Name,
+			Src:           device.Pic,
 			TimesRemain:   timeRemain,
 			MonthlyRemain: monthlyRemain,
 		})
@@ -303,7 +304,8 @@ func UniappLoginSer(c *gin.Context, req model.UniappLoginReq) {
 }
 
 func UniappUpdateSer(c *gin.Context, req model.UniappUpdateReq) {
-	_, err := conf.Mysql.Where("id = ?", req.UserId).Update(model.Member{
+	_, err := conf.Mysql.Where("id = ?", req.MemberId).Update(model.Member{
+		Name:      req.Name,
 		Emergency: req.Emergency,
 		Birthday:  req.Birthday,
 		Gender:    req.Gender,
@@ -344,9 +346,9 @@ func UniappPhoneBindSer(c *gin.Context, req model.UniappPhoneBindReq) {
 		common.ResError(c, "获取用户信息失败")
 		return
 	}
-	if has {
+	if has && existMember.OpenId == "" {
 		var wechatMember model.Member
-		_, err := conf.Mysql.Where("id = ?", req.UserId).Get(&wechatMember)
+		_, err := conf.Mysql.Where("id = ?", req.MemberId).Get(&wechatMember)
 		if err != nil {
 			common.ResError(c, "获取微信绑定用户失败")
 			return
@@ -360,7 +362,7 @@ func UniappPhoneBindSer(c *gin.Context, req model.UniappPhoneBindReq) {
 			sess.Rollback()
 			return
 		}
-		_, err = sess.Where("id = ?", req.UserId).Delete(&model.Member{})
+		_, err = sess.Where("id = ?", req.MemberId).Delete(&model.Member{})
 		if err != nil {
 			common.ResError(c, "删除微信绑定用户失败")
 			sess.Rollback()
@@ -368,7 +370,7 @@ func UniappPhoneBindSer(c *gin.Context, req model.UniappPhoneBindReq) {
 		}
 		sess.Commit()
 	} else {
-		_, err := conf.Mysql.Where("id = ?", req.UserId).Update(model.Member{
+		_, err := conf.Mysql.Where("id = ?", req.MemberId).Update(model.Member{
 			Phone: req.Phone,
 		})
 		if err != nil {
@@ -379,9 +381,9 @@ func UniappPhoneBindSer(c *gin.Context, req model.UniappPhoneBindReq) {
 	common.ResOk(c, "ok", nil)
 }
 
-func UniappInfoSer(c *gin.Context, userId int) {
+func UniappInfoSer(c *gin.Context, memberId int) {
 	var memberInfo model.Member
-	_, err := conf.Mysql.Where("id = ?", userId).Get(&memberInfo)
+	_, err := conf.Mysql.Where("id = ?", memberId).Get(&memberInfo)
 	if err != nil {
 		common.ResError(c, "获取用户信息失败")
 		return

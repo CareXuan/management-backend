@@ -256,8 +256,12 @@ func RemovePermissionSer(c *gin.Context, id int) {
 }
 
 func SmsCodeSer(c *gin.Context, req model.SmsReq) {
+	if req.Phone == "" {
+		common.ResForbidden(c, "请填写手机号")
+		return
+	}
 	var existSms []*model.Sms
-	err := conf.Mysql.Where("expired_at > ?", time.Now().Unix()).Find(&existSms)
+	err := conf.Mysql.Where("phone = ?", req.Phone).Where("expired_at > ?", time.Now().Unix()).Find(&existSms)
 	if err != nil {
 		common.ResError(c, "获取短信信息失败")
 		return

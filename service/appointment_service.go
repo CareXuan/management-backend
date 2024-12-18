@@ -276,3 +276,119 @@ func VerifyAppointmentSer(c *gin.Context, req model.VerifyAppointmentReq) {
 	}
 	common.ResOk(c, "ok", nil)
 }
+
+func UniappAppointmentSer(c *gin.Context, memberId, page, pageSize int, searchType string) {
+	var appointments []*model.MemberUseRecord
+	sess := conf.Mysql.NewSession()
+	if searchType != "" {
+		sess.Where("status = ?", searchType)
+	}
+	err := sess.Where("member_id = ?", memberId).Limit(pageSize, (page-1)*pageSize).OrderBy("id DESC").Find(&appointments)
+	if err != nil {
+		common.ResError(c, "获取预约信息失败")
+		return
+	}
+	var memberIds []int
+	var deviceIds []int
+	for _, i := range appointments {
+		memberIds = append(memberIds, i.MemberId)
+		deviceIds = append(deviceIds, i.DeviceId)
+	}
+	var memberItems []*model.Member
+	err = conf.Mysql.In("id", memberIds).Find(&memberItems)
+	if err != nil {
+		common.ResError(c, "获取用户信息失败")
+		return
+	}
+	var memberMapping = make(map[int]*model.Member)
+	for _, i := range memberItems {
+		memberMapping[i.Id] = i
+	}
+	var deviceItems []*model.Device
+	var deviceMapping = make(map[int]*model.Device)
+	err = conf.Mysql.In("id", deviceIds).Find(&deviceItems)
+	if err != nil {
+		common.ResError(c, "获取设备信息失败")
+		return
+	}
+	for _, i := range deviceItems {
+		deviceMapping[i.Id] = i
+	}
+
+	for _, appointment := range appointments {
+		appointment.Member = memberMapping[appointment.MemberId]
+		appointment.Device = deviceMapping[appointment.DeviceId]
+	}
+
+	common.ResOk(c, "ok", appointments)
+}
+
+func UniappAppointmentDeviceSer(c *gin.Context, memberId int) {
+	var activeDevices []*model.Device
+	err := conf.Mysql.Where("status = ?", model.DEVICE_STATUS_OPEN).Find(&activeDevices)
+	if err != nil {
+		common.ResError(c, "获取可用设备失败")
+		return
+	}
+	var activeDeviceIds []int
+	for _, i := range activeDevices {
+		activeDeviceIds = append(activeDeviceIds, i.Id)
+	}
+
+	var userDevice []*model.MemberDeviceRecord
+	err = conf.Mysql.Where("member_id = ?", memberId).In("device_id", activeDeviceIds).Find(&userDevice)
+	if err != nil {
+		common.ResError(c, "获取用户充值记录失败")
+		return
+	}
+	var userDeviceIds []int
+	for _, i := range userDevice {
+		if i.Type == model.RECHARGE_TYPE_TIMES && i.Value > 0 {
+			userDeviceIds = append(userDeviceIds, i.DeviceId)
+		}
+		if i.Type == model.RECHARGE_TYPE_MONTHLY && i.Value > int(time.Now().Unix()) {
+			userDeviceIds = append(userDeviceIds, i.DeviceId)
+		}
+	}
+	var resDevice []*model.Device
+	err = conf.Mysql.In("id", userDeviceIds).Find(&resDevice)
+	if err != nil {
+		common.ResError(c, "获取可用设备失败")
+		return
+	}
+	common.ResOk(c, "ok", resDevice)
+}
+
+func UniappAppointmentCancelSer(c *gin.Context, req model.UniappAppointmentCancelReq) {
+	var appointment model.MemberUseRecord
+	has, err := conf.Mysql.Where("id = ?", req.AppointmentId).Get(&appointment)
+	if err != nil {
+		common.ResError(c, "获取预约信息失败")
+		return
+	}
+	if !has {
+		common.ResForbidden(c, "预约信息不存在")
+		return
+	}
+	if appointment.MemberId != req.MemberId {
+		common.ResForbidden(c, "您无法操作其他人的预约信息")
+		return
+	}
+	if appointment.Status == model.MEMBER_USE_STATUS_PASS {
+		common.ResForbidden(c, "当前预约已使用")
+		return
+	}
+	if appointment.Status == model.MEMBER_USE_STATUS_REFUSE {
+		common.ResForbidden(c, "当前预约已取消")
+		return
+	}
+	_, err = conf.Mysql.Where("id = ?", req.AppointmentId).Update(model.MemberUseRecord{
+		Status: model.MEMBER_USE_STATUS_REFUSE,
+		Reason: "用户取消",
+	})
+	if err != nil {
+		common.ResError(c, "修改预约信息失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
