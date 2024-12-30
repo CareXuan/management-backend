@@ -280,7 +280,7 @@ func VerifyAppointmentSer(c *gin.Context, req model.VerifyAppointmentReq) {
 func UniappAppointmentSer(c *gin.Context, memberId, page, pageSize int, searchType string) {
 	var appointments []*model.MemberUseRecord
 	sess := conf.Mysql.NewSession()
-	if searchType != "" {
+	if searchType != "" && searchType != "0" {
 		sess.Where("status = ?", searchType)
 	}
 	err := sess.Where("member_id = ?", memberId).Limit(pageSize, (page-1)*pageSize).OrderBy("id DESC").Find(&appointments)

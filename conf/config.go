@@ -122,6 +122,7 @@ func syncTables() {
 		new(model.RolePermission),
 		new(model.GptQuestion),
 		new(model.Member),
+		new(model.MemberWechat),
 		new(model.MemberRecord),
 		new(model.MemberRecordDetail),
 		new(model.MemberUseRecord),
