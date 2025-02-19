@@ -54,6 +54,12 @@ func InitRouter(r *gin.Engine) {
 			data.POST("/bkd/upload", controller.UploadBkdDBF).Use(middleware.LimitUploadSize(int64(50 << 20)))
 		}
 
+		// 工具
+		tools := v1.Group("tools").Use(middleware.AuthCheck())
+		{
+			tools.POST("/data_compare", controller.CompareData)
+		}
+
 		// 配置
 		config := v1.Group("config").Use(middleware.AuthCheck())
 		{

@@ -240,10 +240,11 @@ func UploadBkdDBF(c *gin.Context) {
 		bmdmc := strings.ReplaceAll(common.IgnoreError(record.Field(dbfTable.FieldPos("BMDMC"))).(string), " ", "")
 		if bmddm == "2101" || bmddm == "2144" {
 			insertData = append(insertData, &model.CheckData{
-				Bmddm: bmddm + "A",
-				Bmdmc: bmdmc + "【本校】",
-				Step:  model.CHECK_STEP_WAITING,
-				Year:  year,
+				Bmddm:     bmddm + "A",
+				Bmdmc:     bmdmc + "【本校】",
+				Step:      model.CHECK_STEP_WAITING,
+				EntryForm: model.CHECK_FORM_NOT_COMMIT,
+				Year:      year,
 			})
 			insertCheckData = append(insertCheckData, &model.StepCheckData{
 				Bmddm:  bmddm + "A",
@@ -252,10 +253,11 @@ func UploadBkdDBF(c *gin.Context) {
 				Year:   year,
 			})
 			insertData = append(insertData, &model.CheckData{
-				Bmddm: bmddm + "B",
-				Bmdmc: bmdmc + "【非本校】",
-				Step:  model.CHECK_STEP_WAITING,
-				Year:  year,
+				Bmddm:     bmddm + "B",
+				Bmdmc:     bmdmc + "【非本校】",
+				Step:      model.CHECK_STEP_WAITING,
+				EntryForm: model.CHECK_FORM_NOT_COMMIT,
+				Year:      year,
 			})
 			insertCheckData = append(insertCheckData, &model.StepCheckData{
 				Bmddm:  bmddm + "B",
@@ -265,10 +267,11 @@ func UploadBkdDBF(c *gin.Context) {
 			})
 		} else {
 			insertData = append(insertData, &model.CheckData{
-				Bmddm: bmddm,
-				Bmdmc: bmdmc,
-				Step:  model.CHECK_STEP_WAITING,
-				Year:  year,
+				Bmddm:     bmddm,
+				Bmdmc:     bmdmc,
+				Step:      model.CHECK_STEP_WAITING,
+				EntryForm: model.CHECK_FORM_NOT_COMMIT,
+				Year:      year,
 			})
 			insertCheckData = append(insertCheckData, &model.StepCheckData{
 				Bmddm:  bmddm,

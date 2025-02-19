@@ -6,6 +6,7 @@ import (
 	"data_verify/model"
 	"encoding/base64"
 	"github.com/gin-gonic/gin"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -60,4 +61,11 @@ func SetHistory(step, status, userId int, bmddm, userName, remark, year string) 
 		return err
 	}
 	return nil
+}
+
+func GetFileExtension(filename string) string {
+	// 使用 filepath.Ext 获取文件后缀
+	ext := filepath.Ext(filename)
+	// 去掉后缀中的点（.）
+	return strings.TrimPrefix(ext, ".")
 }

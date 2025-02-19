@@ -22,6 +22,9 @@ const STEP_STATUS_PASS = 2
 
 const CHECK_NEED_CHECK = 1
 
+const CHECK_FORM_NOT_COMMIT = 1
+const CHECK_FORM_COMMIT = 2
+
 var CHECK_STEP_NAME_MAPPING = map[int]string{
 	CHECK_STEP_WAITING: "封装流程开始",
 	CHECK_STEP_FIRST:   "总数清点",
@@ -42,6 +45,7 @@ type CheckData struct {
 	BlackCnt    int    `json:"black_cnt" xorm:"INT(8) not null default 0 comment('黑封数量')"`
 	Step        int    `json:"step" xorm:"INT(4) not null default 0 comment('步骤号')"`
 	NeedCheck   int    `json:"need_check" xorm:"INT(4) not null default 0 comment('是否有报名')"`
+	EntryForm   int    `json:"entry_form" xorm:"INT(4) not null default 0 comment('是否提交报名表')"`
 	Year        string `json:"year" xorm:"VARCHAR(4) not null default 0 comment('年份')"`
 	ProgressCnt int    `json:"progress_cnt" xorm:"-"`
 	RemainCnt   int    `json:"remain_cnt" xorm:"-"`

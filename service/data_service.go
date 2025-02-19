@@ -107,6 +107,9 @@ func StepInfoSer(c *gin.Context, step int) {
 		return
 	}
 	selectString := "bmddm,bmdmc"
+	if step == model.CHECK_STEP_WAITING {
+		selectString = "bmddm,bmdmc,first_cnt,last_cnt"
+	}
 	if step == model.CHECK_STEP_FOURTH {
 		selectString = "bmddm,bmdmc,envelope_cnt,first_cnt,last_cnt,blue_cnt,red_cnt,black_cnt"
 	}
@@ -195,6 +198,20 @@ func CheckSer(c *gin.Context, req model.CheckReq) {
 	case model.CHECK_STEP_THIRD:
 		startCnt := req.Data[0]
 		endCnt := req.Data[1]
+		entryForm := req.Data[2]
+		if entryForm != model.CHECK_FORM_COMMIT {
+			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, req.Bmddm, userName, userName+"未提交考生信息表", year)
+			common.ResForbidden(c, "请确认提交考生信息表")
+			return
+		} else {
+			_, err := conf.Mysql.Where("bmddm = ?", req.Bmddm).Update(&model.CheckData{
+				EntryForm: entryForm,
+			})
+			if err != nil {
+				common.ResError(c, "修改数据状态失败")
+				return
+			}
+		}
 		if checkDataItem.FirstCnt != startCnt || checkDataItem.LastCnt != endCnt {
 			common.SetHistory(req.Step, model.CHECK_STATUS_ERROR, userId, req.Bmddm, userName, userName+"检查此阶段失败", year)
 			_, err := conf.Mysql.Where("bmddm = ?", req.Bmddm).Where("step = ?", req.Step).Where("year = ?", year).Update(model.StepCheckData{
@@ -315,6 +332,18 @@ func NextSer(c *gin.Context, req model.NextStepReq) {
 		if stepCheckData.Status != model.CHECK_STATUS_PASS {
 			common.ResForbidden(c, "您的当前流程尚未校验通过")
 			return
+		}
+		if stepCheckData.Step == model.CHECK_STEP_THIRD {
+			var checkData model.CheckData
+			_, err := conf.Mysql.Where("bmddm = ?", req.Bmddm).Get(&checkData)
+			if err != nil {
+				common.ResError(c, "获取报名点信息失败")
+				return
+			}
+			if checkData.EntryForm != model.CHECK_FORM_COMMIT {
+				common.ResForbidden(c, "尚未提交报名表")
+				return
+			}
 		}
 	}
 	sess := conf.Mysql.NewSession()
