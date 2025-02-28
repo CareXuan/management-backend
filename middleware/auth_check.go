@@ -3,9 +3,9 @@ package middleware
 import "C"
 import (
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
+	"prize-draw/common"
+	"prize-draw/conf"
+	"prize-draw/model"
 	"strings"
 )
 

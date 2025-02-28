@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
-	"management-backend/service"
+	"prize-draw/model"
+	"prize-draw/service"
 	"strconv"
 )
 

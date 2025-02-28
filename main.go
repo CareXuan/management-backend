@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"management-backend/conf"
-	"management-backend/router"
 	"net/http"
+	"prize-draw/conf"
+	"prize-draw/router"
 )
 
 func main() {

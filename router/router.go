@@ -2,9 +2,9 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/controller"
-	"management-backend/middleware"
+	"prize-draw/common"
+	"prize-draw/controller"
+	"prize-draw/middleware"
 )
 
 func InitRouter(r *gin.Engine) {

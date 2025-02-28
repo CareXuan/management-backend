@@ -3,10 +3,10 @@ package service
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
-	"management-backend/utils"
+	"prize-draw/common"
+	"prize-draw/conf"
+	"prize-draw/model"
+	"prize-draw/utils"
 )
 
 func GetUserInfoSer(c *gin.Context, userId int) {

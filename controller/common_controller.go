@@ -3,9 +3,9 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
 	"net/http"
+	"prize-draw/common"
+	"prize-draw/conf"
 )
 
 func Upload(c *gin.Context) {

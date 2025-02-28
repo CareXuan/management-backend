@@ -1,4 +1,4 @@
-module management-backend
+module prize-draw
 
 go 1.18
 

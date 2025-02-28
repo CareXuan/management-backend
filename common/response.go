@@ -2,7 +2,7 @@ package common
 
 import (
 	"github.com/gin-gonic/gin"
-	"management-backend/utils"
+	"prize-draw/utils"
 )
 
 func ResOk(c *gin.Context, msg string, data interface{}) {

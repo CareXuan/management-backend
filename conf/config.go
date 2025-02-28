@@ -6,7 +6,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
-	"management-backend/model"
+	"prize-draw/model"
 	"time"
 	"xorm.io/core"
 
