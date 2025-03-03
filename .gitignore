@@ -2,3 +2,5 @@ conf/config.yaml
 .idea
 go.sum
 prize-draw
+
+/upload

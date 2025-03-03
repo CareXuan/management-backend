@@ -11,7 +11,7 @@ func main() {
 	r := gin.Default()
 	router.InitRouter(r)
 	conf.NewConfig("./conf/config.yaml")
-	err := http.ListenAndServe(":8586", r)
+	err := http.ListenAndServe(":8888", r)
 	if err != nil {
 		return
 	}

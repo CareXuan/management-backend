@@ -117,6 +117,17 @@ func syncTables() {
 		new(model.UserRole),
 		new(model.Permission),
 		new(model.RolePermission),
+		new(model.Gift),
+		new(model.GiftUpgrade),
+		new(model.GiftGroup),
+		new(model.GiftGroupGift),
+		new(model.GiftExtract),
+		new(model.Config),
+		new(model.Achievement),
+		new(model.AchievementTask),
+		new(model.AchievementGift),
+		new(model.Task),
+		new(model.TaskGift),
 	)
 	if err != nil {
 		log.Fatal(err)

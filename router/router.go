@@ -35,6 +35,33 @@ func InitRouter(r *gin.Engine) {
 			auth.POST("/roles/delete", controller.DeleteRole).Use(middleware.AuthCheck())
 		}
 
+		// 礼物
+		gift := v1.Group("gift")
+		{
+			gift.GET("/list", controller.List)
+			gift.GET("/info", controller.Info)
+			gift.GET("/group/list", controller.GroupList)
+			gift.GET("/group/info", controller.GroupInfo)
+			gift.POST("/add", controller.Add)
+			gift.POST("/group/add", controller.GroupAdd)
+		}
+
+		// 任务
+		task := v1.Group("task")
+		{
+			task.GET("/list", controller.TaskList)
+			task.GET("/info", controller.TaskInfo)
+			task.POST("/add", controller.TaskAdd)
+		}
+
+		// 成就
+		achievement := v1.Group("achievement")
+		{
+			achievement.GET("/list", controller.AchievementList)
+			achievement.GET("/info", controller.AchievementInfo)
+			achievement.POST("/add", controller.AchievementAdd)
+		}
+
 		commonCtr := v1.Group("common")
 		{
 			commonCtr.POST("/upload", controller.Upload)
