@@ -3,9 +3,11 @@ package conf
 import (
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 	"github.com/go-xorm/xorm"
+	"github.com/robfig/cron/v3"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
+	cron2 "prize-draw/cron"
 	"prize-draw/model"
 	"time"
 	"xorm.io/core"
@@ -63,6 +65,7 @@ func NewConfig(configPath string) {
 	}
 	connectMysql()
 	initWechatApp()
+	initCronTask()
 }
 
 func connectMysql() {
@@ -110,6 +113,15 @@ func initWechatApp() {
 	WechatApp = OfficialAccountApp
 }
 
+func initCronTask() {
+	c := cron.New()
+	_, err := c.AddFunc("02 00 */1 * *", cron2.AllotTask)
+	if err != nil {
+		log.Fatal("添加定时任务失败")
+	}
+	c.Start()
+}
+
 func syncTables() {
 	err := Mysql.Sync2(
 		new(model.User),
@@ -122,12 +134,14 @@ func syncTables() {
 		new(model.GiftGroup),
 		new(model.GiftGroupGift),
 		new(model.GiftExtract),
+		new(model.GiftPackage),
 		new(model.Config),
 		new(model.Achievement),
 		new(model.AchievementTask),
 		new(model.AchievementGift),
 		new(model.Task),
 		new(model.TaskGift),
+		new(model.TaskDo),
 	)
 	if err != nil {
 		log.Fatal(err)

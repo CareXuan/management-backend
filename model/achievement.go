@@ -6,6 +6,7 @@ type Achievement struct {
 	Pic         string             `json:"pic" xorm:"VARCHAR(128) not null default '' comment('配图路径')"`
 	Description string             `json:"description" xorm:"VARCHAR(256) not null default '' comment('成就描述')"`
 	Point       int                `json:"point" xorm:"INT(10) not null default 0 comment('成就点')"`
+	FinishAt    int                `json:"finish_at" xorm:"INT(10) not null default 0 comment('完成时间')"`
 	CreateAt    int                `json:"create_at" xorm:"INT(10) not null default 0"`
 	Tasks       []*AchievementTask `json:"tasks" xorm:"-"`
 	Gifts       []*AchievementGift `json:"gifts" xorm:"-"`

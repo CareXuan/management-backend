@@ -52,6 +52,7 @@ func InitRouter(r *gin.Engine) {
 			task.GET("/list", controller.TaskList)
 			task.GET("/info", controller.TaskInfo)
 			task.POST("/add", controller.TaskAdd)
+			task.POST("/check", controller.TaskCheck)
 		}
 
 		// 成就
@@ -60,6 +61,16 @@ func InitRouter(r *gin.Engine) {
 			achievement.GET("/list", controller.AchievementList)
 			achievement.GET("/info", controller.AchievementInfo)
 			achievement.POST("/add", controller.AchievementAdd)
+		}
+
+		// 小程序端
+		app := v1.Group("app")
+		{
+			task := app.Group("task")
+			{
+				task.GET("/info")
+				task.POST("/do", controller.TaskDo)
+			}
 		}
 
 		commonCtr := v1.Group("common")

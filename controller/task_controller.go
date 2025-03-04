@@ -34,3 +34,25 @@ func TaskAdd(c *gin.Context) {
 	}
 	service.TaskAdd(c, addReq)
 }
+
+// TaskCheck 任务审核
+func TaskCheck(c *gin.Context) {
+	var checkReq model.TaskCheckReq
+	if err := c.ShouldBindJSON(&checkReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.TaskCheck(c, checkReq)
+}
+
+/*=====================================app=====================================*/
+
+// TaskDo 任务提交
+func TaskDo(c *gin.Context) {
+	var doReq model.TaskDoReq
+	if err := c.ShouldBindJSON(&doReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.TaskDo(c, doReq)
+}
