@@ -144,7 +144,7 @@ func AddUserSer(c *gin.Context, id int, name string, password string, phone stri
 
 func GetUserPermissionSer(c *gin.Context, userId int) {
 	var userRole model.UserRole
-	_, err := conf.Mysql.Where("id = ?", userId).Get(&userRole)
+	_, err := conf.Mysql.Where("user_id = ?", userId).Get(&userRole)
 	if err != nil {
 		common.ResError(c, "获取用户角色失败")
 		return
