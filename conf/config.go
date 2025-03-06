@@ -130,7 +130,6 @@ func syncTables() {
 		new(model.Permission),
 		new(model.RolePermission),
 		new(model.Gift),
-		new(model.GiftUpgrade),
 		new(model.GiftGroup),
 		new(model.GiftGroupGift),
 		new(model.GiftExtract),

@@ -61,3 +61,5 @@ func GroupAdd(c *gin.Context) {
 	}
 	service.GroupAdd(c, addReq)
 }
+
+/*=====================================app=====================================*/

@@ -83,6 +83,8 @@ func Add(c *gin.Context, req model.GiftAddReq) {
 			Level:       req.Level,
 			Show:        req.Show,
 			CanObtain:   req.CanObtain,
+			FragmentCnt: req.FragmentCnt,
+			CrushCnt:    req.CrushCnt,
 			Year:        req.Year,
 			CreateAt:    int(time.Now().Unix()),
 		})
@@ -98,6 +100,8 @@ func Add(c *gin.Context, req model.GiftAddReq) {
 			Level:       req.Level,
 			Show:        req.Show,
 			CanObtain:   req.CanObtain,
+			FragmentCnt: req.FragmentCnt,
+			CrushCnt:    req.CrushCnt,
 			Year:        req.Year,
 			CreateAt:    int(time.Now().Unix()),
 		})
@@ -164,3 +168,5 @@ func GroupAdd(c *gin.Context, req model.GiftGroupAdd) {
 	}
 	common.ResOk(c, "ok", nil)
 }
+
+/*=====================================app=====================================*/

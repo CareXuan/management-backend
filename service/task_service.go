@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"prize-draw/common"
 	"prize-draw/conf"
@@ -192,7 +191,6 @@ func TaskCheck(c *gin.Context, req model.TaskCheckReq) {
 			common.ResError(c, "获取任务信息失败")
 			return
 		}
-		fmt.Println(taskDoItem.TaskId)
 		err = sendTaskFinishGift(taskDoItem.TaskId)
 		if err != nil {
 			common.ResError(c, "发放礼物失败")
@@ -246,20 +244,41 @@ func sendTaskFinishGift(taskId int) error {
 	}
 	for _, i := range taskGifts {
 		var giftPackageItem model.GiftPackage
-		has, err := conf.Mysql.Where("gift_id = ?", i.GiftId).Get(&giftPackageItem)
+		sess := conf.Mysql.NewSession()
+		has, err := sess.Where("gift_id = ?", i.GiftId).Get(&giftPackageItem)
 		if err != nil {
+			sess.Rollback()
 			return err
 		}
 		if has {
-			_, err = conf.Mysql.Where("gift_id = ?", i.GiftId).Update(model.GiftPackage{
+			_, err = sess.Where("gift_id = ?", i.GiftId).Update(model.GiftPackage{
 				Count: giftPackageItem.Count + i.Count,
 			})
+			if err != nil {
+				sess.Rollback()
+				return err
+			}
 		} else {
-			_, err = conf.Mysql.Insert(model.GiftPackage{
+			_, err = sess.Insert(model.GiftPackage{
 				GiftId:   i.GiftId,
 				Count:    i.Count,
 				CreateAt: int(time.Now().Unix()),
 			})
+			if err != nil {
+				sess.Rollback()
+				return err
+			}
+		}
+		_, err = sess.Insert(&model.GiftExtract{
+			GiftId:   i.GiftId,
+			Type:     1,
+			Count:    i.Count,
+			GetTime:  int(time.Now().Unix()),
+			CreateAt: int(time.Now().Unix()),
+		})
+		if err != nil {
+			sess.Rollback()
+			return err
 		}
 	}
 

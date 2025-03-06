@@ -8,6 +8,8 @@ type Gift struct {
 	Level       int    `json:"level" xorm:"INT(3) not null default 0 comment('礼物等级')"`
 	Show        int    `json:"show" xorm:"INT(3) not null default 0 comment('是否展示在前端 1:展示 2:不展示')"`
 	CanObtain   int    `json:"can_obtain" xorm:"INT(3) not null default 0 comment('是否可被获取 1：是 2：否')"`
+	FragmentCnt int    `json:"fragment_cnt" xorm:"INT(5) not null default 0 comment('合成所需碎片数')"`
+	CrushCnt    int    `json:"crush_cnt" xorm:"INT(5) not null default 0 comment('粉碎所得碎片数')"`
 	Year        string `json:"year" xorm:"VARCHAR(4) not null default '' comment('年份')"`
 	CreateAt    int    `json:"create_at" xorm:"INT(10) not null default 0"`
 }
@@ -20,18 +22,11 @@ type GiftGroup struct {
 }
 
 type GiftGroupGift struct {
-	Id       int `json:"id" xorm:"pk autoincr INT(11)"`
-	GroupId  int `json:"group_id" xorm:"INT(10) not null default 0 comment('礼物组ID')"`
-	GiftId   int `json:"gift_id" xorm:"INT(10) not null default 0 comment('礼物ID')"`
-	CreateAt int `json:"create_at" xorm:"INT(10) not null default 0"`
-}
-
-type GiftUpgrade struct {
-	Id            int `json:"id" xorm:"pk autoincr INT(11)"`
-	GiftId        int `json:"gift_id" xorm:"INT(10) not null default 0 comment('礼物ID')"`
-	UpgradeGiftId int `json:"upgrade_gift_id" xorm:"INT(10) not null default 0 comment('升级所需礼物ID')"`
-	Count         int `json:"count" xorm:"INT(10) not null default 0 comment('所需数量')"`
-	CreateAt      int `json:"create_at" xorm:"INT(10) not null default 0"`
+	Id          int `json:"id" xorm:"pk autoincr INT(11)"`
+	GroupId     int `json:"group_id" xorm:"INT(10) not null default 0 comment('礼物组ID')"`
+	GiftId      int `json:"gift_id" xorm:"INT(10) not null default 0 comment('礼物ID')"`
+	Probability int `json:"probability" xorm:"INT(5) not null default 0 comment('礼物在礼物组中被获取的概率')"`
+	CreateAt    int `json:"create_at" xorm:"INT(10) not null default 0"`
 }
 
 type GiftPackage struct {
@@ -44,6 +39,8 @@ type GiftPackage struct {
 type GiftExtract struct {
 	Id       int `json:"id" xorm:"pk autoincr INT(11)"`
 	GiftId   int `json:"gift_id" xorm:"INT(10) not null default 0 comment('礼物ID')"`
+	Count    int `json:"count" xorm:"INT(5) not null default 0 comment('获取数量')"`
+	Type     int `json:"type" xorm:"INT(3) not null default 0 comment('获取类型 1：获取 2：销毁')"`
 	GetTime  int `json:"get_time" xorm:"INT(10) not null default 0 comment('获取时间')"`
 	CreateAt int `json:"create_at" xorm:"INT(10) not null default 0"`
 }
@@ -56,6 +53,8 @@ type GiftAddReq struct {
 	Level       int    `json:"level"`
 	Show        int    `json:"show"`
 	CanObtain   int    `json:"can_obtain"`
+	FragmentCnt int    `json:"fragment_cnt"`
+	CrushCnt    int    `json:"crush_cnt"`
 	Year        string `json:"year"`
 }
 

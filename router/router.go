@@ -71,6 +71,10 @@ func InitRouter(r *gin.Engine) {
 				task.GET("/info")
 				task.POST("/do", controller.TaskDo)
 			}
+			raffle := app.Group("raffle")
+			{
+				raffle.POST("/one", controller.RaffleOne)
+			}
 		}
 
 		commonCtr := v1.Group("common")
