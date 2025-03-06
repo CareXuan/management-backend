@@ -43,7 +43,11 @@ func InitRouter(r *gin.Engine) {
 			gift.GET("/group/list", controller.GroupList)
 			gift.GET("/group/info", controller.GroupInfo)
 			gift.POST("/add", controller.Add)
+			gift.POST("/delete", controller.Delete)
+			gift.POST("/change_status", controller.ChangeStatus)
 			gift.POST("/group/add", controller.GroupAdd)
+			gift.POST("/group/delete", controller.GroupAdd)
+			gift.POST("/group/change_status", controller.GroupAdd)
 		}
 
 		// 任务

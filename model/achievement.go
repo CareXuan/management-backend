@@ -8,6 +8,7 @@ type Achievement struct {
 	Point       int                `json:"point" xorm:"INT(10) not null default 0 comment('成就点')"`
 	FinishAt    int                `json:"finish_at" xorm:"INT(10) not null default 0 comment('完成时间')"`
 	CreateAt    int                `json:"create_at" xorm:"INT(10) not null default 0"`
+	DeleteAt    int                `json:"delete_at" xorm:"INT(10) not null default 0"`
 	Tasks       []*AchievementTask `json:"tasks" xorm:"-"`
 	Gifts       []*AchievementGift `json:"gifts" xorm:"-"`
 }
@@ -18,6 +19,7 @@ type AchievementTask struct {
 	TaskId        int   `json:"task_id" xorm:"INT(10) not null default 0 comment('任务ID')"`
 	Count         int   `json:"count" xorm:"INT(10) not null default 0 comment('完成成就所需任务完成次数')"`
 	CreateAt      int   `json:"create_at" xorm:"INT(10) not null default 0"`
+	DeleteAt      int   `json:"delete_at" xorm:"INT(10) not null default 0"`
 	TaskItem      *Task `json:"task_item" xorm:"-"`
 }
 
@@ -27,6 +29,7 @@ type AchievementGift struct {
 	GiftId        int   `json:"gift_id" xorm:"INT(10) not null default 0 comment('礼物ID')"`
 	Count         int   `json:"count" xorm:"INT(10) not null default 0 comment('完成成就奖励礼物数量')"`
 	CreateAt      int   `json:"create_at" xorm:"INT(10) not null default 0"`
+	DeleteAt      int   `json:"delete_at" xorm:"INT(10) not null default 0"`
 	GiftItem      *Gift `json:"gift_item" xorm:"-"`
 }
 

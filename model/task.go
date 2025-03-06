@@ -11,6 +11,7 @@ type Task struct {
 	Status      int         `json:"status" xorm:"INT(3) not null default 0 comment('是否开启 1：开启 2：关闭')"`
 	Year        string      `json:"year" xorm:"VARCHAR(4) not null default '' comment('年份')"`
 	CreateAt    int         `json:"create_at" xorm:"INT(10) not null default 0"`
+	DeleteAt    int         `json:"delete_at" xorm:"INT(10) not null default 0"`
 	Gifts       []*TaskGift `json:"gifts" xorm:"-"`
 }
 
@@ -20,6 +21,7 @@ type TaskGift struct {
 	GiftId   int   `json:"gift_id" xorm:"INT(10) not null default 0 comment('礼物ID')"`
 	Count    int   `json:"count" xorm:"INT(10) not null default 0 comment('完成任务奖励礼物数量')"`
 	CreateAt int   `json:"create_at" xorm:"INT(10) not null default 0"`
+	DeleteAt int   `json:"delete_at" xorm:"INT(10) not null default 0"`
 	GiftItem *Gift `json:"gift_item" xorm:"-"`
 }
 
@@ -33,6 +35,7 @@ type TaskDo struct {
 	Deadline  int    `json:"deadline" xorm:"INT(10) not null default 0 comment('任务截止时间')"`
 	FinishAt  int    `json:"finish_at" xorm:"INT(10) not null default 0 comment('完成时间')"`
 	CreateAt  int    `json:"create_at" xorm:"INT(10) not null default 0"`
+	DeleteAt  int    `json:"delete_at" xorm:"INT(10) not null default 0"`
 }
 
 type TaskAddReq struct {

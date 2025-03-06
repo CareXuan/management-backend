@@ -52,8 +52,48 @@ func Add(c *gin.Context) {
 	service.Add(c, addReq)
 }
 
+// Delete 删除礼物(软)
+func Delete(c *gin.Context) {
+	var deleteReq model.GiftDeleteReq
+	if err := c.ShouldBindJSON(&deleteReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.Delete(c, deleteReq)
+}
+
+// ChangeStatus 修改可用状态
+func ChangeStatus(c *gin.Context) {
+	var changeReq model.GiftChangeStatusReq
+	if err := c.ShouldBindJSON(&changeReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.ChangeReq(c, changeReq)
+}
+
 // GroupAdd 添加礼物组
 func GroupAdd(c *gin.Context) {
+	var addReq model.GiftGroupAdd
+	if err := c.ShouldBindJSON(&addReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.GroupAdd(c, addReq)
+}
+
+// GroupDelete 删除礼物组(软)
+func GroupDelete(c *gin.Context) {
+	var deleteReq model.GiftGroupDelete
+	if err := c.ShouldBindJSON(&deleteReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.GroupDelete(c, deleteReq)
+}
+
+// GroupChangeStatus 修改礼物组状态
+func GroupChangeStatus(c *gin.Context) {
 	var addReq model.GiftGroupAdd
 	if err := c.ShouldBindJSON(&addReq); err != nil {
 		log.Fatal(err)

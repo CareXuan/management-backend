@@ -15,7 +15,7 @@ func TaskList(c *gin.Context, name string, page, pageSize int) {
 	if name != "" {
 		sess.Where("name like ?", "%"+name+"%")
 	}
-	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&tasks)
+	count, err := sess.Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&tasks)
 	if err != nil {
 		common.ResError(c, "获取任务列表失败")
 		return
@@ -25,13 +25,13 @@ func TaskList(c *gin.Context, name string, page, pageSize int) {
 
 func TaskInfo(c *gin.Context, id int) {
 	var taskItem model.Task
-	_, err := conf.Mysql.Where("id = ?", id).Get(&taskItem)
+	_, err := conf.Mysql.Where("id = ?", id).Where("delete_at = 0").Get(&taskItem)
 	if err != nil {
 		common.ResError(c, "获取任务详情失败")
 		return
 	}
 	var taskGifts []*model.TaskGift
-	err = conf.Mysql.Where("task_id = ?", id).Find(&taskGifts)
+	err = conf.Mysql.Where("task_id = ?", id).Where("delete_at = 0").Find(&taskGifts)
 	if err != nil {
 		common.ResError(c, "获取任务关联礼物失败")
 		return
@@ -41,7 +41,7 @@ func TaskInfo(c *gin.Context, id int) {
 		giftIds = append(giftIds, i.GiftId)
 	}
 	var giftItems []*model.Gift
-	err = conf.Mysql.In("id", giftIds).Find(&giftItems)
+	err = conf.Mysql.In("id", giftIds).Where("delete_at = 0").Find(&giftItems)
 	if err != nil {
 		common.ResError(c, "获取礼物信息失败")
 		return
@@ -60,7 +60,7 @@ func TaskInfo(c *gin.Context, id int) {
 func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 	if req.Id != 0 {
 		sess := conf.Mysql.NewSession()
-		_, err := sess.Where("id = ?", req.Id).Update(&model.Task{
+		_, err := sess.Where("id = ?", req.Id).Where("delete_at = 0").Update(&model.Task{
 			Name:        req.Name,
 			Description: req.Description,
 			Type:        req.Type,
@@ -73,7 +73,9 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 			common.ResError(c, "修改任务失败")
 			return
 		}
-		_, err = sess.Where("task_id = ?", req.Id).Delete(&model.TaskGift{})
+		_, err = sess.Where("task_id = ?", req.Id).Update(&model.TaskGift{
+			DeleteAt: int(time.Now().Unix()),
+		})
 		if err != nil {
 			common.ResError(c, "删除任务关联礼物失败")
 			return
@@ -92,7 +94,9 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 			common.ResError(c, "添加任务关联礼物失败")
 			return
 		}
-		_, err = sess.Where("task_id = ?", req.Id).Where("status = ?", 1).Delete(&model.TaskDo{})
+		_, err = sess.Where("task_id = ?", req.Id).Where("status = ?", 1).Where("delete_at = 0").Update(&model.TaskDo{
+			DeleteAt: int(time.Now().Unix()),
+		})
 		if err != nil {
 			common.ResError(c, "删除未提交任务失败")
 			return
@@ -176,7 +180,7 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 }
 
 func TaskCheck(c *gin.Context, req model.TaskCheckReq) {
-	_, err := conf.Mysql.Where("id = ?", req.Id).Update(&model.TaskDo{
+	_, err := conf.Mysql.Where("id = ?", req.Id).Where("delete_at = 0").Update(&model.TaskDo{
 		Status: req.Status,
 		Reason: req.Reason,
 	})
@@ -186,7 +190,7 @@ func TaskCheck(c *gin.Context, req model.TaskCheckReq) {
 	}
 	if req.Status == 3 {
 		var taskDoItem model.TaskDo
-		_, err := conf.Mysql.Where("id = ?", req.Id).Get(&taskDoItem)
+		_, err := conf.Mysql.Where("id = ?", req.Id).Where("delete_at = 0").Get(&taskDoItem)
 		if err != nil {
 			common.ResError(c, "获取任务信息失败")
 			return
@@ -238,20 +242,26 @@ func TaskDo(c *gin.Context, req model.TaskDoReq) {
 
 func sendTaskFinishGift(taskId int) error {
 	var taskGifts []*model.TaskGift
-	err := conf.Mysql.Where("task_id = ?", taskId).Find(&taskGifts)
+	err := conf.Mysql.Where("task_id = ?", taskId).Where("delete_at = 0").Find(&taskGifts)
 	if err != nil {
 		return err
 	}
 	for _, i := range taskGifts {
 		var giftPackageItem model.GiftPackage
 		sess := conf.Mysql.NewSession()
-		has, err := sess.Where("gift_id = ?", i.GiftId).Get(&giftPackageItem)
+		has, err := sess.Where("gift_id = ?", i.GiftId).Where("delete_at = 0").Get(&giftPackageItem)
+		if err != nil {
+			sess.Rollback()
+			return err
+		}
+		var giftItem model.Gift
+		_, err = sess.Where("id = ?", i.GiftId).Where("delete_at = 0").Get(&giftItem)
 		if err != nil {
 			sess.Rollback()
 			return err
 		}
 		if has {
-			_, err = sess.Where("gift_id = ?", i.GiftId).Update(model.GiftPackage{
+			_, err = sess.Where("gift_id = ?", i.GiftId).Where("delete_at = 0").Update(model.GiftPackage{
 				Count: giftPackageItem.Count + i.Count,
 			})
 			if err != nil {
@@ -260,9 +270,10 @@ func sendTaskFinishGift(taskId int) error {
 			}
 		} else {
 			_, err = sess.Insert(model.GiftPackage{
-				GiftId:   i.GiftId,
-				Count:    i.Count,
-				CreateAt: int(time.Now().Unix()),
+				GiftId:     i.GiftId,
+				Count:      i.Count,
+				Consumable: giftItem.Consumable,
+				CreateAt:   int(time.Now().Unix()),
 			})
 			if err != nil {
 				sess.Rollback()
@@ -287,7 +298,7 @@ func sendTaskFinishGift(taskId int) error {
 
 func checkTaskAchievement(taskId int) error {
 	var achievementTasks []*model.AchievementTask
-	err := conf.Mysql.Where("task_id = ?", taskId).Find(&achievementTasks)
+	err := conf.Mysql.Where("task_id = ?", taskId).Where("delete_at = 0").Find(&achievementTasks)
 	if err != nil {
 		return err
 	}
@@ -296,12 +307,12 @@ func checkTaskAchievement(taskId int) error {
 		achievementIds = append(achievementIds, i.AchievementId)
 	}
 	var unFinishedAchievement []*model.Achievement
-	err = conf.Mysql.In("id", achievementIds).Find(&unFinishedAchievement)
+	err = conf.Mysql.In("id", achievementIds).Where("delete_at = 0").Find(&unFinishedAchievement)
 	if err != nil {
 		return err
 	}
 	var unFinishedAchievementTask []*model.AchievementTask
-	err = conf.Mysql.In("achievement_id", achievementIds).Find(&unFinishedAchievementTask)
+	err = conf.Mysql.In("achievement_id", achievementIds).Where("delete_at = 0").Find(&unFinishedAchievementTask)
 	if err != nil {
 		return err
 	}
@@ -315,7 +326,7 @@ func checkTaskAchievement(taskId int) error {
 		unFinishedAchievementMapping[i.AchievementId][i.TaskId] = i.Count
 	}
 	var checkTaskDo []*model.TaskDo
-	err = conf.Mysql.In("task_id", checkTaskIds).Where("status = 3").Find(&checkTaskDo)
+	err = conf.Mysql.In("task_id", checkTaskIds).Where("status = 3").Where("delete_at = 0").Find(&checkTaskDo)
 	if err != nil {
 		return err
 	}
@@ -339,22 +350,22 @@ func checkTaskAchievement(taskId int) error {
 			needFinishId = append(needFinishId, achievementId)
 		}
 	}
-	_, err = conf.Mysql.In("id", needFinishId).Update(&model.Achievement{
+	_, err = conf.Mysql.In("id", needFinishId).Where("delete_at = 0").Update(&model.Achievement{
 		FinishAt: int(time.Now().Unix()),
 	})
 	for _, i := range needFinishId {
 		var achievementItem model.Achievement
-		_, err := conf.Mysql.Where("id = ?", i).Get(&achievementItem)
+		_, err := conf.Mysql.Where("id = ?", i).Where("delete_at = 0").Get(&achievementItem)
 		if err != nil {
 			return err
 		}
 		var pointGift model.GiftPackage
-		has, err := conf.Mysql.Where("gift_id = 0").Get(&pointGift)
+		has, err := conf.Mysql.Where("gift_id = 0").Where("delete_at = 0").Get(&pointGift)
 		if err != nil {
 			return err
 		}
 		if has {
-			_, err = conf.Mysql.Where("gift_id = 0").Update(&model.GiftPackage{
+			_, err = conf.Mysql.Where("gift_id = 0").Where("delete_at = 0").Update(&model.GiftPackage{
 				Count: pointGift.Count + achievementItem.Point,
 			})
 		} else {
@@ -363,6 +374,57 @@ func checkTaskAchievement(taskId int) error {
 				Count:    achievementItem.Point,
 				CreateAt: int(time.Now().Unix()),
 			})
+		}
+		var achievementGifts []*model.AchievementGift
+		err = conf.Mysql.Where("achievement_id = ?", i).Find(&achievementGifts)
+		if err != nil {
+			return err
+		}
+		for _, j := range achievementGifts {
+			var giftPackageItem model.GiftPackage
+			sess := conf.Mysql.NewSession()
+			has, err := sess.Where("gift_id = ?", j.GiftId).Where("delete_at = 0").Get(&giftPackageItem)
+			if err != nil {
+				sess.Rollback()
+				return err
+			}
+			var giftItem model.Gift
+			_, err = sess.Where("id = ?", j.GiftId).Where("delete_at = 0").Get(&giftItem)
+			if err != nil {
+				sess.Rollback()
+				return err
+			}
+			if has {
+				_, err = sess.Where("gift_id = ?", j.GiftId).Where("delete_at = 0").Update(model.GiftPackage{
+					Count: giftPackageItem.Count + j.Count,
+				})
+				if err != nil {
+					sess.Rollback()
+					return err
+				}
+			} else {
+				_, err = sess.Insert(model.GiftPackage{
+					GiftId:     j.GiftId,
+					Count:      j.Count,
+					Consumable: giftItem.Consumable,
+					CreateAt:   int(time.Now().Unix()),
+				})
+				if err != nil {
+					sess.Rollback()
+					return err
+				}
+			}
+			_, err = sess.Insert(&model.GiftExtract{
+				GiftId:   j.GiftId,
+				Type:     1,
+				Count:    j.Count,
+				GetTime:  int(time.Now().Unix()),
+				CreateAt: int(time.Now().Unix()),
+			})
+			if err != nil {
+				sess.Rollback()
+				return err
+			}
 		}
 	}
 	return nil
