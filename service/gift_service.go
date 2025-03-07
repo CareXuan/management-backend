@@ -60,17 +60,7 @@ func GroupInfo(c *gin.Context, id int) {
 		common.ResError(c, "获取礼物组关联礼物失败")
 		return
 	}
-	var giftIds []int
-	for _, i := range groupGifts {
-		giftIds = append(giftIds, i.GiftId)
-	}
-	var gifts []*model.Gift
-	err = conf.Mysql.In("id", giftIds).Where("delete_at = 0").Find(&gifts)
-	if err != nil {
-		common.ResError(c, "获取礼物失败")
-		return
-	}
-	groupItem.GroupGift = gifts
+	groupItem.GroupGift = groupGifts
 	common.ResOk(c, "ok", groupItem)
 }
 
@@ -146,7 +136,9 @@ func GroupAdd(c *gin.Context, req model.GiftGroupAdd) {
 			common.ResError(c, "修改礼物组失败")
 			return
 		}
-		_, err = sess.Where("group_id = ?", req.Id).Delete(&model.GiftGroupGift{})
+		_, err = sess.Where("group_id = ?", req.Id).Update(&model.GiftGroupGift{
+			DeleteAt: int(time.Now().Unix()),
+		})
 		if err != nil {
 			common.ResError(c, "删除已有关联关系失败")
 			return
@@ -154,9 +146,10 @@ func GroupAdd(c *gin.Context, req model.GiftGroupAdd) {
 		var giftGroupItems []*model.GiftGroupGift
 		for _, i := range req.GiftIds {
 			giftGroupItems = append(giftGroupItems, &model.GiftGroupGift{
-				GroupId:  req.Id,
-				GiftId:   i,
-				CreateAt: int(time.Now().Unix()),
+				GroupId:     req.Id,
+				GiftId:      i.GiftId,
+				Probability: i.Probability,
+				CreateAt:    int(time.Now().Unix()),
 			})
 		}
 		_, err = sess.Insert(giftGroupItems)
@@ -181,9 +174,10 @@ func GroupAdd(c *gin.Context, req model.GiftGroupAdd) {
 		var giftGroupItems []*model.GiftGroupGift
 		for _, i := range req.GiftIds {
 			giftGroupItems = append(giftGroupItems, &model.GiftGroupGift{
-				GroupId:  groupAdd.Id,
-				GiftId:   i,
-				CreateAt: int(time.Now().Unix()),
+				GroupId:     groupAdd.Id,
+				GiftId:      i.GiftId,
+				Probability: i.Probability,
+				CreateAt:    int(time.Now().Unix()),
 			})
 		}
 		_, err = conf.Mysql.Insert(giftGroupItems)
@@ -205,7 +199,7 @@ func GroupDelete(c *gin.Context, req model.GiftGroupDelete) {
 		sess.Rollback()
 		return
 	}
-	_, err = sess.In("group_id = ?", req.Ids).Where("delete_at = 0").Update(&model.GiftGroupGift{
+	_, err = sess.In("group_id", req.Ids).Where("delete_at = 0").Update(&model.GiftGroupGift{
 		DeleteAt: int(time.Now().Unix()),
 	})
 	if err != nil {
@@ -213,6 +207,7 @@ func GroupDelete(c *gin.Context, req model.GiftGroupDelete) {
 		sess.Rollback()
 		return
 	}
+	sess.Commit()
 	common.ResOk(c, "ok", nil)
 }
 

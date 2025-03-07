@@ -15,14 +15,14 @@ type Gift struct {
 }
 
 type GiftGroup struct {
-	Id        int     `json:"id" xorm:"pk autoincr INT(11)"`
-	Name      string  `json:"name" xorm:"VARCHAR(24) not null default '' comment('礼物组名称')"`
-	Status    int     `json:"status" xorm:"INT(3) not null default 0 comment('礼物组状态 1：启用 2：禁用')"`
-	StartTime int     `json:"start_time" xorm:"INT(10) not null default 0 comment('开始时间')"`
-	EndTime   int     `json:"end_time" xorm:"INT(10) not null default 0 comment('结束时间')"`
-	CreateAt  int     `json:"create_at" xorm:"INT(10) not null default 0"`
-	DeleteAt  int     `json:"delete_at" xorm:"INT(10) not null default 0"`
-	GroupGift []*Gift `json:"group_gift" xorm:"-"`
+	Id        int              `json:"id" xorm:"pk autoincr INT(11)"`
+	Name      string           `json:"name" xorm:"VARCHAR(24) not null default '' comment('礼物组名称')"`
+	Status    int              `json:"status" xorm:"INT(3) not null default 0 comment('礼物组状态 1：启用 2：禁用')"`
+	StartTime int              `json:"start_time" xorm:"INT(10) not null default 0 comment('开始时间')"`
+	EndTime   int              `json:"end_time" xorm:"INT(10) not null default 0 comment('结束时间')"`
+	CreateAt  int              `json:"create_at" xorm:"INT(10) not null default 0"`
+	DeleteAt  int              `json:"delete_at" xorm:"INT(10) not null default 0"`
+	GroupGift []*GiftGroupGift `json:"group_gift" xorm:"-"`
 }
 
 type GiftGroupGift struct {
@@ -69,12 +69,17 @@ type GiftDeleteReq struct {
 }
 
 type GiftGroupAdd struct {
-	Id        int    `json:"id"`
-	Name      string `json:"name"`
-	StartTime int    `json:"start_time"`
-	EndTime   int    `json:"end_time"`
-	Status    int    `json:"status"`
-	GiftIds   []int  `json:"gift_ids"`
+	Id        int                      `json:"id"`
+	Name      string                   `json:"name"`
+	StartTime int                      `json:"start_time"`
+	EndTime   int                      `json:"end_time"`
+	Status    int                      `json:"status"`
+	GiftIds   []giftGroupIdProbability `json:"gift_ids"`
+}
+
+type giftGroupIdProbability struct {
+	GiftId      int `json:"gift_id"`
+	Probability int `json:"probability"`
 }
 
 type GiftGroupDelete struct {
