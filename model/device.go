@@ -7,6 +7,14 @@ type Device struct {
 	Latitude        string `json:"latitude" xorm:"VARCHAR(12) not null default '0'"`
 	Longitude       string `json:"longitude" xorm:"VARCHAR(12) not null default '0'"`
 	SignalIntensity int    `json:"signal_intensity" xorm:"INT(10) not null default 0"`
+	Name            string `json:"name" xorm:"VARCHAR(30) not null default '' comment('商家名称')"`
+	Province        string `json:"province" xorm:"VARCHAR(20) not null default '' comment('省份')"`
+	City            string `json:"city" xorm:"VARCHAR(20) not null default '' comment('市')"`
+	Zone            string `json:"zone" xorm:"VARCHAR(20) not null default '' comment('区县')"`
+	Address         string `json:"address" xorm:"VARCHAR(100) not null default '' comment('详细地址')"`
+	Manager         string `json:"manager" xorm:"VARCHAR(20) not null default '' comment('管理人员')"`
+	Phone           string `json:"phone" xorm:"VARCHAR(15) not null default '' comment('联系电话')"`
+	Remark          string `json:"remark" xorm:"VARCHAR(200) not null default '' comment('备注')"`
 	Status          int    `json:"status" xorm:"INT(10) not null default 0"`
 	Pwd1            int    `json:"-" xorm:"INT(10) not null default 0"`
 	Pwd1Base        int    `json:"-" xorm:"INT(10) not null default 0"`
@@ -54,7 +62,16 @@ type DeviceServiceData struct {
 }
 
 type DeviceAddReq struct {
-	DeviceId int `json:"device_id"`
+	Id       int    `json:"id"`
+	DeviceId int    `json:"device_id"`
+	Name     string `json:"name"`
+	Province string `json:"province"`
+	City     string `json:"city"`
+	Zone     string `json:"zone"`
+	Address  string `json:"address"`
+	Manager  string `json:"manager"`
+	Phone    string `json:"phone"`
+	Remark   string `json:"remark"`
 }
 
 type DeviceLocationRes struct {

@@ -22,23 +22,50 @@ func DeviceListSer(c *gin.Context, page, pageSize int) {
 }
 
 func AddDeviceSer(c *gin.Context, req model.DeviceAddReq) {
-	var deviceExist model.Device
-	_, err := conf.Mysql.Where("device_id = ?", req.DeviceId).Get(&deviceExist)
-	if err != nil {
-		common.ResError(c, "获取设备信息失败")
-		return
-	}
-	if deviceExist.Id != 0 {
-		common.ResForbidden(c, "当前设备ID已注册")
-		return
-	}
-	_, err = conf.Mysql.Insert(model.Device{
-		DeviceId: req.DeviceId,
-		Ts:       time.Now().Format("2006-01-02 15:04:05"),
-	})
-	if err != nil {
-		common.ResError(c, "写入设备信息失败")
-		return
+	if req.Id != 0 {
+		_, err := conf.Mysql.Where("id = ?", req.Id).Update(model.Device{
+			DeviceId: req.DeviceId,
+			Name:     req.Name,
+			Province: req.Province,
+			City:     req.City,
+			Zone:     req.Zone,
+			Address:  req.Address,
+			Manager:  req.Manager,
+			Phone:    req.Phone,
+			Remark:   req.Remark,
+			Ts:       time.Now().Format("2006-01-02 15:04:05"),
+		})
+		if err != nil {
+			common.ResError(c, "写入设备信息失败")
+			return
+		}
+	} else {
+		var deviceExist model.Device
+		_, err := conf.Mysql.Where("device_id = ?", req.DeviceId).Get(&deviceExist)
+		if err != nil {
+			common.ResError(c, "获取设备信息失败")
+			return
+		}
+		if deviceExist.Id != 0 {
+			common.ResForbidden(c, "当前设备ID已注册")
+			return
+		}
+		_, err = conf.Mysql.Insert(model.Device{
+			DeviceId: req.DeviceId,
+			Name:     req.Name,
+			Province: req.Province,
+			City:     req.City,
+			Zone:     req.Zone,
+			Address:  req.Address,
+			Manager:  req.Manager,
+			Phone:    req.Phone,
+			Remark:   req.Remark,
+			Ts:       time.Now().Format("2006-01-02 15:04:05"),
+		})
+		if err != nil {
+			common.ResError(c, "写入设备信息失败")
+			return
+		}
 	}
 	common.ResOk(c, "ok", nil)
 }
