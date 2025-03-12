@@ -35,6 +35,26 @@ func TaskAdd(c *gin.Context) {
 	service.TaskAdd(c, addReq)
 }
 
+// TaskDelete 任务删除
+func TaskDelete(c *gin.Context) {
+	var deleteReq model.TaskDeleteReq
+	if err := c.ShouldBindJSON(&deleteReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.TaskDelete(c, deleteReq)
+}
+
+// TaskChangeStatus 任务修改状态
+func TaskChangeStatus(c *gin.Context) {
+	var changeReq model.TaskChangeStatusReq
+	if err := c.ShouldBindJSON(&changeReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.TaskChangeStatus(c, changeReq)
+}
+
 // TaskCheck 任务审核
 func TaskCheck(c *gin.Context) {
 	var checkReq model.TaskCheckReq

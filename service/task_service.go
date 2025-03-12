@@ -131,6 +131,7 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 			Type:        req.Type,
 			Deadline:    req.Deadline,
 			Star:        req.Star,
+			Status:      1,
 			Year:        req.Year,
 			CreateAt:    int(time.Now().Unix()),
 		}
@@ -179,6 +180,64 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 	common.ResOk(c, "ok", nil)
 }
 
+func TaskDelete(c *gin.Context, req model.TaskDeleteReq) {
+	sess := conf.Mysql.NewSession()
+	_, err := sess.In("id", req.Ids).Update(model.Task{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "删除任务失败")
+		sess.Rollback()
+		return
+	}
+	_, err = sess.In("task_id", req.Ids).Update(model.TaskGift{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "删除任务关联礼物关系失败")
+		sess.Rollback()
+		return
+	}
+
+	_, err = sess.In("task_id", req.Ids).Where("status = ?", 1).Update(model.TaskDo{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "删除任务记录失败")
+		sess.Rollback()
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func TaskChangeStatus(c *gin.Context, req model.TaskChangeStatusReq) {
+	_, err := conf.Mysql.Where("id = ?", req.Id).Update(model.Task{
+		Status: req.Status,
+	})
+	if err != nil {
+		common.ResError(c, "修改任务状态失败")
+		return
+	}
+	if req.Status == 2 {
+		_, err = conf.Mysql.Where("task_id = ?", req.Id).Where("status = ?", 1).Update(model.TaskDo{
+			DeleteAt: int(time.Now().Unix()),
+		})
+		if err != nil {
+			common.ResError(c, "禁用任务关联礼物关系失败")
+			return
+		}
+	} else {
+		_, err = conf.Mysql.Where("task_id = ?", req.Id).Where("status = ?", 1).Update(model.TaskDo{
+			DeleteAt: 0,
+		})
+		if err != nil {
+			common.ResError(c, "启用任务记录失败")
+			return
+		}
+	}
+	common.ResOk(c, "ok", nil)
+}
+
 func TaskCheck(c *gin.Context, req model.TaskCheckReq) {
 	_, err := conf.Mysql.Where("id = ?", req.Id).Where("delete_at = 0").Update(&model.TaskDo{
 		Status: req.Status,
@@ -192,7 +251,7 @@ func TaskCheck(c *gin.Context, req model.TaskCheckReq) {
 		var taskDoItem model.TaskDo
 		_, err := conf.Mysql.Where("id = ?", req.Id).Where("delete_at = 0").Get(&taskDoItem)
 		if err != nil {
-			common.ResError(c, "获取任务信息失败")
+			common.ResError(c, " 获取任务信息失败")
 			return
 		}
 		err = sendTaskFinishGift(taskDoItem.TaskId)

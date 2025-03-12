@@ -6,7 +6,7 @@ type Task struct {
 	Description string      `json:"description" xorm:"VARCHAR(256) not null default '' comment('任务描述')"`
 	Type        int         `json:"type" xorm:"INT(3) not null default 0 comment('任务类型 1：常规任务 2：日常任务 3：限时任务')"`
 	StartTime   int         `json:"start_time" xorm:"INT(10) not null default 0 comment('任务开始时间')"`
-	Deadline    int         `json:"deadline" xorm:"INT(10) not null default 0 comment('任务截止时间 当type为1时无截止时间 type为2时是0-6表示周日到周六 type为3时是截止时间')"`
+	Deadline    int         `json:"deadline" xorm:"INT(10) not null default 0 comment('任务截止时间 当type为1时无截止时间 type为2时是1-7表示周一到周日 type为3时是截止时间')"`
 	Star        int         `json:"star" xorm:"INT(3) not null default 0 comment('任务星级')"`
 	Status      int         `json:"status" xorm:"INT(3) not null default 0 comment('是否开启 1：开启 2：关闭')"`
 	Year        string      `json:"year" xorm:"VARCHAR(4) not null default '' comment('年份')"`
@@ -48,6 +48,15 @@ type TaskAddReq struct {
 	Star        int            `json:"star"`
 	Year        string         `json:"year"`
 	BindGifts   []taskGiftBind `json:"bind_gifts"`
+}
+
+type TaskDeleteReq struct {
+	Ids []int `json:"ids"`
+}
+
+type TaskChangeStatusReq struct {
+	Id     int `json:"id"`
+	Status int `json:"status"`
 }
 
 type taskGiftBind struct {

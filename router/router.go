@@ -56,6 +56,8 @@ func InitRouter(r *gin.Engine) {
 			task.GET("/list", controller.TaskList)
 			task.GET("/info", controller.TaskInfo)
 			task.POST("/add", controller.TaskAdd)
+			task.POST("/delete", controller.TaskDelete)
+			task.POST("/change_status", controller.TaskChangeStatus)
 			task.POST("/check", controller.TaskCheck)
 		}
 
