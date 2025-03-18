@@ -55,6 +55,24 @@ func TaskChangeStatus(c *gin.Context) {
 	service.TaskChangeStatus(c, changeReq)
 }
 
+// TaskCheckList 任务执行记录列表
+func TaskCheckList(c *gin.Context) {
+	taskId := c.Query("task_id")
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	taskIdInt, _ := strconv.Atoi(taskId)
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	service.TaskCheckList(c, taskIdInt, pageInt, pageSizeInt)
+}
+
+// TaskCheckInfo 任务执行记录详情
+func TaskCheckInfo(c *gin.Context) {
+	id := c.Query("id")
+	idInt, _ := strconv.Atoi(id)
+	service.TaskCheckInfo(c, idInt)
+}
+
 // TaskCheck 任务审核
 func TaskCheck(c *gin.Context) {
 	var checkReq model.TaskCheckReq

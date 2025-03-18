@@ -34,8 +34,10 @@ type TaskDo struct {
 	StartTime int    `json:"start_time" xorm:"INT(10) not null default 0 comment('任务开始时间')"`
 	Deadline  int    `json:"deadline" xorm:"INT(10) not null default 0 comment('任务截止时间')"`
 	FinishAt  int    `json:"finish_at" xorm:"INT(10) not null default 0 comment('完成时间')"`
+	CheckAt   int    `json:"check_at" xorm:"INT(10) not null default 0 comment('审核完成时间')"`
 	CreateAt  int    `json:"create_at" xorm:"INT(10) not null default 0"`
 	DeleteAt  int    `json:"delete_at" xorm:"INT(10) not null default 0"`
+	Task      *Task  `json:"task" xorm:"-"`
 }
 
 type TaskAddReq struct {

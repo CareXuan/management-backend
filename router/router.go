@@ -54,7 +54,9 @@ func InitRouter(r *gin.Engine) {
 		task := v1.Group("task")
 		{
 			task.GET("/list", controller.TaskList)
+			task.GET("/check/list", controller.TaskCheckList)
 			task.GET("/info", controller.TaskInfo)
+			task.GET("/check/info", controller.TaskCheckInfo)
 			task.POST("/add", controller.TaskAdd)
 			task.POST("/delete", controller.TaskDelete)
 			task.POST("/change_status", controller.TaskChangeStatus)

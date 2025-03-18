@@ -182,7 +182,7 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 
 func TaskDelete(c *gin.Context, req model.TaskDeleteReq) {
 	sess := conf.Mysql.NewSession()
-	_, err := sess.In("id", req.Ids).Update(model.Task{
+	_, err := sess.In("id", req.Ids).Where("delete_at = 0").Update(model.Task{
 		DeleteAt: int(time.Now().Unix()),
 	})
 	if err != nil {
@@ -190,7 +190,7 @@ func TaskDelete(c *gin.Context, req model.TaskDeleteReq) {
 		sess.Rollback()
 		return
 	}
-	_, err = sess.In("task_id", req.Ids).Update(model.TaskGift{
+	_, err = sess.In("task_id", req.Ids).Where("delete_at = 0").Update(model.TaskGift{
 		DeleteAt: int(time.Now().Unix()),
 	})
 	if err != nil {
@@ -199,7 +199,7 @@ func TaskDelete(c *gin.Context, req model.TaskDeleteReq) {
 		return
 	}
 
-	_, err = sess.In("task_id", req.Ids).Where("status = ?", 1).Update(model.TaskDo{
+	_, err = sess.In("task_id", req.Ids).Where("status = ?", 1).Where("delete_at = 0").Update(model.TaskDo{
 		DeleteAt: int(time.Now().Unix()),
 	})
 	if err != nil {
@@ -211,7 +211,7 @@ func TaskDelete(c *gin.Context, req model.TaskDeleteReq) {
 }
 
 func TaskChangeStatus(c *gin.Context, req model.TaskChangeStatusReq) {
-	_, err := conf.Mysql.Where("id = ?", req.Id).Update(model.Task{
+	_, err := conf.Mysql.Where("id = ?", req.Id).Where("delete_at = 0").Update(model.Task{
 		Status: req.Status,
 	})
 	if err != nil {
@@ -219,7 +219,7 @@ func TaskChangeStatus(c *gin.Context, req model.TaskChangeStatusReq) {
 		return
 	}
 	if req.Status == 2 {
-		_, err = conf.Mysql.Where("task_id = ?", req.Id).Where("status = ?", 1).Update(model.TaskDo{
+		_, err = conf.Mysql.Where("task_id = ?", req.Id).Where("status = ?", 1).Where("delete_at = 0").Update(model.TaskDo{
 			DeleteAt: int(time.Now().Unix()),
 		})
 		if err != nil {
@@ -227,7 +227,7 @@ func TaskChangeStatus(c *gin.Context, req model.TaskChangeStatusReq) {
 			return
 		}
 	} else {
-		_, err = conf.Mysql.Where("task_id = ?", req.Id).Where("status = ?", 1).Update(model.TaskDo{
+		_, err = conf.Mysql.Where("task_id = ?", req.Id).Where("status = ?", 1).Where("delete_at = 0").Update(model.TaskDo{
 			DeleteAt: 0,
 		})
 		if err != nil {
@@ -238,10 +238,59 @@ func TaskChangeStatus(c *gin.Context, req model.TaskChangeStatusReq) {
 	common.ResOk(c, "ok", nil)
 }
 
+func TaskCheckList(c *gin.Context, taskId, page, pageSize int) {
+	var taskDos []*model.TaskDo
+	sess := conf.Mysql.NewSession()
+	if taskId != 0 {
+		sess.Where("task_id =?", taskId)
+	}
+	count, err := sess.Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&taskDos)
+	if err != nil {
+		common.ResError(c, "获取任务执行情况列表失败")
+		return
+	}
+	var taskIds []int
+	for _, i := range taskDos {
+		taskIds = append(taskIds, i.TaskId)
+	}
+	var taskItems []*model.Task
+	err = sess.In("id", taskIds).Find(&taskItems)
+	if err != nil {
+		common.ResError(c, "获取任务信息失败")
+		return
+	}
+	var taskMapping = make(map[int]*model.Task)
+	for _, i := range taskItems {
+		taskMapping[i.Id] = i
+	}
+	for _, i := range taskDos {
+		i.Task = taskMapping[i.TaskId]
+	}
+	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: taskDos})
+}
+
+func TaskCheckInfo(c *gin.Context, id int) {
+	var taskDoItem model.TaskDo
+	_, err := conf.Mysql.Where("id = ?", id).Get(&taskDoItem)
+	if err != nil {
+		common.ResError(c, "获取任务执行情况失败")
+		return
+	}
+	var taskItem *model.Task
+	_, err = conf.Mysql.Where("id = ?", taskDoItem.TaskId).Get(taskItem)
+	if err != nil {
+		common.ResError(c, "获取任务信息失败")
+		return
+	}
+	taskDoItem.Task = taskItem
+	common.ResOk(c, "ok", taskDoItem)
+}
+
 func TaskCheck(c *gin.Context, req model.TaskCheckReq) {
 	_, err := conf.Mysql.Where("id = ?", req.Id).Where("delete_at = 0").Update(&model.TaskDo{
-		Status: req.Status,
-		Reason: req.Reason,
+		Status:  req.Status,
+		Reason:  req.Reason,
+		CheckAt: int(time.Now().Unix()),
 	})
 	if err != nil {
 		common.ResError(c, "审核失败")
@@ -251,7 +300,7 @@ func TaskCheck(c *gin.Context, req model.TaskCheckReq) {
 		var taskDoItem model.TaskDo
 		_, err := conf.Mysql.Where("id = ?", req.Id).Where("delete_at = 0").Get(&taskDoItem)
 		if err != nil {
-			common.ResError(c, " 获取任务信息失败")
+			common.ResError(c, "获取任务信息失败")
 			return
 		}
 		err = sendTaskFinishGift(taskDoItem.TaskId)
