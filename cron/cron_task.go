@@ -1,4 +1,1 @@
 package cron
-
-func AllotTask() {
-}

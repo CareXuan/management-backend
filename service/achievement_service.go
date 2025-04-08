@@ -15,7 +15,7 @@ func AchievementList(c *gin.Context, name string, page, pageSize int) {
 	if name != "" {
 		sess.Where("name like ?", "%"+name+"%")
 	}
-	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&achievements)
+	count, err := sess.Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&achievements)
 	if err != nil {
 		common.ResError(c, "获取成就列表失败")
 		return
@@ -25,13 +25,13 @@ func AchievementList(c *gin.Context, name string, page, pageSize int) {
 
 func AchievementInfo(c *gin.Context, id int) {
 	var achievementItem model.Achievement
-	_, err := conf.Mysql.Where("id = ?", id).Get(&achievementItem)
+	_, err := conf.Mysql.Where("id = ?", id).Where("delete_at = 0").Get(&achievementItem)
 	if err != nil {
 		common.ResError(c, "获取成就详情失败")
 		return
 	}
 	var achievementTasks []*model.AchievementTask
-	err = conf.Mysql.Where("achievement_id = ?", id).Find(&achievementTasks)
+	err = conf.Mysql.Where("achievement_id = ?", id).Where("delete_at = 0").Find(&achievementTasks)
 	if err != nil {
 		common.ResError(c, "获取成就关联任务失败")
 		return
@@ -41,7 +41,7 @@ func AchievementInfo(c *gin.Context, id int) {
 		taskIds = append(taskIds, i.TaskId)
 	}
 	var taskItems []*model.Task
-	err = conf.Mysql.In("id", taskIds).Find(&taskItems)
+	err = conf.Mysql.In("id", taskIds).Where("delete_at = 0").Find(&taskItems)
 	if err != nil {
 		common.ResError(c, "获取任务信息失败")
 		return
@@ -51,7 +51,7 @@ func AchievementInfo(c *gin.Context, id int) {
 		taskMapping[i.Id] = i
 	}
 	var achievementGifts []*model.AchievementGift
-	err = conf.Mysql.Where("achievement_id = ?", id).Find(&achievementGifts)
+	err = conf.Mysql.Where("achievement_id = ?", id).Where("delete_at = 0").Find(&achievementGifts)
 	if err != nil {
 		common.ResError(c, "获取成就关联礼物失败")
 		return
@@ -61,7 +61,7 @@ func AchievementInfo(c *gin.Context, id int) {
 		giftIds = append(giftIds, i.GiftId)
 	}
 	var giftItems []*model.Gift
-	err = conf.Mysql.In("id", giftIds).Find(&giftItems)
+	err = conf.Mysql.In("id", giftIds).Where("delete_at = 0").Find(&giftItems)
 	if err != nil {
 		common.ResError(c, "获取礼物信息失败")
 		return
@@ -84,7 +84,7 @@ func AchievementInfo(c *gin.Context, id int) {
 func AchievementAdd(c *gin.Context, req model.AchievementAddReq) {
 	if req.Id != 0 {
 		sess := conf.Mysql.NewSession()
-		_, err := sess.Where("id = ?", req.Id).Update(&model.Achievement{
+		_, err := sess.Where("id = ?", req.Id).Where("delete_at = 0").Update(&model.Achievement{
 			Name:        req.Name,
 			Pic:         req.Pic,
 			Description: req.Description,
@@ -94,12 +94,16 @@ func AchievementAdd(c *gin.Context, req model.AchievementAddReq) {
 			common.ResError(c, "修改成就失败")
 			return
 		}
-		_, err = sess.Where("achievement_id = ?", req.Id).Delete(&model.AchievementTask{})
+		_, err = sess.Where("achievement_id = ?", req.Id).Where("delete_at = 0").Update(&model.AchievementTask{
+			DeleteAt: int(time.Now().Unix()),
+		})
 		if err != nil {
 			common.ResError(c, "删除成就关联任务失败")
 			return
 		}
-		_, err = sess.Where("achievement_id = ?", req.Id).Delete(&model.AchievementGift{})
+		_, err = sess.Where("achievement_id = ?", req.Id).Where("delete_at = 0").Update(&model.AchievementGift{
+			DeleteAt: int(time.Now().Unix()),
+		})
 		if err != nil {
 			common.ResError(c, "删除成就关联礼物失败")
 			return
@@ -174,6 +178,51 @@ func AchievementAdd(c *gin.Context, req model.AchievementAddReq) {
 			common.ResError(c, "添加成就关联礼物失败")
 			return
 		}
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func AchievementFinish(c *gin.Context, req model.AchievementFinishReq) {
+	_, err := conf.Mysql.Where("id = ?", req.Id).Update(&model.Achievement{
+		FinishAt: req.FinishTime,
+	})
+	if err != nil {
+		common.ResError(c, "修改成就失败")
+		return
+	}
+	err = SendFinishAchievement(req.Id)
+	if err != nil {
+		common.ResError(c, "发放成就奖励失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func AchievementDelete(c *gin.Context, req model.AchievementDeleteReq) {
+	sess := conf.Mysql.NewSession()
+	_, err := sess.In("id", req.Ids).Where("delete_at = 0").Update(model.Achievement{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "删除成就失败")
+		sess.Rollback()
+		return
+	}
+	_, err = sess.In("achievement_id", req.Ids).Where("delete_at = 0").Update(model.AchievementGift{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "删除成就关联礼物失败")
+		sess.Rollback()
+		return
+	}
+	_, err = sess.In("achievement_id", req.Ids).Where("delete_at = 0").Update(model.AchievementTask{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "删除成就关联任务失败")
+		sess.Rollback()
+		return
 	}
 	common.ResOk(c, "ok", nil)
 }

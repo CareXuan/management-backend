@@ -69,6 +69,8 @@ func InitRouter(r *gin.Engine) {
 			achievement.GET("/list", controller.AchievementList)
 			achievement.GET("/info", controller.AchievementInfo)
 			achievement.POST("/add", controller.AchievementAdd)
+			achievement.POST("/finish", controller.AchievementFinish)
+			achievement.POST("/delete", controller.AchievementDelete)
 		}
 
 		// 小程序端

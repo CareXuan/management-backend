@@ -4,9 +4,10 @@ type Task struct {
 	Id          int         `json:"id" xorm:"pk autoincr INT(11)"`
 	Name        string      `json:"name" xorm:"VARCHAR(24) not null default '' comment('任务名称')"`
 	Description string      `json:"description" xorm:"VARCHAR(256) not null default '' comment('任务描述')"`
-	Type        int         `json:"type" xorm:"INT(3) not null default 0 comment('任务类型 1：常规任务 2：日常任务 3：限时任务')"`
+	Type        int         `json:"type" xorm:"INT(3) not null default 0 comment('任务类型 1：常规任务 2：日常任务 3：限时任务 4：循环任务')"`
 	StartTime   int         `json:"start_time" xorm:"INT(10) not null default 0 comment('任务开始时间')"`
-	Deadline    int         `json:"deadline" xorm:"INT(10) not null default 0 comment('任务截止时间 当type为1时无截止时间 type为2时是1-7表示周一到周日 type为3时是截止时间')"`
+	Deadline    int         `json:"deadline" xorm:"INT(10) not null default 0 comment('任务截止时间 当type为1时无截止时间 type为2时是1-7表示周一到周日 type为3时是截止时间 type是4时表示循环周期0为无限循环')"`
+	RepeatCnt   int         `json:"repeat_cnt" xorm:"INT(10) not null default 0 comment('循环次数')"`
 	Star        int         `json:"star" xorm:"INT(3) not null default 0 comment('任务星级')"`
 	Status      int         `json:"status" xorm:"INT(3) not null default 0 comment('是否开启 1：开启 2：关闭')"`
 	Year        string      `json:"year" xorm:"VARCHAR(4) not null default '' comment('年份')"`
@@ -47,6 +48,7 @@ type TaskAddReq struct {
 	Type        int            `json:"type"`
 	StartTime   int            `json:"start_time"`
 	Deadline    int            `json:"deadline"`
+	RepeatCnt   int            `json:"repeat_cnt"`
 	Star        int            `json:"star"`
 	Year        string         `json:"year"`
 	BindGifts   []taskGiftBind `json:"bind_gifts"`

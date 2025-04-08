@@ -43,6 +43,11 @@ type AchievementAddReq struct {
 	Gifts       []achievementGiftAdd `json:"gifts"`
 }
 
+type AchievementFinishReq struct {
+	Id         int `json:"id"`
+	FinishTime int `json:"finish_time"`
+}
+
 type achievementTaskAdd struct {
 	TaskId int `json:"task_id"`
 	Count  int `json:"count"`
@@ -51,4 +56,13 @@ type achievementTaskAdd struct {
 type achievementGiftAdd struct {
 	GiftId int `json:"gift_id"`
 	Count  int `json:"count"`
+}
+
+type AchievementDeleteReq struct {
+	Ids []int `json:"ids"`
+}
+
+type AchievementChangeStatusReq struct {
+	Id     int `json:"id"`
+	Status int `json:"status"`
 }

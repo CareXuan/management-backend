@@ -65,6 +65,8 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 			Description: req.Description,
 			Type:        req.Type,
 			Deadline:    req.Deadline,
+			StartTime:   req.StartTime,
+			RepeatCnt:   req.RepeatCnt,
 			Status:      1,
 			Star:        req.Star,
 			Year:        req.Year,
@@ -103,6 +105,7 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 		}
 		deadlineInt := 0
 		needAdd := true
+		taskStartTime := int(time.Now().Unix())
 		if req.Type == 2 {
 			nextDayTime := common.GetNextDay(req.Deadline)
 			needAdd = common.IsToday(nextDayTime)
@@ -110,11 +113,14 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 		} else {
 			deadlineInt = req.Deadline
 		}
+		if req.Type == 4 {
+			taskStartTime = req.StartTime
+		}
 		if needAdd {
 			_, err = conf.Mysql.Insert(model.TaskDo{
 				TaskId:    req.Id,
 				Status:    1,
-				StartTime: int(time.Now().Unix()),
+				StartTime: taskStartTime,
 				Deadline:  deadlineInt,
 				CreateAt:  int(time.Now().Unix()),
 			})
@@ -130,6 +136,8 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 			Description: req.Description,
 			Type:        req.Type,
 			Deadline:    req.Deadline,
+			StartTime:   req.StartTime,
+			RepeatCnt:   req.RepeatCnt,
 			Star:        req.Star,
 			Status:      1,
 			Year:        req.Year,
@@ -156,6 +164,7 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 		}
 		deadlineInt := 0
 		needAdd := true
+		taskStartTime := int(time.Now().Unix())
 		if req.Type == 2 {
 			nextDayTime := common.GetNextDay(req.Deadline)
 			needAdd = common.IsToday(nextDayTime)
@@ -163,11 +172,14 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 		} else {
 			deadlineInt = req.Deadline
 		}
+		if req.Type == 4 {
+			taskStartTime = req.StartTime
+		}
 		if needAdd {
 			_, err = conf.Mysql.Insert(model.TaskDo{
 				TaskId:    taskAdd.Id,
 				Status:    1,
-				StartTime: int(time.Now().Unix()),
+				StartTime: taskStartTime,
 				Deadline:  deadlineInt,
 				CreateAt:  int(time.Now().Unix()),
 			})
@@ -462,77 +474,85 @@ func checkTaskAchievement(taskId int) error {
 		FinishAt: int(time.Now().Unix()),
 	})
 	for _, i := range needFinishId {
-		var achievementItem model.Achievement
-		_, err := conf.Mysql.Where("id = ?", i).Where("delete_at = 0").Get(&achievementItem)
+		err = SendFinishAchievement(i)
 		if err != nil {
 			return err
 		}
-		var pointGift model.GiftPackage
-		has, err := conf.Mysql.Where("gift_id = 0").Where("delete_at = 0").Get(&pointGift)
+	}
+	return nil
+}
+
+func SendFinishAchievement(achievementId int) error {
+	var achievementItem model.Achievement
+	_, err := conf.Mysql.Where("id = ?", achievementId).Where("delete_at = 0").Get(&achievementItem)
+	if err != nil {
+		return err
+	}
+	var pointGift model.GiftPackage
+	has, err := conf.Mysql.Where("gift_id = 0").Where("delete_at = 0").Get(&pointGift)
+	if err != nil {
+		return err
+	}
+	if has {
+		_, err = conf.Mysql.Where("gift_id = 0").Where("delete_at = 0").Update(&model.GiftPackage{
+			Count: pointGift.Count + achievementItem.Point,
+		})
+	} else {
+		_, err = conf.Mysql.Insert(&model.GiftPackage{
+			GiftId:   0,
+			Count:    achievementItem.Point,
+			CreateAt: int(time.Now().Unix()),
+		})
+	}
+	var achievementGifts []*model.AchievementGift
+	err = conf.Mysql.Where("achievement_id = ?", achievementId).Find(&achievementGifts)
+	if err != nil {
+		return err
+	}
+	for _, j := range achievementGifts {
+		var giftPackageItem model.GiftPackage
+		sess := conf.Mysql.NewSession()
+		has, err := sess.Where("gift_id = ?", j.GiftId).Where("delete_at = 0").Get(&giftPackageItem)
 		if err != nil {
+			sess.Rollback()
+			return err
+		}
+		var giftItem model.Gift
+		_, err = sess.Where("id = ?", j.GiftId).Where("delete_at = 0").Get(&giftItem)
+		if err != nil {
+			sess.Rollback()
 			return err
 		}
 		if has {
-			_, err = conf.Mysql.Where("gift_id = 0").Where("delete_at = 0").Update(&model.GiftPackage{
-				Count: pointGift.Count + achievementItem.Point,
+			_, err = sess.Where("gift_id = ?", j.GiftId).Where("delete_at = 0").Update(model.GiftPackage{
+				Count: giftPackageItem.Count + j.Count,
 			})
+			if err != nil {
+				sess.Rollback()
+				return err
+			}
 		} else {
-			_, err = conf.Mysql.Insert(&model.GiftPackage{
-				GiftId:   0,
-				Count:    achievementItem.Point,
-				CreateAt: int(time.Now().Unix()),
+			_, err = sess.Insert(model.GiftPackage{
+				GiftId:     j.GiftId,
+				Count:      j.Count,
+				Consumable: giftItem.Consumable,
+				CreateAt:   int(time.Now().Unix()),
 			})
+			if err != nil {
+				sess.Rollback()
+				return err
+			}
 		}
-		var achievementGifts []*model.AchievementGift
-		err = conf.Mysql.Where("achievement_id = ?", i).Find(&achievementGifts)
+		_, err = sess.Insert(&model.GiftExtract{
+			GiftId:   j.GiftId,
+			Type:     1,
+			Count:    j.Count,
+			GetTime:  int(time.Now().Unix()),
+			CreateAt: int(time.Now().Unix()),
+		})
 		if err != nil {
+			sess.Rollback()
 			return err
-		}
-		for _, j := range achievementGifts {
-			var giftPackageItem model.GiftPackage
-			sess := conf.Mysql.NewSession()
-			has, err := sess.Where("gift_id = ?", j.GiftId).Where("delete_at = 0").Get(&giftPackageItem)
-			if err != nil {
-				sess.Rollback()
-				return err
-			}
-			var giftItem model.Gift
-			_, err = sess.Where("id = ?", j.GiftId).Where("delete_at = 0").Get(&giftItem)
-			if err != nil {
-				sess.Rollback()
-				return err
-			}
-			if has {
-				_, err = sess.Where("gift_id = ?", j.GiftId).Where("delete_at = 0").Update(model.GiftPackage{
-					Count: giftPackageItem.Count + j.Count,
-				})
-				if err != nil {
-					sess.Rollback()
-					return err
-				}
-			} else {
-				_, err = sess.Insert(model.GiftPackage{
-					GiftId:     j.GiftId,
-					Count:      j.Count,
-					Consumable: giftItem.Consumable,
-					CreateAt:   int(time.Now().Unix()),
-				})
-				if err != nil {
-					sess.Rollback()
-					return err
-				}
-			}
-			_, err = sess.Insert(&model.GiftExtract{
-				GiftId:   j.GiftId,
-				Type:     1,
-				Count:    j.Count,
-				GetTime:  int(time.Now().Unix()),
-				CreateAt: int(time.Now().Unix()),
-			})
-			if err != nil {
-				sess.Rollback()
-				return err
-			}
 		}
 	}
 	return nil

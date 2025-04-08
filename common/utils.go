@@ -35,3 +35,19 @@ func IsToday(t time.Time) bool {
 	now := time.Now()
 	return t.Year() == now.Year() && t.Month() == now.Month() && t.Day() == now.Day()
 }
+
+func CompareDaysSinceTimestamp(timestamp int64, number int) bool {
+	t := time.Unix(timestamp, 0)
+	now := time.Now()
+
+	// 去除时间部分，只保留日期
+	startDate := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+	endDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+
+	days := int(endDate.Sub(startDate).Hours() / 24)
+	if days < 0 {
+		days = -days
+	}
+
+	return days >= number
+}

@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
-	cron2 "prize-draw/cron"
+	"prize-draw/common"
 	"prize-draw/model"
 	"time"
 	"xorm.io/core"
@@ -115,7 +115,7 @@ func initWechatApp() {
 
 func initCronTask() {
 	c := cron.New()
-	_, err := c.AddFunc("02 00 */1 * *", cron2.AllotTask)
+	_, err := c.AddFunc("02 00 */1 * *", allotTask)
 	if err != nil {
 		log.Fatal("添加定时任务失败")
 	}
@@ -145,5 +145,67 @@ func syncTables() {
 	if err != nil {
 		log.Fatal(err)
 		return
+	}
+}
+
+func allotTask() {
+	var tasks []*model.Task
+	err := Mysql.In("type", []int{3, 4}).Where("delete_at", 0).Find(&tasks)
+	if err != nil {
+		log.Fatal("定时任务出错")
+		return
+	}
+	// 因为任务量小所以直接循环检查
+	for _, task := range tasks {
+		var undoneTask model.TaskDo
+		has, err := Mysql.Where("task_id = ?", task.Id).Where("deadline = 0 or deadline > ?", int(time.Now().Unix())).Where("status != ?", 3).Get(&undoneTask)
+		if err != nil {
+			log.Fatal("搜索任务列表失败")
+			return
+		}
+		if has {
+			continue
+		}
+		deadlineInt := 0
+		needAdd := false
+		taskStartTime := int(time.Now().Unix())
+		if task.Type == 2 {
+			nextDayTime := common.GetNextDay(task.Deadline)
+			needAdd = common.IsToday(nextDayTime)
+			deadlineInt = int(nextDayTime.Unix())
+		}
+
+		if task.Type == 4 {
+			var existTask []*model.TaskDo
+			err := Mysql.Where("task_id = ?", task.Id).Where("status = 3").Find(&existTask)
+			if err != nil {
+				log.Fatal("搜索历史任务失败")
+				return
+			}
+			lastFinishAt := 0
+			for _, i := range existTask {
+				if i.FinishAt > lastFinishAt {
+					lastFinishAt = i.FinishAt
+				}
+			}
+			needAdd = common.CompareDaysSinceTimestamp(int64(lastFinishAt), task.Deadline)
+			if len(existTask) >= task.RepeatCnt {
+				needAdd = false
+			}
+		}
+
+		if needAdd {
+			_, err = Mysql.Insert(model.TaskDo{
+				TaskId:    task.Id,
+				Status:    1,
+				StartTime: taskStartTime,
+				Deadline:  deadlineInt,
+				CreateAt:  int(time.Now().Unix()),
+			})
+			if err != nil {
+				log.Fatal("添加任务失败")
+				return
+			}
+		}
 	}
 }

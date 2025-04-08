@@ -34,3 +34,23 @@ func AchievementAdd(c *gin.Context) {
 	}
 	service.AchievementAdd(c, addReq)
 }
+
+// AchievementFinish 成就手动完成
+func AchievementFinish(c *gin.Context) {
+	var finishReq model.AchievementFinishReq
+	if err := c.ShouldBindJSON(&finishReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AchievementFinish(c, finishReq)
+}
+
+// AchievementDelete 成就删除
+func AchievementDelete(c *gin.Context) {
+	var deleteReq model.AchievementDeleteReq
+	if err := c.ShouldBindJSON(&deleteReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AchievementDelete(c, deleteReq)
+}
