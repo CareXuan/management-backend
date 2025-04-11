@@ -14,9 +14,9 @@ func Upload(c *gin.Context) {
 		common.ResError(c, "文件上传失败")
 		return
 	}
-	fileMaxSize := 4 << 20 //4M
+	fileMaxSize := 128 << 20 //4M
 	if int(file.Size) > fileMaxSize {
-		common.ResError(c, "文件不允许大小于32KB")
+		common.ResError(c, "文件不允许大于8MB")
 		return
 	}
 	reader, err := file.Open()

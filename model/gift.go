@@ -26,12 +26,12 @@ type GiftGroup struct {
 }
 
 type GiftGroupGift struct {
-	Id          int `json:"id" xorm:"pk autoincr INT(11)"`
-	GroupId     int `json:"group_id" xorm:"INT(10) not null default 0 comment('礼物组ID')"`
-	GiftId      int `json:"gift_id" xorm:"INT(10) not null default 0 comment('礼物ID')"`
-	Probability int `json:"probability" xorm:"INT(5) not null default 0 comment('礼物在礼物组中被获取的概率')"`
-	CreateAt    int `json:"create_at" xorm:"INT(10) not null default 0"`
-	DeleteAt    int `json:"delete_at" xorm:"INT(10) not null default 0"`
+	Id          int    `json:"id" xorm:"pk autoincr INT(11)"`
+	GroupId     int    `json:"group_id" xorm:"INT(10) not null default 0 comment('礼物组ID')"`
+	Level       string `json:"level" xorm:"VARCHAR(5) not null default 0 comment('礼物等级')"`
+	Probability int    `json:"probability" xorm:"INT(5) not null default 0 comment('礼物在礼物组中被获取的概率')"`
+	CreateAt    int    `json:"create_at" xorm:"INT(10) not null default 0"`
+	DeleteAt    int    `json:"delete_at" xorm:"INT(10) not null default 0"`
 }
 
 type GiftPackage struct {
@@ -69,17 +69,17 @@ type GiftDeleteReq struct {
 }
 
 type GiftGroupAdd struct {
-	Id        int                      `json:"id"`
-	Name      string                   `json:"name"`
-	StartTime int                      `json:"start_time"`
-	EndTime   int                      `json:"end_time"`
-	Status    int                      `json:"status"`
-	GiftIds   []giftGroupIdProbability `json:"gift_ids"`
+	Id        int                    `json:"id"`
+	Name      string                 `json:"name"`
+	StartTime int                    `json:"start_time"`
+	EndTime   int                    `json:"end_time"`
+	Status    int                    `json:"status"`
+	GiftIds   []giftLevelProbability `json:"gift_ids"`
 }
 
-type giftGroupIdProbability struct {
-	GiftId      int `json:"gift_id"`
-	Probability int `json:"probability"`
+type giftLevelProbability struct {
+	Level       string `json:"level"`
+	Probability int    `json:"probability"`
 }
 
 type GiftGroupDelete struct {
@@ -92,9 +92,9 @@ type GiftChangeStatusReq struct {
 }
 
 var GIFT_LEVEL_MAPPING = map[string]int{
-	"A": 1,
-	"B": 2,
-	"C": 3,
-	"D": 4,
-	"E": 5,
+	"A": 700,
+	"B": 70,
+	"C": 27,
+	"D": 7,
+	"E": 0,
 }

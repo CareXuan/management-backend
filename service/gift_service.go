@@ -147,7 +147,7 @@ func GroupAdd(c *gin.Context, req model.GiftGroupAdd) {
 		for _, i := range req.GiftIds {
 			giftGroupItems = append(giftGroupItems, &model.GiftGroupGift{
 				GroupId:     req.Id,
-				GiftId:      i.GiftId,
+				Level:       i.Level,
 				Probability: i.Probability,
 				CreateAt:    int(time.Now().Unix()),
 			})
@@ -175,7 +175,7 @@ func GroupAdd(c *gin.Context, req model.GiftGroupAdd) {
 		for _, i := range req.GiftIds {
 			giftGroupItems = append(giftGroupItems, &model.GiftGroupGift{
 				GroupId:     groupAdd.Id,
-				GiftId:      i.GiftId,
+				Level:       i.Level,
 				Probability: i.Probability,
 				CreateAt:    int(time.Now().Unix()),
 			})

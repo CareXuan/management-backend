@@ -1,8 +1,8 @@
 package common
 
 import (
-	"crypto/rand"
 	"encoding/base64"
+	"math/rand"
 	"time"
 )
 
@@ -50,4 +50,15 @@ func CompareDaysSinceTimestamp(timestamp int64, number int) bool {
 	}
 
 	return days >= number
+}
+
+func RandomClosedInterval(min, max int) int {
+	// 参数校验与修正（支持倒序调用）
+	if min > max {
+		min, max = max, min
+	}
+
+	// 核心算法（确保包含两端）
+	rangeSize := max - min + 1 // 计算范围长度（关键！）
+	return rand.Intn(rangeSize) + min
 }
