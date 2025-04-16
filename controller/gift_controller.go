@@ -25,6 +25,21 @@ func Info(c *gin.Context) {
 	service.GiftInfo(c, idInt)
 }
 
+// Remain 礼物剩余情况
+func Remain(c *gin.Context) {
+	service.GiftRemain(c)
+}
+
+// RaffleConfig 抽卡配置
+func RaffleConfig(c *gin.Context) {
+	service.RaffleConfig(c)
+}
+
+// PointLeft 抽卡点剩余情况
+func PointLeft(c *gin.Context) {
+	service.PointLeft(c)
+}
+
 // GroupList 礼物组列表
 func GroupList(c *gin.Context) {
 	name := c.Query("name")
@@ -50,6 +65,31 @@ func Add(c *gin.Context) {
 		return
 	}
 	service.Add(c, addReq)
+}
+
+// AddPoint 添加抽卡点
+func AddPoint(c *gin.Context) {
+	var addReq model.GiftAddPointReq
+	if err := c.ShouldBindJSON(&addReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AddPoint(c, addReq)
+}
+
+// RaffleConfigSet 抽卡配置设置
+func RaffleConfigSet(c *gin.Context) {
+	var addReq model.GiftConfigSetReq
+	if err := c.ShouldBindJSON(&addReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.RaffleConfigSet(c, addReq)
+}
+
+// ResetPoint 一键重置
+func ResetPoint(c *gin.Context) {
+	service.ResetPoint(c)
 }
 
 // Delete 删除礼物(软)

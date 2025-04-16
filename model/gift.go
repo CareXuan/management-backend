@@ -64,6 +64,15 @@ type GiftAddReq struct {
 	CanObtain   int    `json:"can_obtain"`
 }
 
+type GiftAddPointReq struct {
+	Count int `json:"count"`
+}
+
+type GiftConfigSetReq struct {
+	OneCount int `json:"one_count"`
+	TenCount int `json:"ten_count"`
+}
+
 type GiftDeleteReq struct {
 	Ids []int `json:"ids"`
 }
@@ -89,6 +98,23 @@ type GiftGroupDelete struct {
 type GiftChangeStatusReq struct {
 	Id     int `json:"id"`
 	Status int `json:"status"`
+}
+
+type GiftProbabilityRes struct {
+	GetCount int `json:"get_count"`
+	AllCount int `json:"all_count"`
+}
+
+type GiftRemainListItem struct {
+	GiftId int    `json:"gift_id"`
+	Name   string `json:"name"`
+	Pic    string `json:"pic"`
+	Exist  int    `json:"exist"`
+}
+
+type GiftRemainRes struct {
+	List        []*GiftRemainListItem          `json:"list"`
+	Probability map[string]*GiftProbabilityRes `json:"probability"`
 }
 
 var GIFT_LEVEL_MAPPING = map[string]int{

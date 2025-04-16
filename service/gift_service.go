@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"prize-draw/common"
 	"prize-draw/conf"
@@ -31,6 +32,85 @@ func GiftInfo(c *gin.Context, id int) {
 		return
 	}
 	common.ResOk(c, "ok", giftItem)
+}
+
+func GiftRemain(c *gin.Context) {
+	var giftRemainRes = model.GiftRemainRes{}
+	var levels = []string{"总量", "E", "D", "C", "B", "A"}
+	var r = make(map[string]*model.GiftProbabilityRes)
+	for _, i := range levels {
+		r[i] = &model.GiftProbabilityRes{
+			GetCount: 0,
+			AllCount: 0,
+		}
+	}
+	giftRemainRes.Probability = r
+	var giftItem []*model.Gift
+	err := conf.Mysql.Where("delete_at = 0").Find(&giftItem)
+	if err != nil {
+		common.ResError(c, "获取礼物信息失败")
+		return
+	}
+	var giftPackage []*model.GiftPackage
+	err = conf.Mysql.Where("delete_at = 0").Find(&giftPackage)
+	if err != nil {
+		common.ResError(c, "获取背包信息失败")
+		return
+	}
+
+	var giftPackageMapping = make(map[int]*model.GiftPackage)
+	for _, i := range giftPackage {
+		giftPackageMapping[i.GiftId] = i
+	}
+	for _, i := range giftItem {
+		exist := 0
+		if _, ok := giftPackageMapping[i.Id]; ok {
+			exist = 1
+			giftRemainRes.Probability[i.Level].GetCount += 1
+			giftRemainRes.Probability["总量"].GetCount += 1
+		}
+		giftRemainRes.Probability[i.Level].AllCount += 1
+		giftRemainRes.Probability["总量"].AllCount += 1
+		giftRemainRes.List = append(giftRemainRes.List, &model.GiftRemainListItem{
+			GiftId: i.Id,
+			Name:   i.Name,
+			Pic:    i.Pic,
+			Exist:  exist,
+		})
+	}
+	common.ResOk(c, "ok", giftRemainRes)
+}
+
+func RaffleConfig(c *gin.Context) {
+	var config model.Config
+	_, err := conf.Mysql.Where("id = 1").Get(&config)
+	if err != nil {
+		common.ResError(c, "获取配置失败")
+		return
+	}
+	common.ResOk(c, "ok", config)
+}
+
+func RaffleConfigSet(c *gin.Context, req model.GiftConfigSetReq) {
+	_, err := conf.Mysql.Where("id > 0").Update(model.Config{
+		OnePoint: req.OneCount,
+		TenPoint: req.TenCount,
+	})
+	if err != nil {
+		common.ResError(c, "修改配置失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func PointLeft(c *gin.Context) {
+	var pointLeft model.GiftPackage
+	_, err := conf.Mysql.Where("gift_id = 0").Where("delete_at = 0").Get(&pointLeft)
+	if err != nil {
+		common.ResError(c, "获取抽卡点失败")
+		return
+	}
+	common.ResOk(c, "ok", pointLeft)
 }
 
 func GroupList(c *gin.Context, name string, page, pageSize int) {
@@ -97,6 +177,40 @@ func Add(c *gin.Context, req model.GiftAddReq) {
 			common.ResError(c, "添加礼物失败")
 			return
 		}
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func AddPoint(c *gin.Context, req model.GiftAddPointReq) {
+	var pointItem model.GiftPackage
+	_, err := conf.Mysql.Where("gift_id = 0").Where("delete_at = 0").Get(&pointItem)
+	if err != nil {
+		common.ResError(c, "获取抽卡点失败")
+		return
+	}
+	_, err = conf.Mysql.Where("gift_id = 0").Where("delete_at = 0").Update(&model.GiftPackage{
+		Count: pointItem.Count + req.Count,
+	})
+	if err != nil {
+		common.ResError(c, "发放抽卡点失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func ResetPoint(c *gin.Context) {
+	_, err := conf.Mysql.MustCols("gift_id", "count").Where("gift_id = 0").Update(&model.GiftPackage{
+		Count: 0,
+	})
+	if err != nil {
+		fmt.Println(err)
+		common.ResError(c, "重置抽卡点失败")
+		return
+	}
+	_, err = conf.Mysql.Where("gift_id != 0").Delete(&model.GiftPackage{})
+	if err != nil {
+		common.ResError(c, "重置礼物获取情况失败")
+		return
 	}
 	common.ResOk(c, "ok", nil)
 }

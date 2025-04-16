@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+type raffleResult struct {
+	Msg  string `json:"msg"`
+	Pic  string `json:"pic"`
+	Time string `json:"time"`
+}
+
 func RaffleOne(c *gin.Context, req model.RaffleOneReq) {
 	var pointCount model.GiftPackage
 	has, err := conf.Mysql.Where("gift_id = ?", 0).Where("delete_at = 0").Get(&pointCount)
@@ -16,15 +22,21 @@ func RaffleOne(c *gin.Context, req model.RaffleOneReq) {
 		common.ResError(c, "获取抽卡点信息失败")
 		return
 	}
-	oneRaffleCount := 7
+	var raffleConfig model.Config
+	_, err = conf.Mysql.Get(&raffleConfig)
+	if err != nil {
+		common.ResError(c, "获取配置失败")
+		return
+	}
+	oneRaffleCount := raffleConfig.OnePoint
 	if req.Count == 10 {
-		oneRaffleCount = 77
+		oneRaffleCount = raffleConfig.TenPoint
 	}
 	if !has || pointCount.Count < oneRaffleCount {
 		common.ResForbidden(c, "抽卡点不足")
 		return
 	}
-	var resLogs []string
+	var resLogs []raffleResult
 	var probabilityItems []*model.GiftGroupGift
 	err = conf.Mysql.Where("group_id = ?", req.GiftGroupId).Where("delete_at = 0").Find(&probabilityItems)
 	if err != nil {
@@ -111,7 +123,10 @@ func RaffleOne(c *gin.Context, req model.RaffleOneReq) {
 				}
 				resLog = fmt.Sprintf("获取【%s】X1。", activeGift.Name)
 			}
-			resLogs = append(resLogs, resLog)
+			resLogs = append(resLogs, raffleResult{
+				Msg:  resLog,
+				Time: time.Now().Format("2006-01-02 15:04:05"),
+			})
 		} else {
 			common.ResForbidden(c, "抽卡失败")
 			return
