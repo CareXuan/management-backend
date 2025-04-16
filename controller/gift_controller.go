@@ -27,7 +27,10 @@ func Info(c *gin.Context) {
 
 // Remain 礼物剩余情况
 func Remain(c *gin.Context) {
-	service.GiftRemain(c)
+	level := c.Query("level")
+	exist := c.Query("exist")
+	existInt, _ := strconv.Atoi(exist)
+	service.GiftRemain(c, level, existInt)
 }
 
 // RaffleConfig 抽卡配置
@@ -55,6 +58,30 @@ func GroupInfo(c *gin.Context) {
 	id := c.Query("id")
 	idInt, _ := strconv.Atoi(id)
 	service.GroupInfo(c, idInt)
+}
+
+// AlbumList 相册列表
+func AlbumList(c *gin.Context) {
+	name := c.Query("name")
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	service.AlbumList(c, name, pageInt, pageSizeInt)
+}
+
+// AlbumInfo 相册详情
+func AlbumInfo(c *gin.Context) {
+	id := c.Query("id")
+	idInt, _ := strconv.Atoi(id)
+	service.AlbumInfo(c, idInt)
+}
+
+// AlbumGift 获取未被相册绑定的礼物
+func AlbumGift(c *gin.Context) {
+	albumId := c.Query("album_id")
+	albumIdInt, _ := strconv.Atoi(albumId)
+	service.AlbumGift(c, albumIdInt)
 }
 
 // Add 添加礼物
@@ -140,6 +167,26 @@ func GroupChangeStatus(c *gin.Context) {
 		return
 	}
 	service.GroupAdd(c, addReq)
+}
+
+// AlbumAdd 添加相册
+func AlbumAdd(c *gin.Context) {
+	var addReq model.GiftAlbumAdd
+	if err := c.ShouldBindJSON(&addReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AlbumAdd(c, addReq)
+}
+
+// AlbumDelete 删除相册(软)
+func AlbumDelete(c *gin.Context) {
+	var deleteReq model.GiftAlbumDelete
+	if err := c.ShouldBindJSON(&deleteReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AlbumDelete(c, deleteReq)
 }
 
 /*=====================================app=====================================*/

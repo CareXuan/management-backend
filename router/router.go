@@ -45,6 +45,9 @@ func InitRouter(r *gin.Engine) {
 			gift.GET("/point/left", controller.PointLeft)
 			gift.GET("/group/list", controller.GroupList)
 			gift.GET("/group/info", controller.GroupInfo)
+			gift.GET("/album/list", controller.AlbumList)
+			gift.GET("/album/info", controller.AlbumInfo)
+			gift.GET("/album/gift", controller.AlbumGift)
 			gift.POST("/add", controller.Add)
 			gift.POST("/add_point", controller.AddPoint)
 			gift.POST("/reset_point", controller.ResetPoint)
@@ -54,6 +57,8 @@ func InitRouter(r *gin.Engine) {
 			gift.POST("/group/add", controller.GroupAdd)
 			gift.POST("/group/delete", controller.GroupDelete)
 			gift.POST("/group/change_status", controller.GroupChangeStatus)
+			gift.POST("/album/add", controller.AlbumAdd)
+			gift.POST("/album/delete", controller.AlbumDelete)
 		}
 
 		// 任务

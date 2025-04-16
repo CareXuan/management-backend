@@ -34,7 +34,7 @@ func GiftInfo(c *gin.Context, id int) {
 	common.ResOk(c, "ok", giftItem)
 }
 
-func GiftRemain(c *gin.Context) {
+func GiftRemain(c *gin.Context, level string, giftExist int) {
 	var giftRemainRes = model.GiftRemainRes{}
 	var levels = []string{"总量", "E", "D", "C", "B", "A"}
 	var r = make(map[string]*model.GiftProbabilityRes)
@@ -46,7 +46,11 @@ func GiftRemain(c *gin.Context) {
 	}
 	giftRemainRes.Probability = r
 	var giftItem []*model.Gift
-	err := conf.Mysql.Where("delete_at = 0").Find(&giftItem)
+	sess := conf.Mysql.NewSession()
+	if level != "" {
+		sess.Where("level = ?", level)
+	}
+	err := sess.Where("delete_at = 0").Find(&giftItem)
 	if err != nil {
 		common.ResError(c, "获取礼物信息失败")
 		return
@@ -63,7 +67,7 @@ func GiftRemain(c *gin.Context) {
 		giftPackageMapping[i.GiftId] = i
 	}
 	for _, i := range giftItem {
-		exist := 0
+		exist := 2
 		if _, ok := giftPackageMapping[i.Id]; ok {
 			exist = 1
 			giftRemainRes.Probability[i.Level].GetCount += 1
@@ -71,6 +75,9 @@ func GiftRemain(c *gin.Context) {
 		}
 		giftRemainRes.Probability[i.Level].AllCount += 1
 		giftRemainRes.Probability["总量"].AllCount += 1
+		if giftExist != 0 && giftExist != exist {
+			continue
+		}
 		giftRemainRes.List = append(giftRemainRes.List, &model.GiftRemainListItem{
 			GiftId: i.Id,
 			Name:   i.Name,
@@ -142,6 +149,61 @@ func GroupInfo(c *gin.Context, id int) {
 	}
 	groupItem.GroupGift = groupGifts
 	common.ResOk(c, "ok", groupItem)
+}
+
+func AlbumList(c *gin.Context, name string, page, pageSize int) {
+	var albums []*model.Album
+	sess := conf.Mysql.NewSession()
+	if name != "" {
+		sess.Where("name like ?", "%"+name+"%")
+	}
+	count, err := sess.Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&albums)
+	if err != nil {
+		common.ResError(c, "获取相册列表失败")
+		return
+	}
+	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: albums})
+}
+
+func AlbumInfo(c *gin.Context, id int) {
+	var albumItem model.Album
+	_, err := conf.Mysql.Where("id = ?", id).Where("delete_at = 0").Get(&albumItem)
+	if err != nil {
+		common.ResError(c, "获取相册失败")
+		return
+	}
+	var albumGifts []*model.AlbumGift
+	err = conf.Mysql.Where("album_id = ?", id).Where("delete_at = 0").Find(&albumGifts)
+	if err != nil {
+		common.ResError(c, "获取相册关联礼物失败")
+		return
+	}
+	albumItem.AlbumGift = albumGifts
+	common.ResOk(c, "ok", albumItem)
+}
+
+func AlbumGift(c *gin.Context, albumId int) {
+	var existGift []*model.AlbumGift
+	sess := conf.Mysql.NewSession()
+	if albumId != 0 {
+		sess.Where("album_id != ?", albumId)
+	}
+	err := sess.Where("delete_at = 0").Find(&existGift)
+	if err != nil {
+		common.ResError(c, "获取已关联相册相片失败")
+		return
+	}
+	var existId []int
+	for _, i := range existGift {
+		existId = append(existId, i.GiftId)
+	}
+	var giftItems []*model.Gift
+	err = conf.Mysql.NotIn("id", existId).Where("delete_at = 0").Find(&giftItems)
+	if err != nil {
+		common.ResError(c, "获取礼物列表失败")
+		return
+	}
+	common.ResOk(c, "ok", giftItems)
 }
 
 func Add(c *gin.Context, req model.GiftAddReq) {
@@ -318,6 +380,86 @@ func GroupDelete(c *gin.Context, req model.GiftGroupDelete) {
 	})
 	if err != nil {
 		common.ResError(c, "删除礼物组关联关系失败")
+		sess.Rollback()
+		return
+	}
+	sess.Commit()
+	common.ResOk(c, "ok", nil)
+}
+
+func AlbumAdd(c *gin.Context, req model.GiftAlbumAdd) {
+	if req.Id != 0 {
+		sess := conf.Mysql.NewSession()
+		_, err := sess.Where("id = ?", req.Id).Update(model.Album{
+			Name: req.Name,
+		})
+		if err != nil {
+			common.ResError(c, "修改相册失败")
+			return
+		}
+		_, err = sess.Where("album_id = ?", req.Id).Update(&model.AlbumGift{
+			DeleteAt: int(time.Now().Unix()),
+		})
+		if err != nil {
+			common.ResError(c, "删除已有关联关系失败")
+			return
+		}
+		var giftAlbumItems []*model.AlbumGift
+		for _, i := range req.GiftIds {
+			giftAlbumItems = append(giftAlbumItems, &model.AlbumGift{
+				AlbumId:  req.Id,
+				GiftId:   i,
+				CreateAt: int(time.Now().Unix()),
+			})
+		}
+		_, err = sess.Insert(giftAlbumItems)
+		if err != nil {
+			common.ResError(c, "绑定相册失败")
+			return
+		}
+		sess.Commit()
+	} else {
+		var albumAdd = &model.Album{
+			Name:     req.Name,
+			CreateAt: int(time.Now().Unix()),
+		}
+		_, err := conf.Mysql.Insert(albumAdd)
+		if err != nil {
+			common.ResError(c, "添加相册失败")
+			return
+		}
+		var giftAlbumItems []*model.AlbumGift
+		for _, i := range req.GiftIds {
+			giftAlbumItems = append(giftAlbumItems, &model.AlbumGift{
+				AlbumId:  albumAdd.Id,
+				GiftId:   i,
+				CreateAt: int(time.Now().Unix()),
+			})
+		}
+		_, err = conf.Mysql.Insert(giftAlbumItems)
+		if err != nil {
+			common.ResError(c, "绑定相册失败")
+			return
+		}
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func AlbumDelete(c *gin.Context, req model.GiftAlbumDelete) {
+	sess := conf.Mysql.NewSession()
+	_, err := sess.In("id", req.Ids).Where("delete_at = 0").Update(&model.Album{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "删除相册失败")
+		sess.Rollback()
+		return
+	}
+	_, err = sess.In("album_id", req.Ids).Where("delete_at = 0").Update(&model.AlbumGift{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "删除相册关联关系失败")
 		sess.Rollback()
 		return
 	}

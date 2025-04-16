@@ -117,6 +117,16 @@ type GiftRemainRes struct {
 	Probability map[string]*GiftProbabilityRes `json:"probability"`
 }
 
+type GiftAlbumAdd struct {
+	Id      int    `json:"id"`
+	Name    string `json:"name"`
+	GiftIds []int  `json:"gift_ids"`
+}
+
+type GiftAlbumDelete struct {
+	Ids []int `json:"ids"`
+}
+
 var GIFT_LEVEL_MAPPING = map[string]int{
 	"A": 700,
 	"B": 70,

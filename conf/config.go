@@ -131,6 +131,8 @@ func syncTables() {
 		new(model.RolePermission),
 		new(model.Gift),
 		new(model.GiftGroup),
+		new(model.Album),
+		new(model.AlbumGift),
 		new(model.GiftGroupGift),
 		new(model.GiftExtract),
 		new(model.GiftPackage),
