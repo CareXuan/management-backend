@@ -17,6 +17,7 @@ type Config struct {
 	Mysql  MysqlConfig  `yaml:"mysql"`
 	Gpt    GptConfig    `yaml:"gpt"`
 	Upload UploadConfig `yaml:"upload"`
+	Tcp    TcpConfig    `yaml:"tcp"`
 	Wechat WechatConfig `yaml:"wechat"`
 }
 
@@ -31,6 +32,15 @@ type GptConfig struct {
 
 type UploadConfig struct {
 	Url string `yaml:"url"`
+}
+
+type TcpConfig struct {
+	Host1 string `yaml:"host1"`
+	Port1 string `yaml:"port1"`
+	Host2 string `yaml:"host2"`
+	Port2 string `yaml:"port2"`
+	Host3 string `yaml:"host3"`
+	Port3 string `yaml:"port3"`
 }
 
 type WechatConfig struct {
@@ -121,6 +131,7 @@ func syncTables() {
 		new(model.DeviceCommonData),
 		new(model.DeviceLocationHistory),
 		new(model.DeviceServiceData),
+		new(model.DeviceNewServiceData),
 	)
 	if err != nil {
 		log.Fatal(err)

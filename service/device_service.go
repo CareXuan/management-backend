@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"management-backend/common"
@@ -17,6 +18,29 @@ func DeviceListSer(c *gin.Context, page, pageSize int) {
 	if err != nil {
 		common.ResError(c, "获取设备列表失败")
 		return
+	}
+	isSupervisor, err := common.IsSupervisor(c)
+	if err != nil {
+		common.ResError(c, err.Error())
+		return
+	}
+	for _, i := range deviceItems {
+		i.IsSupervisor = isSupervisor
+		if isSupervisor != 1 {
+			i.Pwd1 = 0
+			i.Pwd1Base = 0
+			i.Pwd2 = 0
+			i.Pwd2Base = 0
+			i.Pwd3 = 0
+			i.Pwd3Base = 0
+			i.Pwd4 = 0
+			i.Pwd4Base = 0
+			i.Ip1 = ""
+			i.Port1 = 0
+			i.Ip2 = ""
+			i.Port2 = 0
+			i.PwdChangeDate = 0
+		}
 	}
 	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: deviceItems})
 }
@@ -70,6 +94,67 @@ func AddDeviceSer(c *gin.Context, req model.DeviceAddReq) {
 	common.ResOk(c, "ok", nil)
 }
 
+func UpdateSpecialInfoSer(c *gin.Context, req model.UpdateSpecialInfoReq) {
+	_, err := conf.Mysql.Where("device_id = ?", req.DeviceId).Update(model.Device{
+		HeartBeat:     req.HeartBeat,
+		HeartBeatMin:  req.HeartBeatMin,
+		Pwd1:          req.Pwd1,
+		Pwd2:          req.Pwd2,
+		Pwd3:          req.Pwd3,
+		Pwd4:          req.Pwd4,
+		Pwd1Base:      req.Pwd1Base,
+		Pwd2Base:      req.Pwd2Base,
+		Pwd3Base:      req.Pwd3Base,
+		Pwd4Base:      req.Pwd4Base,
+		Ip1:           req.Ip1,
+		Port1:         req.Port1,
+		Ip2:           req.Ip2,
+		Port2:         req.Port2,
+		PwdChangeDate: req.PwdChangeDate,
+	})
+	if err != nil {
+		common.ResError(c, "修改数据失败")
+		return
+	}
+	var msgData = make(map[string]interface{})
+	msgData["beat_time"] = req.HeartBeat
+	msgData["beat_min_time"] = req.HeartBeatMin
+	msgData["statistic_pwd"] = req.Pwd1
+	msgData["statistic_base"] = req.Pwd1Base
+	msgData["pwd1"] = req.Pwd2
+	msgData["pwd1_base"] = req.Pwd2Base
+	msgData["pwd2"] = req.Pwd3
+	msgData["pwd2_base"] = req.Pwd3Base
+	msgData["pwd3"] = req.Pwd4
+	msgData["pwd3_base"] = req.Pwd4Base
+	msgData["ip1"] = req.Ip1
+	msgData["port1"] = req.Port1
+	msgData["ip2"] = req.Ip2
+	msgData["port2"] = req.Port2
+	msgData["pwd_change_date"] = req.PwdChangeDate
+	msg, err := json.Marshal(msgData)
+	if err != nil {
+		common.ResError(c, "数据转换失败")
+		return
+	}
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host1, conf.Conf.Tcp.Port1, 1, req.DeviceId, 1, string(msg))
+	if err != nil {
+		common.ResError(c, "发送控制命令1失败")
+		return
+	}
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host2, conf.Conf.Tcp.Port2, 1, req.DeviceId, 1, string(msg))
+	if err != nil {
+		common.ResError(c, "发送控制命令2失败")
+		return
+	}
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host3, conf.Conf.Tcp.Port3, 1, req.DeviceId, 1, string(msg))
+	if err != nil {
+		common.ResError(c, "发送控制命令2失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
 func DeviceInfoSer(c *gin.Context, deviceId int) {
 	var deviceItem model.Device
 	_, err := conf.Mysql.Where("device_id = ?", deviceId).Get(&deviceItem)
@@ -104,6 +189,18 @@ func DeviceServiceDataSer(c *gin.Context, deviceId, page, pageSize int) {
 	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: serviceDatas})
 }
 
+func DeviceNewServiceDataSer(c *gin.Context, deviceId, page, pageSize int) {
+	var serviceDatas []*model.DeviceNewServiceData
+	sess := conf.Mysql.NewSession()
+	sess.Where("device_id=?", deviceId)
+	count, err := sess.OrderBy("id DESC").Limit(pageSize, (page-1)*pageSize).FindAndCount(&serviceDatas)
+	if err != nil {
+		common.ResError(c, "获取通用数据失败")
+		return
+	}
+	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: serviceDatas})
+}
+
 func AllDeviceLocationSer(c *gin.Context) {
 	var deviceItems []*model.Device
 	err := conf.Mysql.Find(&deviceItems)
@@ -116,11 +213,16 @@ func AllDeviceLocationSer(c *gin.Context) {
 		if i.Latitude == "" && i.Longitude == "" {
 			continue
 		}
+		//latFloat, _ := strconv.ParseFloat(i.Latitude, 64)
+		//lngFloat, _ := strconv.ParseFloat(i.Longitude, 64)
+		//caLat, caLng := common.WGS84ToGCJ02(latFloat, lngFloat)
 		locationRes = append(locationRes, model.DeviceLocationRes{
 			DeviceId: i.DeviceId,
 			Iccid:    i.Iccid,
-			Lat:      i.Latitude,
-			Lng:      i.Longitude,
+			//Lat:      strconv.FormatFloat(caLat, 'f', -1, 64),
+			//Lng:      strconv.FormatFloat(caLng, 'f', -1, 64),
+			Lat: i.Latitude,
+			Lng: i.Longitude,
 		})
 	}
 	common.ResOk(c, "ok", locationRes)
@@ -158,4 +260,23 @@ func DeviceStatisticSer(c *gin.Context, deviceId int, startTime, endTime string)
 
 func DeviceLocationHistorySer(c *gin.Context, deviceId int) {
 
+}
+
+func DeviceReportSer(c *gin.Context, reportType int, deviceId int, controlType int, msg string) {
+	err := common.CommonSendDeviceReport(conf.Conf.Tcp.Host1, conf.Conf.Tcp.Port1, reportType, deviceId, controlType, msg)
+	if err != nil {
+		common.ResError(c, "发送控制命令1失败")
+		return
+	}
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host2, conf.Conf.Tcp.Port2, reportType, deviceId, controlType, msg)
+	if err != nil {
+		common.ResError(c, "发送控制命令2失败")
+		return
+	}
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host3, conf.Conf.Tcp.Port3, reportType, deviceId, controlType, msg)
+	if err != nil {
+		common.ResError(c, "发送控制命令3失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
 }

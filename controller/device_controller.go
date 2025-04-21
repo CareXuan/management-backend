@@ -25,6 +25,15 @@ func AddOneDevice(c *gin.Context) {
 	service.AddDeviceSer(c, device)
 }
 
+func UpdateSpecialInfo(c *gin.Context) {
+	var device model.UpdateSpecialInfoReq
+	if err := c.ShouldBindJSON(&device); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.UpdateSpecialInfoSer(c, device)
+}
+
 func GetOneDeviceInfo(c *gin.Context) {
 	deviceId := c.Query("device_id")
 	deviceIdInt, _ := strconv.Atoi(deviceId)
@@ -51,6 +60,16 @@ func GetOneDeviceServiceData(c *gin.Context) {
 	service.DeviceServiceDataSer(c, deviceIdInt, pageInt, pageSizeInt)
 }
 
+func GetOneDeviceNewServiceData(c *gin.Context) {
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	deviceId := c.Query("device_id")
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	deviceIdInt, _ := strconv.Atoi(deviceId)
+	service.DeviceNewServiceDataSer(c, deviceIdInt, pageInt, pageSizeInt)
+}
+
 func GetAllDeviceLocation(c *gin.Context) {
 	service.AllDeviceLocationSer(c)
 }
@@ -67,4 +86,13 @@ func GetDeviceLocationHistory(c *gin.Context) {
 	deviceId := c.Query("id")
 	deviceIdInt, _ := strconv.Atoi(deviceId)
 	service.DeviceLocationHistorySer(c, deviceIdInt)
+}
+
+func DeviceReport(c *gin.Context) {
+	var req model.DeviceReportReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.DeviceReportSer(c, req.ReportType, req.DeviceId, req.ControlType, req.Msg)
 }

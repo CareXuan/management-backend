@@ -48,10 +48,13 @@ func InitRouter(r *gin.Engine) {
 			device.GET("/info", controller.GetOneDeviceInfo)
 			device.GET("/common_data", controller.GetOneDeviceCommonData)
 			device.GET("/service_data", controller.GetOneDeviceServiceData)
+			device.GET("/new_service_data", controller.GetOneDeviceNewServiceData)
 			device.GET("/location_history", controller.GetDeviceLocationHistory)
 			device.GET("/all_location", controller.GetAllDeviceLocation)
 			device.GET("/statistic", controller.GetDeviceStatistic)
 			device.POST("/add", controller.AddOneDevice)
+			device.POST("/special_info", controller.UpdateSpecialInfo)
+			device.POST("/report", controller.DeviceReport)
 		}
 	}
 }

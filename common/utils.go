@@ -3,6 +3,17 @@ package common
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"management-backend/conf"
+	"management-backend/model"
+	"math"
+	"strings"
+)
+
+const (
+	a  = 6378245.0              // 长半轴
+	ee = 0.00669342162296594323 // 扁率
 )
 
 func GetOneNewCard(length int) string {
@@ -14,4 +25,75 @@ func GetOneNewCard(length int) string {
 
 	// 使用base64编码将字节切片转换为字符串
 	return base64.URLEncoding.EncodeToString(byteSlice)
+}
+
+func IsSupervisor(c *gin.Context) (int, error) {
+	authorization := c.GetHeader("Authorization")
+	if authorization == "" {
+		return 0, fmt.Errorf("获取token失败")
+	}
+	part := strings.Split(authorization, " ")
+	if len(part) < 2 {
+		return 0, fmt.Errorf("非法请求")
+	}
+	var user model.User
+	_, err := conf.Mysql.Where("token=?", part[1]).Get(&user)
+	if err != nil {
+		return 0, fmt.Errorf("获取用户信息失败")
+	}
+	var userRole model.UserRole
+	_, err = conf.Mysql.Where("user_id = ?", user.Id).Get(&userRole)
+	if err != nil {
+		return 0, fmt.Errorf("获取用户角色失败")
+	}
+	var roleItem model.Role
+	_, err = conf.Mysql.Where("id = ?", userRole.RoleId).Get(&roleItem)
+	if err != nil {
+		return 0, fmt.Errorf("获取角色信息失败")
+	}
+	if roleItem.Name != "管理员" {
+		return 0, nil
+	}
+	return 1, nil
+}
+
+// WGS84ToGCJ02 WGS84 转 GCJ02（火星坐标）
+func WGS84ToGCJ02(wgLat, wgLon float64) (cgLat, cgLon float64) {
+	if OutOfChina(wgLat, wgLon) {
+		return wgLat, wgLon
+	}
+	dLat := transformLat(wgLon-105.0, wgLat-35.0)
+	dLon := transformLon(wgLon-105.0, wgLat-35.0)
+	radLat := wgLat / 180.0 * math.Pi
+	magic := math.Sin(radLat)
+	magic = 1 - ee*magic*magic
+	sqrtMagic := math.Sqrt(magic)
+	dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * math.Pi)
+	dLon = (dLon * 180.0) / (a / sqrtMagic * math.Cos(radLat) * math.Pi)
+	cgLat = wgLat + dLat
+	cgLon = wgLon + dLon
+	return cgLat, cgLon
+}
+
+// 判断是否在中国境内
+func OutOfChina(lat, lon float64) bool {
+	return lon < 73.66 || lon > 135.05 || lat < 3.86 || lat > 53.55
+}
+
+// 转换纬度偏移
+func transformLat(x, y float64) float64 {
+	ret := -100.0 + 2.0*x + 3.0*y + 0.2*y*y + 0.1*x*y + 0.2*math.Sqrt(math.Abs(x))
+	ret += (20.0*math.Sin(6.0*x*math.Pi) + 20.0*math.Sin(2.0*x*math.Pi)) * 2.0 / 3.0
+	ret += (20.0*math.Sin(y*math.Pi) + 40.0*math.Sin(y/3.0*math.Pi)) * 2.0 / 3.0
+	ret += (160.0*math.Sin(y/12.0*math.Pi) + 320*math.Sin(y*math.Pi/30.0)) * 2.0 / 3.0
+	return ret
+}
+
+// 转换经度偏移
+func transformLon(x, y float64) float64 {
+	ret := 300.0 + x + 2.0*y + 0.1*x*x + 0.1*x*y + 0.1*math.Sqrt(math.Abs(x))
+	ret += (20.0*math.Sin(6.0*x*math.Pi) + 20.0*math.Sin(2.0*x*math.Pi)) * 2.0 / 3.0
+	ret += (20.0*math.Sin(x*math.Pi) + 40.0*math.Sin(x/3.0*math.Pi)) * 2.0 / 3.0
+	ret += (150.0*math.Sin(x/12.0*math.Pi) + 300.0*math.Sin(x/30.0*math.Pi)) * 2.0 / 3.0
+	return ret
 }
