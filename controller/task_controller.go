@@ -94,3 +94,8 @@ func TaskDo(c *gin.Context) {
 	}
 	service.TaskDo(c, doReq)
 }
+
+func AppTaskList(c *gin.Context) {
+	name := c.Query("name")
+	service.AppTaskListSer(c, name)
+}

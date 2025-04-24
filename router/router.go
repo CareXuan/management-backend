@@ -90,6 +90,7 @@ func InitRouter(r *gin.Engine) {
 			task := app.Group("task")
 			{
 				task.GET("/info")
+				task.GET("/list", controller.AppTaskList)
 				task.POST("/do", controller.TaskDo)
 			}
 			raffle := app.Group("raffle")

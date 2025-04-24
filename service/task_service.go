@@ -358,6 +358,46 @@ func TaskDo(c *gin.Context, req model.TaskDoReq) {
 	common.ResOk(c, "ok", nil)
 }
 
+func AppTaskListSer(c *gin.Context, name string) {
+	timeNow := time.Now().Unix()
+	var tasks []*model.Task
+	sess := conf.Mysql.NewSession()
+	if name != "" {
+		sess.Where("name like ?", "%"+name+"%")
+	}
+	err := sess.Where("delete_at = 0").Find(&tasks)
+	if err != nil {
+		common.ResError(c, "获取任务信息失败")
+		return
+	}
+	var taskMapping = make(map[int]*model.Task)
+	var taskIds []int
+	for _, i := range tasks {
+		taskMapping[i.Id] = i
+		taskIds = append(taskIds, i.Id)
+	}
+	var taskGifts []*model.TaskGift
+	err = conf.Mysql.In("task_id", taskIds).Where("delete_at = 0").Find(&taskGifts)
+	if err != nil {
+		common.ResError(c, "获取任务抽卡点失败")
+		return
+	}
+	for _, i := range taskGifts {
+		taskMapping[i.TaskId].Gifts = []*model.TaskGift{i}
+	}
+	var taskDos []*model.TaskDo
+	err = conf.Mysql.In("task_id", taskIds).In("status", []int{1, 2, 4}).Where("delete_at = 0").Where("start_time < ? and (deadline = 0 or deadline > ?)", timeNow, timeNow).Find(&taskDos)
+	if err != nil {
+		common.ResError(c, "获取任务列表失败")
+		return
+	}
+	for _, i := range taskDos {
+		i.Task = taskMapping[i.TaskId]
+		i.Pic = "https://yuyuzheng.cn:7788/upload/YQx3qFcAMCfsPHxuy82Hgo-UB1.png"
+	}
+	common.ResOk(c, "ok", taskDos)
+}
+
 /*=====================================func=====================================*/
 
 func sendTaskFinishGift(taskId int) error {
