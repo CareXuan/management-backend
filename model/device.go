@@ -91,6 +91,17 @@ type DeviceNewServiceData struct {
 	Ts              string `json:"ts" xorm:"timestamp not null"`
 }
 
+type DeviceChangeLog struct {
+	Id               int    `json:"id" xorm:"pk autoincr INT(11)"`
+	DeviceId         int    `json:"device_id" xorm:"INT(10) not null default 0"`
+	Type             int    `json:"type" xorm:"INT(3) not null default 0 comment('报警类型 1：iccid发生修改')"`
+	OldValue         string `json:"old_value" xorm:"VARCHAR(128) not null default 0 comment('修改前内容')"`
+	NewValue         string `json:"new_value" xorm:"VARCHAR(128) not null default 0 comment('修改后内容')"`
+	HasAllWarning    int    `json:"has_all_warning" xorm:"INT(3) not null default 0 comment('是否已报警 0：否 1：是')"`
+	HasSingleWarning int    `json:"has_single_warning" xorm:"INT(3) not null default 0 comment('是否已报警 0：否 1：是')"`
+	Ts               string `json:"ts" xorm:"timestamp not null"`
+}
+
 type DeviceAddReq struct {
 	Id       int    `json:"id"`
 	DeviceId int    `json:"device_id"`

@@ -132,6 +132,7 @@ func syncTables() {
 		new(model.DeviceLocationHistory),
 		new(model.DeviceServiceData),
 		new(model.DeviceNewServiceData),
+		new(model.DeviceChangeLog),
 	)
 	if err != nil {
 		log.Fatal(err)

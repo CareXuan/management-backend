@@ -82,6 +82,16 @@ func GetDeviceStatistic(c *gin.Context) {
 	service.DeviceStatisticSer(c, deviceIdInt, startTime, endTime)
 }
 
+func GetAllWarning(c *gin.Context) {
+	service.GetDeviceAllWarningSer(c)
+}
+
+func GetSingleWarning(c *gin.Context) {
+	deviceId := c.Query("device_id")
+	deviceIdInt, _ := strconv.Atoi(deviceId)
+	service.GetDeviceSingleWarningSer(c, deviceIdInt)
+}
+
 func GetDeviceLocationHistory(c *gin.Context) {
 	deviceId := c.Query("id")
 	deviceIdInt, _ := strconv.Atoi(deviceId)

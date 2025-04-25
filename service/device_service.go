@@ -8,6 +8,7 @@ import (
 	"management-backend/conf"
 	"management-backend/model"
 	"management-backend/utils"
+	"strconv"
 	"time"
 )
 
@@ -213,49 +214,134 @@ func AllDeviceLocationSer(c *gin.Context) {
 		if i.Latitude == "" && i.Longitude == "" {
 			continue
 		}
-		//latFloat, _ := strconv.ParseFloat(i.Latitude, 64)
-		//lngFloat, _ := strconv.ParseFloat(i.Longitude, 64)
-		//caLat, caLng := common.WGS84ToGCJ02(latFloat, lngFloat)
+		caLat, caLng := common.WGS84ToGCJ02(common.ConvertBDSLatitude(i.Latitude), common.ConvertBDSLatitude(i.Longitude))
 		locationRes = append(locationRes, model.DeviceLocationRes{
 			DeviceId: i.DeviceId,
 			Iccid:    i.Iccid,
-			//Lat:      strconv.FormatFloat(caLat, 'f', -1, 64),
-			//Lng:      strconv.FormatFloat(caLng, 'f', -1, 64),
-			Lat: i.Latitude,
-			Lng: i.Longitude,
+			Lat:      strconv.FormatFloat(caLat, 'f', -1, 64),
+			Lng:      strconv.FormatFloat(caLng, 'f', -1, 64),
+			//Lat: i.Latitude,
+			//Lng: i.Longitude,
 		})
 	}
 	common.ResOk(c, "ok", locationRes)
 }
 
 func DeviceStatisticSer(c *gin.Context, deviceId int, startTime, endTime string) {
-	var serviceDatas []*model.DeviceServiceData
+	var serviceData []*model.DeviceNewServiceData
 	var statisticRes model.DeviceStatisticRes
 	sess := conf.Mysql.NewSession()
-	var dataVoltage []interface{}
-	var dataElectric []interface{}
-	var dataSwitchCurrent []interface{}
-	var errorCnt []interface{}
+	var highVoltage []interface{}
+	var highCurrent []interface{}
+	var warningCnt []interface{}
+	var power []interface{}
+	var status1 []interface{}
+	var status2 []interface{}
+	var voltage []interface{}
+	var current []interface{}
+	var temperature []interface{}
+	var signalIntensity []interface{}
 	sess.Where("device_id = ?", deviceId)
 	sess.Where("ts >= ? and ts <= ?", startTime, endTime)
-	err := sess.Find(&serviceDatas)
+	err := sess.Find(&serviceData)
 	if err != nil {
 		common.ResError(c, "获取数据失败")
 		return
 	}
-	for _, i := range serviceDatas {
+	for _, i := range serviceData {
 		statisticRes.Columns = append(statisticRes.Columns, i.Ts)
-		dataVoltage = append(dataVoltage, fmt.Sprintf("%.2f", float64((i.HighVoltageH<<8+i.HighVoltageL)*15)/4095.0))
-		dataElectric = append(dataElectric, fmt.Sprintf("%.2f", float64((i.HighCurrentH<<8+i.HighCurrentL)*20)/4095.0))
-		dataSwitchCurrent = append(dataSwitchCurrent, float64(i.SwitchCurrent)/100.0)
-		errorCnt = append(errorCnt, i.CurrentBak2)
-
+		highVoltage = append(highVoltage, fmt.Sprintf("%.2f", float64((i.HighVoltageH<<8+i.HighVoltageL)*15)/4095.0))
+		highCurrent = append(highCurrent, fmt.Sprintf("%.2f", float64((i.HighCurrentH<<8+i.HighCurrentL)*20)/4095.0))
+		warningCnt = append(warningCnt, i.WarningCount)
+		power = append(power, fmt.Sprintf("%.2f", float64((i.PowerH<<8)+i.Power)/100.0))
+		status1Item := 0
+		if i.IoStatus&64 > 0 {
+			status1Item = 1
+		}
+		status1 = append(status1, status1Item)
+		status2Item := 0
+		if i.IoStatus&32 > 0 {
+			status2Item = 1
+		}
+		status2 = append(status2, status2Item)
+		voltage = append(voltage, fmt.Sprintf("%.2f", float64(((i.VoltageH<<8)+i.Voltage)/100.0)))
+		current = append(current, fmt.Sprintf("%.2f", float64(((i.CurrentH<<8)+i.Current)/100.0)))
+		tem := (i.Tem1h << 8) + i.Tem1l
+		var realTem float64
+		if tem < 0x8000 {
+			realTem = float64(tem) * 0.0625
+		} else {
+			tem = -((^tem & 0xffff) + 1)
+			realTem = float64(tem) * 0.0625
+		}
+		if realTem >= -55 {
+			temperature = append(temperature, realTem)
+		}
+		signalIntensity = append(signalIntensity, i.SignalIntensity)
 	}
-	statisticRes.Datas = append(statisticRes.Datas, dataVoltage)
-	statisticRes.Datas = append(statisticRes.Datas, dataElectric)
-	statisticRes.Datas = append(statisticRes.Datas, dataSwitchCurrent)
-	statisticRes.Datas = append(statisticRes.Datas, errorCnt)
+	statisticRes.Datas = append(statisticRes.Datas, highVoltage)
+	statisticRes.Datas = append(statisticRes.Datas, highCurrent)
+	statisticRes.Datas = append(statisticRes.Datas, warningCnt)
+	statisticRes.Datas = append(statisticRes.Datas, power)
+	statisticRes.Datas = append(statisticRes.Datas, status1)
+	statisticRes.Datas = append(statisticRes.Datas, status2)
+	statisticRes.Datas = append(statisticRes.Datas, voltage)
+	statisticRes.Datas = append(statisticRes.Datas, current)
+	statisticRes.Datas = append(statisticRes.Datas, temperature)
+	statisticRes.Datas = append(statisticRes.Datas, signalIntensity)
 	common.ResOk(c, "ok", statisticRes)
+}
+
+func GetDeviceAllWarningSer(c *gin.Context) {
+	isSupervisor, err := common.IsSupervisor(c)
+	if err != nil {
+		common.ResError(c, err.Error())
+		return
+	}
+	if isSupervisor == 0 {
+		common.ResOk(c, "ok", nil)
+		return
+	}
+	var warnings []*model.DeviceChangeLog
+	err = conf.Mysql.Where("has_all_warning = ?", 0).Find(&warnings)
+	if err != nil {
+		common.ResError(c, "获取报警记录失败")
+		return
+	}
+	_, err = conf.Mysql.Where("has_all_warning = ?", 0).Update(model.DeviceChangeLog{
+		HasAllWarning: 1,
+	})
+	if err != nil {
+		common.ResError(c, "修改报警记录状态失败")
+		return
+	}
+	common.ResOk(c, "ok", warnings)
+}
+
+func GetDeviceSingleWarningSer(c *gin.Context, deviceId int) {
+	isSupervisor, err := common.IsSupervisor(c)
+	if err != nil {
+		common.ResError(c, err.Error())
+		return
+	}
+	if isSupervisor == 0 {
+		common.ResOk(c, "ok", nil)
+		return
+	}
+	var warnings []*model.DeviceChangeLog
+	err = conf.Mysql.Where("device_id = ?", deviceId).Where("has_single_warning = ?", 0).Find(&warnings)
+	if err != nil {
+		common.ResError(c, "获取报警记录失败")
+		return
+	}
+	_, err = conf.Mysql.Where("device_id = ?", deviceId).Where("has_single_warning = ?", 0).Update(model.DeviceChangeLog{
+		HasSingleWarning: 1,
+	})
+	if err != nil {
+		common.ResError(c, "修改报警记录状态失败")
+		return
+	}
+	common.ResOk(c, "ok", warnings)
 }
 
 func DeviceLocationHistorySer(c *gin.Context, deviceId int) {

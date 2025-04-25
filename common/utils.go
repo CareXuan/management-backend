@@ -8,6 +8,7 @@ import (
 	"management-backend/conf"
 	"management-backend/model"
 	"math"
+	"strconv"
 	"strings"
 )
 
@@ -96,4 +97,38 @@ func transformLon(x, y float64) float64 {
 	ret += (20.0*math.Sin(x*math.Pi) + 40.0*math.Sin(x/3.0*math.Pi)) * 2.0 / 3.0
 	ret += (150.0*math.Sin(x/12.0*math.Pi) + 300.0*math.Sin(x/30.0*math.Pi)) * 2.0 / 3.0
 	return ret
+}
+
+// ConvertBDSLatitude 将北斗纬度格式 dd.mmmmm 转换为十进制度
+// 输入示例：39.12345（北纬39度12.345分）或 "-39.12345"（南纬39度12.345分）
+func ConvertBDSLatitude(latStr string) float64 {
+	// 处理符号
+	sign := 1.0
+	if strings.HasPrefix(latStr, "-") {
+		sign = -1.0
+		latStr = latStr[1:]
+	} else if strings.HasPrefix(latStr, "+") {
+		latStr = latStr[1:]
+	}
+
+	// 分割度分部分
+	parts := strings.Split(latStr, ".")
+	if len(parts) != 2 {
+		return 0
+	}
+
+	// 解析度部分
+	degrees, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return 0
+	}
+	minutesStr := parts[1][:2] + "." + parts[1][2:] // 转换为 XX.XXX 格式
+	minutes, err := strconv.ParseFloat(minutesStr, 64)
+	if err != nil {
+		return 0
+	}
+
+	// 计算十进制度
+	total := float64(degrees) + minutes/60
+	return sign * total
 }

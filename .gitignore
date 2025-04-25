@@ -2,3 +2,4 @@ conf/config.yaml
 .idea
 go.sum
 management-backend
+env-backend
