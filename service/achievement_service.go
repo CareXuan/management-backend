@@ -184,17 +184,18 @@ func AchievementAdd(c *gin.Context, req model.AchievementAddReq) {
 
 func AchievementFinish(c *gin.Context, req model.AchievementFinishReq) {
 	_, err := conf.Mysql.Where("id = ?", req.Id).Update(&model.Achievement{
+		IsFinish: 1,
 		FinishAt: req.FinishTime,
 	})
 	if err != nil {
 		common.ResError(c, "修改成就失败")
 		return
 	}
-	err = SendFinishAchievement(req.Id)
-	if err != nil {
-		common.ResError(c, "发放成就奖励失败")
-		return
-	}
+	//err = SendFinishAchievement(req.Id)
+	//if err != nil {
+	//	common.ResError(c, "发放成就奖励失败")
+	//	return
+	//}
 	common.ResOk(c, "ok", nil)
 }
 
@@ -222,6 +223,106 @@ func AchievementDelete(c *gin.Context, req model.AchievementDeleteReq) {
 	if err != nil {
 		common.ResError(c, "删除成就关联任务失败")
 		sess.Rollback()
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+/*=====================================app=====================================*/
+
+func AppAchievementList(c *gin.Context, statusInt int) {
+	var achievementList []*model.Achievement
+	sess := conf.Mysql.NewSession()
+	if statusInt == 1 {
+		sess.Where("is_finish = 1")
+	}
+	if statusInt == 2 {
+		sess.Where("is_finish = 0")
+	}
+	err := sess.Where("delete_at = 0").Find(&achievementList)
+	if err != nil {
+		common.ResError(c, "获取成就列表失败")
+		return
+	}
+	var unFinishAchievementId []int
+	for _, i := range achievementList {
+		if i.IsFinish == 0 {
+			unFinishAchievementId = append(unFinishAchievementId, i.Id)
+		}
+	}
+	var achievementTask []*model.AchievementTask
+	err = conf.Mysql.In("achievement_id", unFinishAchievementId).Find(&achievementTask)
+	if err != nil {
+		common.ResError(c, "获取关联任务失败")
+		return
+	}
+	var taskIds []int
+	for _, i := range achievementTask {
+		taskIds = append(taskIds, i.TaskId)
+	}
+	var taskItems []*model.Task
+	err = conf.Mysql.In("id", taskIds).Find(&taskItems)
+	if err != nil {
+		common.ResError(c, "获取任务信息失败")
+		return
+	}
+	var taskMapping = make(map[int]*model.Task)
+	for _, i := range taskItems {
+		taskMapping[i.Id] = i
+	}
+	var taskProgress []*model.TaskDo
+	err = conf.Mysql.In("task_id", taskIds).Find(&taskProgress)
+	if err != nil {
+		common.ResError(c, "搜索任务进度失败")
+		return
+	}
+	var taskProgressMapping = make(map[int]int)
+	for _, i := range taskProgress {
+		if _, ok := taskProgressMapping[i.TaskId]; ok && i.Status == 3 {
+			taskProgressMapping[i.TaskId] += 1
+		} else {
+			taskProgressMapping[i.TaskId] = 1
+		}
+	}
+	var achievementTaskMapping = make(map[int][]*model.AchievementTask)
+	for _, i := range achievementTask {
+		i.Progress = taskProgressMapping[i.TaskId]
+		i.TaskItem = taskMapping[i.TaskId]
+		if _, ok := achievementTaskMapping[i.AchievementId]; ok {
+			achievementTaskMapping[i.AchievementId] = append(achievementTaskMapping[i.AchievementId], i)
+		} else {
+			achievementTaskMapping[i.AchievementId] = []*model.AchievementTask{i}
+		}
+	}
+
+	for _, i := range achievementList {
+		i.Tasks = achievementTaskMapping[i.Id]
+	}
+	common.ResOk(c, "ok", achievementList)
+}
+
+func AppAchievementReceive(c *gin.Context, req model.AppAchievementReceiveReq) {
+	achievementId := req.AchievementId
+	var achievementItem model.Achievement
+	_, err := conf.Mysql.Where("id = ?", achievementId).Get(&achievementItem)
+	if err != nil {
+		common.ResError(c, "获取成就信息失败")
+		return
+	}
+	if achievementItem.IsFinish == 0 {
+		common.ResForbidden(c, "成就尚未完成")
+		return
+	}
+	if achievementItem.IsReceive == 1 {
+		common.ResForbidden(c, "奖励已经领取")
+		return
+	}
+	_, err = conf.Mysql.Where("id = ?", achievementId).Update(&model.Achievement{
+		IsReceive: 1,
+	})
+	err = SendFinishAchievement(achievementId)
+	if err != nil {
+		common.ResError(c, "发放成就奖励失败")
 		return
 	}
 	common.ResOk(c, "ok", nil)

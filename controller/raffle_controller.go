@@ -15,3 +15,7 @@ func RaffleOne(c *gin.Context) {
 	}
 	service.RaffleOne(c, raffleReq)
 }
+
+func AppRaffleConfig(c *gin.Context) {
+	service.AppRaffleConfig(c)
+}

@@ -148,3 +148,28 @@ func RaffleOne(c *gin.Context, req model.RaffleOneReq) {
 	}
 	common.ResOk(c, "ok", resLogs)
 }
+
+func AppRaffleConfig(c *gin.Context) {
+	type appRaffleConfig struct {
+		PointCount int `json:"point_count"`
+		RaffleOne  int `json:"raffle_one"`
+		RaffleTen  int `json:"raffle_ten"`
+	}
+	var configItem model.Config
+	_, err := conf.Mysql.Where("id = 1").Get(&configItem)
+	if err != nil {
+		common.ResError(c, "获取配置失败")
+		return
+	}
+	var packageItem model.GiftPackage
+	_, err = conf.Mysql.Where("gift_id = 0").Get(&packageItem)
+	if err != nil {
+		common.ResError(c, "获取抽卡点失败")
+		return
+	}
+	common.ResOk(c, "ok", appRaffleConfig{
+		PointCount: packageItem.Count,
+		RaffleOne:  configItem.OnePoint,
+		RaffleTen:  configItem.TenPoint,
+	})
+}

@@ -89,12 +89,17 @@ func InitRouter(r *gin.Engine) {
 		{
 			task := app.Group("task")
 			{
-				task.GET("/info")
 				task.GET("/list", controller.AppTaskList)
 				task.POST("/do", controller.TaskDo)
 			}
+			achievement := app.Group("achievement")
+			{
+				achievement.GET("/list", controller.AppAchievementList)
+				achievement.POST("/receive", controller.AppReceiveAchievement)
+			}
 			raffle := app.Group("raffle")
 			{
+				raffle.GET("/config", controller.AppRaffleConfig)
 				raffle.POST("/one", controller.RaffleOne)
 			}
 		}

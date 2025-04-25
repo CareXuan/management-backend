@@ -115,6 +115,7 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 		}
 		if req.Type == 4 {
 			taskStartTime = req.StartTime
+			deadlineInt = 0
 		}
 		if needAdd {
 			_, err = conf.Mysql.Insert(model.TaskDo{
@@ -174,6 +175,7 @@ func TaskAdd(c *gin.Context, req model.TaskAddReq) {
 		}
 		if req.Type == 4 {
 			taskStartTime = req.StartTime
+			deadlineInt = 0
 		}
 		if needAdd {
 			_, err = conf.Mysql.Insert(model.TaskDo{
@@ -250,13 +252,16 @@ func TaskChangeStatus(c *gin.Context, req model.TaskChangeStatusReq) {
 	common.ResOk(c, "ok", nil)
 }
 
-func TaskCheckList(c *gin.Context, taskId, page, pageSize int) {
+func TaskCheckList(c *gin.Context, taskId, status, page, pageSize int) {
 	var taskDos []*model.TaskDo
 	sess := conf.Mysql.NewSession()
 	if taskId != 0 {
-		sess.Where("task_id =?", taskId)
+		sess.Where("task_id = ?", taskId)
 	}
-	count, err := sess.Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&taskDos)
+	if status != 0 {
+		sess.Where("status = ?", status)
+	}
+	count, err := sess.Where("delete_at = 0").OrderBy("id DESC").Limit(pageSize, (page-1)*pageSize).FindAndCount(&taskDos)
 	if err != nil {
 		common.ResError(c, "获取任务执行情况列表失败")
 		return
@@ -511,14 +516,15 @@ func checkTaskAchievement(taskId int) error {
 		}
 	}
 	_, err = conf.Mysql.In("id", needFinishId).Where("delete_at = 0").Update(&model.Achievement{
+		IsFinish: 1,
 		FinishAt: int(time.Now().Unix()),
 	})
-	for _, i := range needFinishId {
-		err = SendFinishAchievement(i)
-		if err != nil {
-			return err
-		}
-	}
+	//for _, i := range needFinishId {
+	//	err = SendFinishAchievement(i)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }
 

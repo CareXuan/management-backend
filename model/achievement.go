@@ -7,6 +7,8 @@ type Achievement struct {
 	Description string             `json:"description" xorm:"VARCHAR(256) not null default '' comment('成就描述')"`
 	Point       int                `json:"point" xorm:"INT(10) not null default 0 comment('成就点')"`
 	FinishAt    int                `json:"finish_at" xorm:"INT(10) not null default 0 comment('完成时间')"`
+	IsFinish    int                `json:"is_finish" xorm:"INT(10) not null default 0 comment('是否已完成 1：已完成 0：未完成')"`
+	IsReceive   int                `json:"is_receive" xorm:"INT(10) not null default 0 comment('是否已领取 1：已领取 0：未领取')"`
 	CreateAt    int                `json:"create_at" xorm:"INT(10) not null default 0"`
 	DeleteAt    int                `json:"delete_at" xorm:"INT(10) not null default 0"`
 	Tasks       []*AchievementTask `json:"tasks" xorm:"-"`
@@ -18,6 +20,7 @@ type AchievementTask struct {
 	AchievementId int   `json:"achievement_id" xorm:"INT(10) not null default 0 comment('成就ID')"`
 	TaskId        int   `json:"task_id" xorm:"INT(10) not null default 0 comment('任务ID')"`
 	Count         int   `json:"count" xorm:"INT(10) not null default 0 comment('完成成就所需任务完成次数')"`
+	Progress      int   `json:"progress" xorm:"-"`
 	CreateAt      int   `json:"create_at" xorm:"INT(10) not null default 0"`
 	DeleteAt      int   `json:"delete_at" xorm:"INT(10) not null default 0"`
 	TaskItem      *Task `json:"task_item" xorm:"-"`
@@ -65,4 +68,8 @@ type AchievementDeleteReq struct {
 type AchievementChangeStatusReq struct {
 	Id     int `json:"id"`
 	Status int `json:"status"`
+}
+
+type AppAchievementReceiveReq struct {
+	AchievementId int `json:"achievement_id"`
 }

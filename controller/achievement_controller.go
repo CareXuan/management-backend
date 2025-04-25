@@ -54,3 +54,20 @@ func AchievementDelete(c *gin.Context) {
 	}
 	service.AchievementDelete(c, deleteReq)
 }
+
+/*=====================================app=====================================*/
+
+func AppAchievementList(c *gin.Context) {
+	status := c.Query("status")
+	statusInt, _ := strconv.Atoi(status)
+	service.AppAchievementList(c, statusInt)
+}
+
+func AppReceiveAchievement(c *gin.Context) {
+	var receiveReq model.AppAchievementReceiveReq
+	if err := c.ShouldBindJSON(&receiveReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AppAchievementReceive(c, receiveReq)
+}
