@@ -190,3 +190,24 @@ func AlbumDelete(c *gin.Context) {
 }
 
 /*=====================================app=====================================*/
+
+func AppAlbumItems(c *gin.Context) {
+	service.AppAlbumItems(c)
+}
+
+func AppAlbumList(c *gin.Context) {
+	name := c.Query("name")
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	service.AppAlbumList(c, name, pageInt, pageSizeInt)
+}
+
+func AppRealList(c *gin.Context) {
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	service.AppRealList(c, pageInt, pageSizeInt)
+}

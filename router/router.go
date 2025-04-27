@@ -97,6 +97,12 @@ func InitRouter(r *gin.Engine) {
 				achievement.GET("/list", controller.AppAchievementList)
 				achievement.POST("/receive", controller.AppReceiveAchievement)
 			}
+			album := app.Group("album")
+			{
+				album.GET("/items", controller.AppAlbumItems)
+				album.GET("/list", controller.AppAlbumList)
+				album.GET("/real/list", controller.AppRealList)
+			}
 			raffle := app.Group("raffle")
 			{
 				raffle.GET("/config", controller.AppRaffleConfig)

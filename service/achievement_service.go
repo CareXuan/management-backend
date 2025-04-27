@@ -143,6 +143,8 @@ func AchievementAdd(c *gin.Context, req model.AchievementAddReq) {
 			Pic:         req.Pic,
 			Description: req.Description,
 			Point:       req.Point,
+			IsFinish:    0,
+			IsReceive:   0,
 			CreateAt:    int(time.Now().Unix()),
 		}
 		_, err := conf.Mysql.Insert(achievementAdd)
@@ -230,7 +232,7 @@ func AchievementDelete(c *gin.Context, req model.AchievementDeleteReq) {
 
 /*=====================================app=====================================*/
 
-func AppAchievementList(c *gin.Context, statusInt int) {
+func AppAchievementList(c *gin.Context, page, pageSize, statusInt int) {
 	var achievementList []*model.Achievement
 	sess := conf.Mysql.NewSession()
 	if statusInt == 1 {
@@ -239,7 +241,7 @@ func AppAchievementList(c *gin.Context, statusInt int) {
 	if statusInt == 2 {
 		sess.Where("is_finish = 0")
 	}
-	err := sess.Where("delete_at = 0").Find(&achievementList)
+	err := sess.Limit(pageSize, (page-1)*pageSize).OrderBy("is_finish,is_receive,finish_at").Where("delete_at = 0").Find(&achievementList)
 	if err != nil {
 		common.ResError(c, "获取成就列表失败")
 		return

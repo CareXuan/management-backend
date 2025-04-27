@@ -59,8 +59,12 @@ func AchievementDelete(c *gin.Context) {
 
 func AppAchievementList(c *gin.Context) {
 	status := c.Query("status")
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
 	statusInt, _ := strconv.Atoi(status)
-	service.AppAchievementList(c, statusInt)
+	service.AppAchievementList(c, pageInt, pageSizeInt, statusInt)
 }
 
 func AppReceiveAchievement(c *gin.Context) {

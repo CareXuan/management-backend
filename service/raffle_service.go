@@ -121,6 +121,13 @@ func RaffleOne(c *gin.Context, req model.RaffleOneReq) {
 					common.ResError(c, "礼物加入背包失败")
 					return
 				}
+				_, err = conf.Mysql.Where("id = ?", activeGift.Id).Update(&model.Gift{
+					Count: 1,
+				})
+				if err != nil {
+					common.ResError(c, "礼物信息修改失败")
+					return
+				}
 				resLog = fmt.Sprintf("获取【%s】X1。", activeGift.Name)
 			}
 			resLogs = append(resLogs, raffleResult{
