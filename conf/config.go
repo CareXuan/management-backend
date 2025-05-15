@@ -46,11 +46,13 @@ type TcpConfig struct {
 type WechatConfig struct {
 	AppId     string        `yaml:"app_id"`
 	AppSecret string        `yaml:"app_secret"`
-	Wechat    wechatWarning `yaml:"wechat"`
+	Token     string        `yaml:"token"`
+	Warning   wechatWarning `yaml:"warning"`
 }
 
 type wechatWarning struct {
-	Common string `yaml:"common"`
+	Common      string `yaml:"common"`
+	TestWarning string `yaml:"test_warning"`
 }
 
 var (
@@ -108,7 +110,7 @@ func initWechatApp() {
 		Log: officialAccount.Log{
 			Level:  "debug",
 			File:   "./wechat.log",
-			Stdout: false, //  是否打印在终端
+			Stdout: false, // 是否打印在终端
 		},
 
 		HttpDebug: true,
@@ -127,6 +129,8 @@ func syncTables() {
 		new(model.UserRole),
 		new(model.Permission),
 		new(model.RolePermission),
+		new(model.Organization),
+		new(model.OrganizationUser),
 		new(model.Device),
 		new(model.DeviceCommonData),
 		new(model.DeviceLocationHistory),

@@ -7,6 +7,7 @@ import (
 	"management-backend/conf"
 	"management-backend/model"
 	"management-backend/utils"
+	"time"
 )
 
 func LoginSrv(c *gin.Context, phone string, password string) {
@@ -26,7 +27,7 @@ func LoginSrv(c *gin.Context, phone string, password string) {
 		return
 	}
 	var userRole model.UserRole
-	_, err = conf.Mysql.Where("id = ?", user.Id).Get(&userRole)
+	_, err = conf.Mysql.Where("user_id = ?", user.Id).Get(&userRole)
 	if err != nil {
 		common.ResError(c, "获取用户角色失败")
 		return
@@ -38,6 +39,24 @@ func LoginSrv(c *gin.Context, phone string, password string) {
 		return
 	}
 	user.RoleStr = role
+	var rolePermissions []*model.RolePermission
+	err = conf.Mysql.Where("role_id = ?", role.Id).Find(&rolePermissions)
+	if err != nil {
+		common.ResError(c, "获取用户权限失败")
+		return
+	}
+	var permissionIds []int
+	for _, i := range rolePermissions {
+		permissionIds = append(permissionIds, i.PermissionId)
+	}
+	var permissions []*model.Permission
+	err = conf.Mysql.In("id", permissionIds).Find(&permissions)
+	for _, i := range permissions {
+		if i.Path != "" {
+			continue
+		}
+		user.Permissions = append(user.Permissions, i.Icon)
+	}
 	common.ResOk(c, "ok", user)
 }
 
@@ -60,13 +79,33 @@ func GetAllPermissionSer(c *gin.Context) {
 
 	for _, fp := range fatherPermissions {
 		fp.Children = childrenPermissions[fp.Id]
+		for _, fpc := range fp.Children {
+			fpc.Children = childrenPermissions[fpc.Id]
+		}
 	}
 	common.ResOk(c, "ok", fatherPermissions)
 }
 
+func GetPermissionInfoSer(c *gin.Context, id int) {
+	var permissionItem model.Permission
+	_, err := conf.Mysql.Where("id = ?", id).Get(&permissionItem)
+	if err != nil {
+		common.ResError(c, "获取权限信息失败")
+		return
+	}
+	common.ResOk(c, "ok", permissionItem)
+}
+
 func GetAllRolesSer(c *gin.Context, page int, pageSize int) {
+	userId := c.Param("user_id")
+	var userRoleItem model.UserRole
+	_, err := conf.Mysql.Where("user_id = ?", userId).Get(&userRoleItem)
+	if err != nil {
+		common.ResError(c, "获取用户角色失败")
+		return
+	}
 	var roles []*model.Role
-	count, err := conf.Mysql.Limit(pageSize, (page-1)*pageSize).FindAndCount(&roles)
+	count, err := conf.Mysql.Where("id >= ?", userRoleItem.RoleId).Limit(pageSize, (page-1)*pageSize).FindAndCount(&roles)
 	if err != nil {
 		common.ResError(c, "获取角色信息失败")
 		return
@@ -176,20 +215,36 @@ func DeleteRoleSer(c *gin.Context, roleId int) {
 	common.ResOk(c, "ok", nil)
 }
 
-func AddPermissionSer(c *gin.Context, parentId int, path string, icon string, sort int, label string, desc string, component string) {
-	var newPermission = model.Permission{
-		Path:      path,
-		Icon:      icon,
-		Sort:      sort,
-		ParentId:  parentId,
-		Label:     label,
-		Desc:      desc,
-		Component: component,
-	}
-	_, err := conf.Mysql.Insert(newPermission)
-	if err != nil {
-		common.ResError(c, "添加权限失败")
-		return
+func AddPermissionSer(c *gin.Context, id int, parentId int, path string, icon string, sort int, label string, desc string, component string) {
+	if id != 0 {
+		_, err := conf.Mysql.Where("id = ?", id).Update(model.Permission{
+			Path:      path,
+			Icon:      icon,
+			Sort:      sort,
+			ParentId:  parentId,
+			Label:     label,
+			Desc:      desc,
+			Component: component,
+		})
+		if err != nil {
+			common.ResError(c, "修改权限失败")
+			return
+		}
+	} else {
+		var newPermission = model.Permission{
+			Path:      path,
+			Icon:      icon,
+			Sort:      sort,
+			ParentId:  parentId,
+			Label:     label,
+			Desc:      desc,
+			Component: component,
+		}
+		_, err := conf.Mysql.Insert(newPermission)
+		if err != nil {
+			common.ResError(c, "添加权限失败")
+			return
+		}
 	}
 	common.ResOk(c, "ok", nil)
 }
@@ -216,5 +271,99 @@ func RemovePermissionSer(c *gin.Context, id int) {
 		return
 	}
 
+	common.ResOk(c, "ok", nil)
+}
+
+func AllOrganizationSer(c *gin.Context, page, pageSize int) {
+	var organizations []*model.Organization
+	sess := conf.Mysql.NewSession()
+	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&organizations)
+	if err != nil {
+		common.ResError(c, "获取组织信息失败")
+		return
+	}
+	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: organizations})
+}
+
+func GetOrganizationInfoSer(c *gin.Context, id int) {
+	var organizationItem model.Organization
+	_, err := conf.Mysql.Where("id = ?", id).Get(&organizationItem)
+	if err != nil {
+		common.ResError(c, "获取组织信息失败")
+		return
+	}
+	var organizationUsers []*model.OrganizationUser
+	err = conf.Mysql.Where("organization_id = ?", id).Find(&organizationUsers)
+	if err != nil {
+		common.ResError(c, "获取组织关联用户失败")
+		return
+	}
+	for _, i := range organizationUsers {
+		organizationItem.UserIds = append(organizationItem.UserIds, i.UserId)
+	}
+	common.ResOk(c, "ok", organizationItem)
+}
+
+func AddOrganizationSer(c *gin.Context, req model.OrganizationAddReq) {
+	var organizationId int
+	if req.Id != 0 {
+		_, err := conf.Mysql.Where("id = ?", req.Id).Update(&model.Organization{
+			Name:     req.Name,
+			Province: req.Province,
+			City:     req.City,
+			Zone:     req.Zone,
+		})
+		if err != nil {
+			common.ResError(c, "修改组织失败")
+			return
+		}
+		_, err = conf.Mysql.Where("organization_id = ?", req.Id).Delete(&model.OrganizationUser{})
+		if err != nil {
+			common.ResError(c, "删除组织关联关系失败")
+			return
+		}
+		organizationId = req.Id
+	} else {
+		addOrganizationItem := model.Organization{
+			Name:     req.Name,
+			Province: req.Province,
+			City:     req.City,
+			Zone:     req.Zone,
+			Ts:       time.Now().Format("2006-01-02 15:04:05"),
+		}
+		_, err := conf.Mysql.Insert(&addOrganizationItem)
+		if err != nil {
+			common.ResError(c, "添加组织失败")
+			return
+		}
+		organizationId = addOrganizationItem.Id
+	}
+	var addOrganizationUsers []*model.OrganizationUser
+	for _, i := range req.UserIds {
+		addOrganizationUsers = append(addOrganizationUsers, &model.OrganizationUser{
+			OrganizationId: organizationId,
+			UserId:         i,
+			Ts:             time.Now().Format("2006-01-02 15:04:05"),
+		})
+	}
+	_, err := conf.Mysql.Insert(&addOrganizationUsers)
+	if err != nil {
+		common.ResError(c, "添加组织关联用户失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func DeleteOrganizationSer(c *gin.Context, req model.OrganizationDeleteReq) {
+	_, err := conf.Mysql.Where("id = ?", req.Id).Delete(&model.Organization{})
+	if err != nil {
+		common.ResError(c, "删除组织失败")
+		return
+	}
+	_, err = conf.Mysql.Where("organization_id = ?", req.Id).Delete(model.OrganizationUser{})
+	if err != nil {
+		common.ResError(c, "删除组织关联用户失败")
+		return
+	}
 	common.ResOk(c, "ok", nil)
 }

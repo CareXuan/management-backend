@@ -32,6 +32,7 @@ type Device struct {
 	HeartBeatMin    int    `json:"heart_beat_min" xorm:"INT(10) not null default 0"`
 	PwdChangeDate   int    `json:"pwd_change_date" xorm:"INT(10) not null default 0"`
 	IsSupervisor    int    `json:"is_supervisor" xorm:"-"`
+	RealLocation    string `json:"real_location" xorm:"-"`
 	Ts              string `json:"ts" xorm:"timestamp not null"`
 }
 
@@ -94,9 +95,9 @@ type DeviceNewServiceData struct {
 type DeviceChangeLog struct {
 	Id               int    `json:"id" xorm:"pk autoincr INT(11)"`
 	DeviceId         int    `json:"device_id" xorm:"INT(10) not null default 0"`
-	Type             int    `json:"type" xorm:"INT(3) not null default 0 comment('报警类型 1：iccid发生修改')"`
-	OldValue         string `json:"old_value" xorm:"VARCHAR(128) not null default 0 comment('修改前内容')"`
-	NewValue         string `json:"new_value" xorm:"VARCHAR(128) not null default 0 comment('修改后内容')"`
+	Type             int    `json:"type" xorm:"INT(3) not null default 0 comment('报警类型 1：iccid发生修改 2：获取关键信息')"`
+	OldValue         string `json:"old_value" xorm:"VARCHAR(512) not null default 0 comment('修改前内容')"`
+	NewValue         string `json:"new_value" xorm:"VARCHAR(512) not null default 0 comment('修改后内容')"`
 	HasAllWarning    int    `json:"has_all_warning" xorm:"INT(3) not null default 0 comment('是否已报警 0：否 1：是')"`
 	HasSingleWarning int    `json:"has_single_warning" xorm:"INT(3) not null default 0 comment('是否已报警 0：否 1：是')"`
 	Ts               string `json:"ts" xorm:"timestamp not null"`
@@ -134,6 +135,10 @@ type UpdateSpecialInfoReq struct {
 	PwdChangeDate int    `json:"pwd_change_date"`
 }
 
+type ReadSpecialInfoReq struct {
+	DeviceId int `json:"device_id"`
+}
+
 type DeviceReportReq struct {
 	DeviceId    int    `json:"device_id"`
 	ReportType  int    `json:"report_type"`
@@ -143,6 +148,7 @@ type DeviceReportReq struct {
 
 type DeviceLocationRes struct {
 	DeviceId int    `json:"device_id"`
+	Name     string `json:"name"`
 	Iccid    string `json:"iccid"`
 	Lat      string `json:"lat"`
 	Lng      string `json:"lng"`

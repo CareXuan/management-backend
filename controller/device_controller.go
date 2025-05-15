@@ -34,6 +34,20 @@ func UpdateSpecialInfo(c *gin.Context) {
 	service.UpdateSpecialInfoSer(c, device)
 }
 
+func ReadSpecialInfo(c *gin.Context) {
+	var device model.ReadSpecialInfoReq
+	if err := c.ShouldBindJSON(&device); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.ReadSpecialInfoSer(c, device)
+}
+
+func GetSpecialInfoLog(c *gin.Context) {
+	deviceId := c.Query("device_id")
+	service.GetSpecialInfoLogSer(c, deviceId)
+}
+
 func GetOneDeviceInfo(c *gin.Context) {
 	deviceId := c.Query("device_id")
 	deviceIdInt, _ := strconv.Atoi(deviceId)

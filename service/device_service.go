@@ -13,8 +13,53 @@ import (
 )
 
 func DeviceListSer(c *gin.Context, page, pageSize int) {
+	userId := c.Param("user_id")
+	var userRoleItem model.UserRole
+	_, err := conf.Mysql.Where("user_id = ?", userId).Get(&userRoleItem)
+	if err != nil {
+		common.ResError(c, "获取用户角色失败")
+		return
+	}
 	var deviceItems []*model.Device
 	sess := conf.Mysql.NewSession()
+	needFilter := false
+	var province []string
+	var city []string
+	var zone []string
+	// 1 超级管理员 8 商户
+	if userRoleItem.RoleId != 1 && userRoleItem.RoleId != 8 {
+		needFilter = true
+		var organizationUser model.OrganizationUser
+		_, err := conf.Mysql.Where("user_id = ?", userId).Get(&organizationUser)
+		if err != nil {
+			common.ResError(c, "获取用户关联组织失败")
+			return
+		}
+		var organizationItem []*model.Organization
+		err = conf.Mysql.Where("id = ?", organizationUser.OrganizationId).Find(&organizationItem)
+		if err != nil {
+			common.ResError(c, "获取组织信息失败")
+			return
+		}
+		for _, i := range organizationItem {
+			province = append(province, i.Province)
+			city = append(city, i.City)
+			zone = append(zone, i.Zone)
+		}
+	} else if userRoleItem.RoleId == 8 {
+		var userItem model.User
+		_, err := conf.Mysql.Where("id = ?", userId).Get(&userItem)
+		if err != nil {
+			common.ResError(c, "获取用户信息失败")
+			return
+		}
+		sess.Where("phone = ?", userItem.Phone)
+	}
+	if needFilter {
+		sess.In("province", province)
+		sess.In("city", city)
+		sess.In("zone", zone)
+	}
 	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&deviceItems)
 	if err != nil {
 		common.ResError(c, "获取设备列表失败")
@@ -92,6 +137,38 @@ func AddDeviceSer(c *gin.Context, req model.DeviceAddReq) {
 			return
 		}
 	}
+	var userExist model.User
+	has, err := conf.Mysql.Where("phone = ?", req.Phone).Get(&userExist)
+	if err != nil {
+		common.ResError(c, "查询用户失败")
+		return
+	}
+	if !has {
+		newToken, err := utils.GenerateRandomToken(20)
+		if err != nil {
+			common.ResError(c, "生成token失败")
+			return
+		}
+		var newUser = model.User{
+			Name:     req.Manager,
+			Password: "123456",
+			Phone:    req.Phone,
+			Token:    newToken,
+		}
+		_, err = conf.Mysql.Insert(&newUser)
+		if err != nil {
+			common.ResError(c, "生成用户失败")
+			return
+		}
+		_, err = conf.Mysql.Insert(&model.UserRole{
+			UserId: newUser.Id,
+			RoleId: 8,
+		})
+		if err != nil {
+			common.ResError(c, "分配用户角色失败")
+			return
+		}
+	}
 	common.ResOk(c, "ok", nil)
 }
 
@@ -156,6 +233,35 @@ func UpdateSpecialInfoSer(c *gin.Context, req model.UpdateSpecialInfoReq) {
 	common.ResOk(c, "ok", nil)
 }
 
+func ReadSpecialInfoSer(c *gin.Context, req model.ReadSpecialInfoReq) {
+	err := common.CommonSendDeviceReport(conf.Conf.Tcp.Host1, conf.Conf.Tcp.Port1, 2, req.DeviceId, 1, "")
+	if err != nil {
+		common.ResError(c, "发送控制命令1失败")
+		return
+	}
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host2, conf.Conf.Tcp.Port2, 2, req.DeviceId, 1, "")
+	if err != nil {
+		common.ResError(c, "发送控制命令2失败")
+		return
+	}
+	err = common.CommonSendDeviceReport(conf.Conf.Tcp.Host3, conf.Conf.Tcp.Port3, 2, req.DeviceId, 1, "")
+	if err != nil {
+		common.ResError(c, "发送控制命令2失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
+func GetSpecialInfoLogSer(c *gin.Context, deviceId string) {
+	var specialInfoLog []*model.DeviceChangeLog
+	err := conf.Mysql.Where("device_id = ?", deviceId).Where("type = 2").OrderBy("id DESC").Find(&specialInfoLog)
+	if err != nil {
+		common.ResError(c, "获取日志失败")
+		return
+	}
+	common.ResOk(c, "ok", specialInfoLog)
+}
+
 func DeviceInfoSer(c *gin.Context, deviceId int) {
 	var deviceItem model.Device
 	_, err := conf.Mysql.Where("device_id = ?", deviceId).Get(&deviceItem)
@@ -163,6 +269,8 @@ func DeviceInfoSer(c *gin.Context, deviceId int) {
 		common.ResError(c, "获取设备详情失败")
 		return
 	}
+	caLat, caLng := common.WGS84ToGCJ02(common.ConvertBDSLatitude(deviceItem.Latitude), common.ConvertBDSLatitude(deviceItem.Longitude))
+	deviceItem.RealLocation, err = common.ReGeoCode(strconv.FormatFloat(caLng, 'f', -1, 64)+","+strconv.FormatFloat(caLat, 'f', -1, 64), 1000, "all")
 	common.ResOk(c, "ok", deviceItem)
 }
 
@@ -217,6 +325,7 @@ func AllDeviceLocationSer(c *gin.Context) {
 		caLat, caLng := common.WGS84ToGCJ02(common.ConvertBDSLatitude(i.Latitude), common.ConvertBDSLatitude(i.Longitude))
 		locationRes = append(locationRes, model.DeviceLocationRes{
 			DeviceId: i.DeviceId,
+			Name:     i.Name,
 			Iccid:    i.Iccid,
 			Lat:      strconv.FormatFloat(caLat, 'f', -1, 64),
 			Lng:      strconv.FormatFloat(caLng, 'f', -1, 64),
@@ -264,8 +373,8 @@ func DeviceStatisticSer(c *gin.Context, deviceId int, startTime, endTime string)
 			status2Item = 1
 		}
 		status2 = append(status2, status2Item)
-		voltage = append(voltage, fmt.Sprintf("%.2f", float64(((i.VoltageH<<8)+i.Voltage)/100.0)))
-		current = append(current, fmt.Sprintf("%.2f", float64(((i.CurrentH<<8)+i.Current)/100.0)))
+		voltage = append(voltage, fmt.Sprintf("%.2f", float64((i.VoltageH<<8)+i.Voltage)/100.0))
+		current = append(current, fmt.Sprintf("%.2f", float64((i.CurrentH<<8)+i.Current)/100.0))
 		tem := (i.Tem1h << 8) + i.Tem1l
 		var realTem float64
 		if tem < 0x8000 {

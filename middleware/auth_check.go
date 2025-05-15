@@ -5,6 +5,7 @@ import (
 	"management-backend/common"
 	"management-backend/conf"
 	"management-backend/model"
+	"strconv"
 	"strings"
 )
 
@@ -36,6 +37,7 @@ func AuthCheck() gin.HandlerFunc {
 			return
 		}
 		// 继续处理请求
+		c.AddParam("user_id", strconv.Itoa(user.Id))
 		c.Next()
 	}
 }

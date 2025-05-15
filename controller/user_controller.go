@@ -30,10 +30,19 @@ func GetUserList(c *gin.Context) {
 }
 
 func AddUser(c *gin.Context) {
-	var user model.AddUserReq
-	if err := c.ShouldBindJSON(&user); err != nil {
+	var req model.AddUserReq
+	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Fatal(err)
 		return
 	}
-	service.AddUserSer(c, user.Id, user.Name, user.Password, user.Phone, user.RoleId)
+	service.AddUserSer(c, req)
+}
+
+func DeleteUser(c *gin.Context) {
+	var req model.DeleteUserReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.DeleteUserSer(c, req)
 }

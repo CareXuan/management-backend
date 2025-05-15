@@ -26,6 +26,12 @@ func AllPermission(c *gin.Context) {
 	service.GetAllPermissionSer(c)
 }
 
+func PermissionInfo(c *gin.Context) {
+	id := c.Query("id")
+	idInt, _ := strconv.Atoi(id)
+	service.GetPermissionInfoSer(c, idInt)
+}
+
 func AllRoles(c *gin.Context) {
 	page := c.Query("page")
 	pageSize := c.Query("page_size")
@@ -66,6 +72,7 @@ func AddPermission(c *gin.Context) {
 	}
 	service.AddPermissionSer(
 		c,
+		permissionReq.Id,
 		permissionReq.ParentId,
 		permissionReq.Path,
 		permissionReq.Icon,
@@ -83,4 +90,36 @@ func RemovePermission(c *gin.Context) {
 		return
 	}
 	service.RemovePermissionSer(c, permissionReq.Id)
+}
+
+func AllOrganization(c *gin.Context) {
+	page := c.Query("page")
+	pageSize := c.Query("page_size")
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	service.AllOrganizationSer(c, pageInt, pageSizeInt)
+}
+
+func GetOrganizationInfo(c *gin.Context) {
+	id := c.Query("id")
+	idInt, _ := strconv.Atoi(id)
+	service.GetOrganizationInfoSer(c, idInt)
+}
+
+func AddOrganization(c *gin.Context) {
+	var addReq model.OrganizationAddReq
+	if err := c.ShouldBindJSON(&addReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AddOrganizationSer(c, addReq)
+}
+
+func DeleteOrganization(c *gin.Context) {
+	var deleteReq model.OrganizationDeleteReq
+	if err := c.ShouldBindJSON(&deleteReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.DeleteOrganizationSer(c, deleteReq)
 }
