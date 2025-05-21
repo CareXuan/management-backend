@@ -9,11 +9,14 @@ import (
 )
 
 func GetDeviceList(c *gin.Context) {
+	deviceId := c.Query("device_id")
+	name := c.Query("name")
+	phone := c.Query("phone")
 	page := c.Query("page")
 	pageSize := c.Query("page_size")
 	pageInt, _ := strconv.Atoi(page)
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	service.DeviceListSer(c, pageInt, pageSizeInt)
+	service.DeviceListSer(c, deviceId, name, phone, pageInt, pageSizeInt)
 }
 
 func AddOneDevice(c *gin.Context) {

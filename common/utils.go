@@ -3,10 +3,6 @@ package common
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"management-backend/conf"
-	"management-backend/model"
 	"math"
 	"strconv"
 	"strings"
@@ -26,36 +22,6 @@ func GetOneNewCard(length int) string {
 
 	// 使用base64编码将字节切片转换为字符串
 	return base64.URLEncoding.EncodeToString(byteSlice)
-}
-
-func IsSupervisor(c *gin.Context) (int, error) {
-	authorization := c.GetHeader("Authorization")
-	if authorization == "" {
-		return 0, fmt.Errorf("获取token失败")
-	}
-	part := strings.Split(authorization, " ")
-	if len(part) < 2 {
-		return 0, fmt.Errorf("非法请求")
-	}
-	var user model.User
-	_, err := conf.Mysql.Where("token=?", part[1]).Get(&user)
-	if err != nil {
-		return 0, fmt.Errorf("获取用户信息失败")
-	}
-	var userRole model.UserRole
-	_, err = conf.Mysql.Where("user_id = ?", user.Id).Get(&userRole)
-	if err != nil {
-		return 0, fmt.Errorf("获取用户角色失败")
-	}
-	var roleItem model.Role
-	_, err = conf.Mysql.Where("id = ?", userRole.RoleId).Get(&roleItem)
-	if err != nil {
-		return 0, fmt.Errorf("获取角色信息失败")
-	}
-	if roleItem.Name != "管理员" {
-		return 0, nil
-	}
-	return 1, nil
 }
 
 // WGS84ToGCJ02 WGS84 转 GCJ02（火星坐标）

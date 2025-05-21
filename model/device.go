@@ -34,6 +34,7 @@ type Device struct {
 	IsSupervisor    int    `json:"is_supervisor" xorm:"-"`
 	RealLocation    string `json:"real_location" xorm:"-"`
 	Ts              string `json:"ts" xorm:"timestamp not null"`
+	UpdateTs        string `json:"update_ts" xorm:"timestamp not null"`
 }
 
 type DeviceCommonData struct {

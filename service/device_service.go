@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func DeviceListSer(c *gin.Context, page, pageSize int) {
+func DeviceListSer(c *gin.Context, deviceId, name, phone string, page, pageSize int) {
 	userId := c.Param("user_id")
 	var userRoleItem model.UserRole
 	_, err := conf.Mysql.Where("user_id = ?", userId).Get(&userRoleItem)
@@ -60,12 +60,21 @@ func DeviceListSer(c *gin.Context, page, pageSize int) {
 		sess.In("city", city)
 		sess.In("zone", zone)
 	}
+	if deviceId != "" {
+		sess.Where("device_id = ?", deviceId)
+	}
+	if name != "" {
+		sess.Where("name like ?", "%"+name+"%")
+	}
+	if phone != "" {
+		sess.Where("phone = ?", phone)
+	}
 	count, err := sess.Limit(pageSize, (page-1)*pageSize).FindAndCount(&deviceItems)
 	if err != nil {
 		common.ResError(c, "获取设备列表失败")
 		return
 	}
-	isSupervisor, err := common.IsSupervisor(c)
+	isSupervisor, err := IsSupervisor(c)
 	if err != nil {
 		common.ResError(c, err.Error())
 		return
@@ -103,7 +112,7 @@ func AddDeviceSer(c *gin.Context, req model.DeviceAddReq) {
 			Manager:  req.Manager,
 			Phone:    req.Phone,
 			Remark:   req.Remark,
-			Ts:       time.Now().Format("2006-01-02 15:04:05"),
+			UpdateTs: time.Now().Format("2006-01-02 15:04:05"),
 		})
 		if err != nil {
 			common.ResError(c, "写入设备信息失败")
@@ -131,6 +140,7 @@ func AddDeviceSer(c *gin.Context, req model.DeviceAddReq) {
 			Phone:    req.Phone,
 			Remark:   req.Remark,
 			Ts:       time.Now().Format("2006-01-02 15:04:05"),
+			UpdateTs: time.Now().Format("2006-01-02 15:04:05"),
 		})
 		if err != nil {
 			common.ResError(c, "写入设备信息失败")
@@ -302,6 +312,8 @@ func DeviceNewServiceDataSer(c *gin.Context, deviceId, page, pageSize int) {
 	var serviceDatas []*model.DeviceNewServiceData
 	sess := conf.Mysql.NewSession()
 	sess.Where("device_id=?", deviceId)
+	sess.Where("current_h != 255")
+	sess.Where("voltage_h != 255")
 	count, err := sess.OrderBy("id DESC").Limit(pageSize, (page-1)*pageSize).FindAndCount(&serviceDatas)
 	if err != nil {
 		common.ResError(c, "获取通用数据失败")
@@ -402,7 +414,7 @@ func DeviceStatisticSer(c *gin.Context, deviceId int, startTime, endTime string)
 }
 
 func GetDeviceAllWarningSer(c *gin.Context) {
-	isSupervisor, err := common.IsSupervisor(c)
+	isSupervisor, err := IsSupervisor(c)
 	if err != nil {
 		common.ResError(c, err.Error())
 		return
@@ -428,7 +440,7 @@ func GetDeviceAllWarningSer(c *gin.Context) {
 }
 
 func GetDeviceSingleWarningSer(c *gin.Context, deviceId int) {
-	isSupervisor, err := common.IsSupervisor(c)
+	isSupervisor, err := IsSupervisor(c)
 	if err != nil {
 		common.ResError(c, err.Error())
 		return

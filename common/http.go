@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -42,6 +43,23 @@ func DoGet(reqUrl string, params map[string]string) (*HttpResponse, error) {
 	return &result, nil
 }
 
-func DoPost(reqUrl string, data map[string]string) {
+func DoPost(reqUrl string, data map[string]interface{}) (string, error) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
 
+	// 3. 发送 POST 请求
+	resp, err := http.Post(reqUrl, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// 4. 读取响应内容
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
 }

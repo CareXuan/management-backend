@@ -3,10 +3,13 @@ package conf
 import (
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 	"github.com/go-xorm/xorm"
+	"github.com/robfig/cron/v3"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
+	"management-backend/common"
 	"management-backend/model"
+	"strconv"
 	"time"
 	"xorm.io/core"
 
@@ -48,6 +51,7 @@ type WechatConfig struct {
 	AppSecret string        `yaml:"app_secret"`
 	Token     string        `yaml:"token"`
 	Warning   wechatWarning `yaml:"warning"`
+	Robot     string        `yaml:"robot"`
 }
 
 type wechatWarning struct {
@@ -100,6 +104,7 @@ func connectMysql() {
 
 	// 同步表
 	syncTables()
+	initCronTask()
 }
 
 func initWechatApp() {
@@ -138,6 +143,64 @@ func syncTables() {
 		new(model.DeviceNewServiceData),
 		new(model.DeviceChangeLog),
 	)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func initCronTask() {
+	c := cron.New()
+	_, err := c.AddFunc("30 09 */1 * *", dailyWarning)
+	if err != nil {
+		log.Fatal("添加定时任务失败")
+	}
+	c.Start()
+}
+
+func dailyWarning() {
+	now := time.Now()
+	todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	var dataItems []*model.DeviceNewServiceData
+	err := Mysql.Where("ts BETWEEN ? AND ?", todayZero.AddDate(0, 0, -1).Format("2006-01-02 15:04:05"), todayZero.Format("2006-01-02 15:04:05")).NotIn("device_id", []int{1, 65, 66, 200, 201}).Find(&dataItems)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	var dataMapping = make(map[int]bool)
+	for _, i := range dataItems {
+		if _, ok := dataMapping[i.DeviceId]; ok {
+			continue
+		}
+		dataMapping[i.DeviceId] = true
+	}
+	var deviceItems []*model.Device
+	err = Mysql.NotIn("device_id", []int{1, 65, 66, 200, 201}).Find(&deviceItems)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	var noDataDevice []*model.Device
+	var warningContent string
+	for _, i := range deviceItems {
+		if _, ok := dataMapping[i.DeviceId]; !ok {
+			noDataDevice = append(noDataDevice, i)
+		}
+	}
+	if len(noDataDevice) <= 0 {
+		return
+	}
+	warningContent += todayZero.Format("2006-01-02") + "未上线设备：\n"
+	for _, i := range noDataDevice {
+		warningContent += "设备ID：" + strconv.Itoa(i.DeviceId) + "；商户名称：" + i.Name + "\n"
+	}
+	_, err = common.DoPost(Conf.Wechat.Robot, map[string]interface{}{
+		"msgtype": "text",
+		"text": map[string]interface{}{
+			"content":        warningContent,
+			"mentioned_list": []string{"@all"},
+		},
+	})
 	if err != nil {
 		log.Fatal(err)
 		return
