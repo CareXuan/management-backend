@@ -50,6 +50,7 @@ func InitRouter(r *gin.Engine) {
 			gift.GET("/album/gift", controller.AlbumGift)
 			gift.POST("/add", controller.Add)
 			gift.POST("/add_point", controller.AddPoint)
+			gift.POST("/real/destroy", controller.DestroyReal)
 			gift.POST("/reset_point", controller.ResetPoint)
 			gift.POST("/raffle/config/set", controller.RaffleConfigSet)
 			gift.POST("/delete", controller.Delete)
@@ -87,6 +88,10 @@ func InitRouter(r *gin.Engine) {
 		// 小程序端
 		app := v1.Group("app")
 		{
+			user := app.Group("user")
+			{
+				user.POST("/login", controller.AppLogin)
+			}
 			task := app.Group("task")
 			{
 				task.GET("/list", controller.AppTaskList)
@@ -114,6 +119,7 @@ func InitRouter(r *gin.Engine) {
 		{
 			commonCtr.POST("/upload", controller.Upload)
 			commonCtr.GET("/wechat_check", controller.WechatCheck)
+			commonCtr.GET("/resize_upload", controller.ResizeUpload)
 		}
 	}
 }

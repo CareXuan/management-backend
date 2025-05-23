@@ -3,6 +3,8 @@ package model
 type Album struct {
 	Id        int          `json:"id" xorm:"pk autoincr INT(11)"`
 	Name      string       `json:"name" xorm:"VARCHAR(24) not null default '' comment('礼物组名称')"`
+	HasCnt    int          `json:"has_cnt" xorm:"-"`
+	AllCnt    int          `json:"all_cnt" xorm:"-"`
 	CreateAt  int          `json:"create_at" xorm:"INT(10) not null default 0"`
 	DeleteAt  int          `json:"delete_at" xorm:"INT(10) not null default 0"`
 	AlbumGift []*AlbumGift `json:"album_gift" xorm:"-"`

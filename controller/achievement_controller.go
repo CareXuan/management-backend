@@ -11,11 +11,13 @@ import (
 // AchievementList 成就列表
 func AchievementList(c *gin.Context) {
 	name := c.Query("name")
+	isFinish := c.Query("is_finish")
 	page := c.Query("page")
 	pageSize := c.Query("page_size")
+	isFinishInt, _ := strconv.Atoi(isFinish)
 	pageInt, _ := strconv.Atoi(page)
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	service.AchievementList(c, name, pageInt, pageSizeInt)
+	service.AchievementList(c, name, isFinishInt, pageInt, pageSizeInt)
 }
 
 // AchievementInfo 成就详情

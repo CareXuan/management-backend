@@ -9,11 +9,17 @@ import (
 	"time"
 )
 
-func AchievementList(c *gin.Context, name string, page, pageSize int) {
+func AchievementList(c *gin.Context, name string, isFinish, page, pageSize int) {
 	var achievements []*model.Achievement
 	sess := conf.Mysql.NewSession()
 	if name != "" {
 		sess.Where("name like ?", "%"+name+"%")
+	}
+	if isFinish != 0 {
+		if isFinish == 2 {
+			isFinish = 0
+		}
+		sess.Where("is_finish = ?", isFinish)
 	}
 	count, err := sess.Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&achievements)
 	if err != nil {
@@ -280,10 +286,11 @@ func AppAchievementList(c *gin.Context, page, pageSize, statusInt int) {
 	}
 	var taskProgressMapping = make(map[int]int)
 	for _, i := range taskProgress {
-		if _, ok := taskProgressMapping[i.TaskId]; ok && i.Status == 3 {
+		if _, ok := taskProgressMapping[i.TaskId]; !ok {
+			taskProgressMapping[i.TaskId] = 0
+		}
+		if i.Status == 3 {
 			taskProgressMapping[i.TaskId] += 1
-		} else {
-			taskProgressMapping[i.TaskId] = 1
 		}
 	}
 	var achievementTaskMapping = make(map[int][]*model.AchievementTask)

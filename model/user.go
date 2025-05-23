@@ -20,3 +20,7 @@ type AddUserReq struct {
 	Phone    string `json:"phone"`
 	RoleId   int    `json:"role_id"`
 }
+
+type AppLoginReq struct {
+	LoginPwd string `json:"login_pwd"`
+}

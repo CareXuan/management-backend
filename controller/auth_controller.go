@@ -84,3 +84,14 @@ func RemovePermission(c *gin.Context) {
 	}
 	service.RemovePermissionSer(c, permissionReq.Id)
 }
+
+/*=====================================app=====================================*/
+
+func AppLogin(c *gin.Context) {
+	var loginReq model.AppLoginReq
+	if err := c.ShouldBindJSON(&loginReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.AppLoginSer(c, loginReq)
+}

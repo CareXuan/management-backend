@@ -11,11 +11,13 @@ import (
 // TaskList 任务列表
 func TaskList(c *gin.Context) {
 	name := c.Query("name")
+	status := c.Query("status")
 	page := c.Query("page")
 	pageSize := c.Query("page_size")
 	pageInt, _ := strconv.Atoi(page)
+	statusInt, _ := strconv.Atoi(status)
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	service.TaskList(c, name, pageInt, pageSizeInt)
+	service.TaskList(c, name, statusInt, pageInt, pageSizeInt)
 }
 
 // TaskInfo 任务详情

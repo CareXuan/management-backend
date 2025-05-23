@@ -11,11 +11,18 @@ import (
 // List 礼物列表
 func List(c *gin.Context) {
 	name := c.Query("name")
+	consumable := c.Query("consumable")
+	show := c.Query("show")
+	canObtain := c.Query("can_obtain")
 	page := c.Query("page")
 	pageSize := c.Query("page_size")
+	consumableInt, _ := strconv.Atoi(consumable)
+	showInt, _ := strconv.Atoi(show)
+	canObtainInt, _ := strconv.Atoi(canObtain)
 	pageInt, _ := strconv.Atoi(page)
 	pageSizeInt, _ := strconv.Atoi(pageSize)
-	service.List(c, name, pageInt, pageSizeInt)
+
+	service.List(c, name, consumableInt, showInt, canObtainInt, pageInt, pageSizeInt)
 }
 
 // Info 礼物详情
@@ -102,6 +109,16 @@ func AddPoint(c *gin.Context) {
 		return
 	}
 	service.AddPoint(c, addReq)
+}
+
+// DestroyReal 兑换&销毁一个实体礼物
+func DestroyReal(c *gin.Context) {
+	var destroyReq model.DestroyGiftReq
+	if err := c.ShouldBindJSON(&destroyReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.DestroyReal(c, destroyReq)
 }
 
 // RaffleConfigSet 抽卡配置设置

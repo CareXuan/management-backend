@@ -218,3 +218,19 @@ func RemovePermissionSer(c *gin.Context, id int) {
 
 	common.ResOk(c, "ok", nil)
 }
+
+/*=====================================app=====================================*/
+
+func AppLoginSer(c *gin.Context, req model.AppLoginReq) {
+	var configItem model.Config
+	_, err := conf.Mysql.Where("id > 0").Get(&configItem)
+	if err != nil {
+		common.ResError(c, "获取配置失败")
+		return
+	}
+	if req.LoginPwd != configItem.LoginPwd {
+		common.ResForbidden(c, "密码错误")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}

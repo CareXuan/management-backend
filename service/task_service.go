@@ -9,11 +9,14 @@ import (
 	"time"
 )
 
-func TaskList(c *gin.Context, name string, page, pageSize int) {
+func TaskList(c *gin.Context, name string, status, page, pageSize int) {
 	var tasks []*model.Task
 	sess := conf.Mysql.NewSession()
 	if name != "" {
 		sess.Where("name like ?", "%"+name+"%")
+	}
+	if status != 0 {
+		sess.Where("`status` = ?", status)
 	}
 	count, err := sess.Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&tasks)
 	if err != nil {
@@ -370,7 +373,7 @@ func AppTaskListSer(c *gin.Context, name string) {
 	if name != "" {
 		sess.Where("name like ?", "%"+name+"%")
 	}
-	err := sess.Where("delete_at = 0").Find(&tasks)
+	err := sess.Where("delete_at = 0").OrderBy("type").Find(&tasks)
 	if err != nil {
 		common.ResError(c, "获取任务信息失败")
 		return
@@ -391,7 +394,7 @@ func AppTaskListSer(c *gin.Context, name string) {
 		taskMapping[i.TaskId].Gifts = []*model.TaskGift{i}
 	}
 	var taskDos []*model.TaskDo
-	err = conf.Mysql.In("task_id", taskIds).In("status", []int{1, 2, 4}).Where("delete_at = 0").Where("start_time < ? and (deadline = 0 or deadline > ?)", timeNow, timeNow).Find(&taskDos)
+	err = conf.Mysql.In("task_id", taskIds).In("status", []int{1, 2, 4}).Where("delete_at = 0").Where("start_time < ? and (deadline = 0 or deadline > ?)", timeNow, timeNow).OrderBy("task_id").Find(&taskDos)
 	if err != nil {
 		common.ResError(c, "获取任务列表失败")
 		return

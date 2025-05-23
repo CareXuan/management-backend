@@ -10,7 +10,7 @@ type Gift struct {
 	CanObtain   int    `json:"can_obtain" xorm:"INT(3) not null default 0 comment('是否可被获取 1：是 2：否')"`
 	CrushCnt    int    `json:"crush_cnt" xorm:"INT(5) not null default 0 comment('粉碎所得抽卡点数')"`
 	Consumable  int    `json:"consumable" xorm:"INT(3) not null default 0 comment('是否可消耗 1：可以 2：不可以')"`
-	Count       int    `json:"exist" xorm:"INT(3) not null default 0 comment('获取数量')"`
+	Count       int    `json:"count" xorm:"INT(3) not null default 0 comment('获取数量')"`
 	CreateAt    int    `json:"create_at" xorm:"INT(10) not null default 0"`
 	DeleteAt    int    `json:"delete_at" xorm:"INT(10) not null default 0"`
 }
@@ -69,9 +69,14 @@ type GiftAddPointReq struct {
 	Count int `json:"count"`
 }
 
+type DestroyGiftReq struct {
+	Id int `json:"id"`
+}
+
 type GiftConfigSetReq struct {
-	OneCount int `json:"one_count"`
-	TenCount int `json:"ten_count"`
+	OneCount int    `json:"one_count"`
+	TenCount int    `json:"ten_count"`
+	LoginPwd string `json:"login_pwd"`
 }
 
 type GiftDeleteReq struct {

@@ -109,7 +109,7 @@ func RaffleOne(c *gin.Context, req model.RaffleOneReq) {
 						return
 					}
 				}
-				resLog = fmt.Sprintf("获取【%s】X1，自动分解为抽卡点%d个。", activeGift.Name, activeGift.CrushCnt)
+				resLog = fmt.Sprintf("获取%s级【%s】X1，自动分解为抽卡点%d个。", activeGift.Level, activeGift.Name, activeGift.CrushCnt)
 			} else {
 				_, err := conf.Mysql.Insert(&model.GiftPackage{
 					GiftId:     activeGift.Id,
@@ -128,10 +128,11 @@ func RaffleOne(c *gin.Context, req model.RaffleOneReq) {
 					common.ResError(c, "礼物信息修改失败")
 					return
 				}
-				resLog = fmt.Sprintf("获取【%s】X1。", activeGift.Name)
+				resLog = fmt.Sprintf("获取%s级【%s】X1。", activeGift.Level, activeGift.Name)
 			}
 			resLogs = append(resLogs, raffleResult{
 				Msg:  resLog,
+				Pic:  activeGift.Pic,
 				Time: time.Now().Format("2006-01-02 15:04:05"),
 			})
 		} else {
@@ -158,9 +159,10 @@ func RaffleOne(c *gin.Context, req model.RaffleOneReq) {
 
 func AppRaffleConfig(c *gin.Context) {
 	type appRaffleConfig struct {
-		PointCount int `json:"point_count"`
-		RaffleOne  int `json:"raffle_one"`
-		RaffleTen  int `json:"raffle_ten"`
+		PointCount       int `json:"point_count"`
+		AchievementCount int `json:"achievement_count"`
+		RaffleOne        int `json:"raffle_one"`
+		RaffleTen        int `json:"raffle_ten"`
 	}
 	var configItem model.Config
 	_, err := conf.Mysql.Where("id = 1").Get(&configItem)
@@ -174,9 +176,16 @@ func AppRaffleConfig(c *gin.Context) {
 		common.ResError(c, "获取抽卡点失败")
 		return
 	}
+	var achievementItems []*model.Achievement
+	err = conf.Mysql.Where("is_finish = 1").Where("is_receive = 0").Find(&achievementItems)
+	if err != nil {
+		common.ResError(c, "获取成就信息失败")
+		return
+	}
 	common.ResOk(c, "ok", appRaffleConfig{
-		PointCount: packageItem.Count,
-		RaffleOne:  configItem.OnePoint,
-		RaffleTen:  configItem.TenPoint,
+		PointCount:       packageItem.Count,
+		AchievementCount: len(achievementItems),
+		RaffleOne:        configItem.OnePoint,
+		RaffleTen:        configItem.TenPoint,
 	})
 }

@@ -10,11 +10,20 @@ import (
 	"time"
 )
 
-func List(c *gin.Context, name string, page, pageSize int) {
+func List(c *gin.Context, name string, consumable, show, canObtain, page, pageSize int) {
 	var gifts []*model.Gift
 	sess := conf.Mysql.NewSession()
 	if name != "" {
 		sess.Where("name like ?", "%"+name+"%")
+	}
+	if consumable != 0 {
+		sess.Where("consumable = ?", consumable)
+	}
+	if show != 0 {
+		sess.Where("`show` = ?", show)
+	}
+	if canObtain != 0 {
+		sess.Where("can_obtain = ?", canObtain)
 	}
 	count, err := sess.Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&gifts)
 	if err != nil {
@@ -102,6 +111,7 @@ func RaffleConfigSet(c *gin.Context, req model.GiftConfigSetReq) {
 	_, err := conf.Mysql.Where("id > 0").Update(model.Config{
 		OnePoint: req.OneCount,
 		TenPoint: req.TenCount,
+		LoginPwd: req.LoginPwd,
 	})
 	if err != nil {
 		common.ResError(c, "修改配置失败")
@@ -260,6 +270,42 @@ func AddPoint(c *gin.Context, req model.GiftAddPointReq) {
 	common.ResOk(c, "ok", nil)
 }
 
+func DestroyReal(c *gin.Context, req model.DestroyGiftReq) {
+	var giftPackageItem model.GiftPackage
+	_, err := conf.Mysql.Where("gift_id = ?", req.Id).Where("count > 0").Where("delete_at = 0").Get(&giftPackageItem)
+	if err != nil {
+		common.ResError(c, "获取背包信息失败")
+		return
+	}
+	_, err = conf.Mysql.Insert(model.GiftExtract{
+		GiftId:   req.Id,
+		GetTime:  int(time.Now().Unix()),
+		CreateAt: int(time.Now().Unix()),
+		Count:    1,
+		Type:     2,
+	})
+	if err != nil {
+		common.ResError(c, "写入记录失败")
+		return
+	}
+	_, err = conf.Mysql.Where("gift_id = ?", req.Id).Where("delete_at = 0").Update(&model.GiftPackage{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "销毁背包失败")
+		return
+	}
+	_, err = conf.Mysql.MustCols("count").Where("id = ?", req.Id).Where("delete_at = 0").Update(&model.Gift{
+		Count:    0,
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "修改礼物信息失败")
+		return
+	}
+	common.ResOk(c, "ok", nil)
+}
+
 func ResetPoint(c *gin.Context) {
 	_, err := conf.Mysql.MustCols("gift_id", "count").Where("gift_id = 0").Update(&model.GiftPackage{
 		Count: 0,
@@ -283,6 +329,13 @@ func Delete(c *gin.Context, req model.GiftDeleteReq) {
 	})
 	if err != nil {
 		common.ResError(c, "删除礼物失败")
+		return
+	}
+	_, err = conf.Mysql.In("gift_id", req.Ids).Update(&model.AlbumGift{
+		DeleteAt: int(time.Now().Unix()),
+	})
+	if err != nil {
+		common.ResError(c, "删除关联相册信息失败")
 		return
 	}
 	common.ResOk(c, "ok", nil)
@@ -470,11 +523,48 @@ func AlbumDelete(c *gin.Context, req model.GiftAlbumDelete) {
 /*=====================================app=====================================*/
 
 func AppAlbumItems(c *gin.Context) {
+	type albumCnt struct {
+		HasCnt int `json:"has_cnt"`
+		AllCnt int `json:"all_cnt"`
+	}
 	var albumItems []*model.Album
 	err := conf.Mysql.Where("delete_at = 0").Find(&albumItems)
 	if err != nil {
 		common.ResError(c, "获取相册信息失败")
 		return
+	}
+	var gifts []*model.Gift
+	err = conf.Mysql.Where("count > 0").Where("delete_at = 0").Find(&gifts)
+	if err != nil {
+		common.ResError(c, "获取已获得照片信息失败")
+		return
+	}
+	var hasGift = make(map[int]bool)
+	for _, i := range gifts {
+		hasGift[i.Id] = true
+	}
+	var albumGift []*model.AlbumGift
+	err = conf.Mysql.Where("delete_at = 0").Find(&albumGift)
+	if err != nil {
+		common.ResError(c, "获取相册关联信息失败")
+		return
+	}
+	var albumCntMapping = make(map[int]*albumCnt)
+	for _, i := range albumGift {
+		if _, ok := albumCntMapping[i.AlbumId]; !ok {
+			albumCntMapping[i.AlbumId] = &albumCnt{
+				HasCnt: 0,
+				AllCnt: 0,
+			}
+		}
+		if hasGift[i.GiftId] {
+			albumCntMapping[i.AlbumId].HasCnt += 1
+		}
+		albumCntMapping[i.AlbumId].AllCnt += 1
+	}
+	for _, i := range albumItems {
+		i.HasCnt = albumCntMapping[i.Id].HasCnt
+		i.AllCnt = albumCntMapping[i.Id].AllCnt
 	}
 	common.ResOk(c, "ok", albumItems)
 }
@@ -497,7 +587,7 @@ func AppAlbumList(c *gin.Context, name string, page, pageSize int) {
 		giftIds = append(giftIds, i.GiftId)
 	}
 	var giftItems []*model.Gift
-	err = conf.Mysql.In("id", giftIds).Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).OrderBy("count DESC,level ASC").Find(&giftItems)
+	err = conf.Mysql.In("id", giftIds).Where("delete_at = 0").Limit(pageSize, (page-1)*pageSize).OrderBy("count DESC,level ASC,id DESC").Find(&giftItems)
 	if err != nil {
 		common.ResError(c, "获取相片信息失败")
 		return
@@ -506,7 +596,7 @@ func AppAlbumList(c *gin.Context, name string, page, pageSize int) {
 		if i.Count == 0 {
 			i.Name = "未获得"
 			i.Description = "尚未解锁"
-			i.Pic = "https://yuyuzheng.cn:7788/upload/YQUv38ByGCZU8WP18PmmIdcpVm.png"
+			i.Pic = "https://yuyuzheng.cn:7788/upload/YQRJGjaQEtuS0YT8OdFzT_VxZC.png"
 		}
 	}
 	common.ResOk(c, "ok", giftItems)

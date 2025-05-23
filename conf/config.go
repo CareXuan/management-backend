@@ -152,7 +152,7 @@ func syncTables() {
 
 func allotTask() {
 	var tasks []*model.Task
-	err := Mysql.In("type", []int{2, 4}).Where("delete_at = ?", 0).Find(&tasks)
+	err := Mysql.In("type", []int{2, 4}).Where("start_time = 0 or start_time < ?", time.Now().Unix()).Where("delete_at = ?", 0).Find(&tasks)
 	if err != nil {
 		log.Fatal("定时任务出错")
 		return
