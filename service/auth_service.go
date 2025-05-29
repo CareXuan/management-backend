@@ -26,7 +26,7 @@ func LoginSrv(c *gin.Context, phone string, password string) {
 		return
 	}
 	var userRole model.UserRole
-	_, err = conf.Mysql.Where("id = ?", user.Id).Get(&userRole)
+	_, err = conf.Mysql.Where("user_id = ?", user.Id).Get(&userRole)
 	if err != nil {
 		common.ResError(c, "获取用户角色失败")
 		return
@@ -38,6 +38,24 @@ func LoginSrv(c *gin.Context, phone string, password string) {
 		return
 	}
 	user.RoleStr = role
+	var rolePermissions []*model.RolePermission
+	err = conf.Mysql.Where("role_id = ?", role.Id).Find(&rolePermissions)
+	if err != nil {
+		common.ResError(c, "获取用户权限失败")
+		return
+	}
+	var permissionIds []int
+	for _, i := range rolePermissions {
+		permissionIds = append(permissionIds, i.PermissionId)
+	}
+	var permissions []*model.Permission
+	err = conf.Mysql.In("id", permissionIds).Find(&permissions)
+	for _, i := range permissions {
+		if i.Path != "" {
+			continue
+		}
+		user.Permissions = append(user.Permissions, i.Icon)
+	}
 	common.ResOk(c, "ok", user)
 }
 
@@ -60,13 +78,33 @@ func GetAllPermissionSer(c *gin.Context) {
 
 	for _, fp := range fatherPermissions {
 		fp.Children = childrenPermissions[fp.Id]
+		for _, fpc := range fp.Children {
+			fpc.Children = childrenPermissions[fpc.Id]
+		}
 	}
 	common.ResOk(c, "ok", fatherPermissions)
 }
 
+func GetPermissionInfoSer(c *gin.Context, id int) {
+	var permissionItem model.Permission
+	_, err := conf.Mysql.Where("id = ?", id).Get(&permissionItem)
+	if err != nil {
+		common.ResError(c, "获取权限信息失败")
+		return
+	}
+	common.ResOk(c, "ok", permissionItem)
+}
+
 func GetAllRolesSer(c *gin.Context, page int, pageSize int) {
+	userId := c.Param("user_id")
+	var userRoleItem model.UserRole
+	_, err := conf.Mysql.Where("user_id = ?", userId).Get(&userRoleItem)
+	if err != nil {
+		common.ResError(c, "获取用户角色失败")
+		return
+	}
 	var roles []*model.Role
-	count, err := conf.Mysql.Limit(pageSize, (page-1)*pageSize).FindAndCount(&roles)
+	count, err := conf.Mysql.Where("id >= ?", userRoleItem.RoleId).Limit(pageSize, (page-1)*pageSize).FindAndCount(&roles)
 	if err != nil {
 		common.ResError(c, "获取角色信息失败")
 		return
@@ -176,24 +214,39 @@ func DeleteRoleSer(c *gin.Context, roleId int) {
 	common.ResOk(c, "ok", nil)
 }
 
-func AddPermissionSer(c *gin.Context, parentId int, path string, icon string, sort int, label string, desc string, component string) {
-	var newPermission = model.Permission{
-		Path:      path,
-		Icon:      icon,
-		Sort:      sort,
-		ParentId:  parentId,
-		Label:     label,
-		Desc:      desc,
-		Component: component,
-	}
-	_, err := conf.Mysql.Insert(newPermission)
-	if err != nil {
-		common.ResError(c, "添加权限失败")
-		return
+func AddPermissionSer(c *gin.Context, id int, parentId int, path string, icon string, sort int, label string, desc string, component string) {
+	if id != 0 {
+		_, err := conf.Mysql.Where("id = ?", id).Update(model.Permission{
+			Path:      path,
+			Icon:      icon,
+			Sort:      sort,
+			ParentId:  parentId,
+			Label:     label,
+			Desc:      desc,
+			Component: component,
+		})
+		if err != nil {
+			common.ResError(c, "修改权限失败")
+			return
+		}
+	} else {
+		var newPermission = model.Permission{
+			Path:      path,
+			Icon:      icon,
+			Sort:      sort,
+			ParentId:  parentId,
+			Label:     label,
+			Desc:      desc,
+			Component: component,
+		}
+		_, err := conf.Mysql.Insert(newPermission)
+		if err != nil {
+			common.ResError(c, "添加权限失败")
+			return
+		}
 	}
 	common.ResOk(c, "ok", nil)
 }
-
 func RemovePermissionSer(c *gin.Context, id int) {
 	var permissions []model.Permission
 	err := conf.Mysql.Where("id = ?", id).Or("parent_id = ?", id).Find(&permissions)
