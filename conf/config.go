@@ -29,9 +29,9 @@ type Config struct {
 	Tcp     TcpConfig     `yaml:"tcp"`
 	Ammeter AmmeterConfig `yaml:"ammeter"`
 	Admin   int           `yaml:"admin"`
-	Gpt    GptConfig    `yaml:"gpt"`
-	Upload UploadConfig `yaml:"upload"`
-	Wechat WechatConfig `yaml:"wechat"`
+	Gpt     GptConfig     `yaml:"gpt"`
+	Upload  UploadConfig  `yaml:"upload"`
+	Wechat  WechatConfig  `yaml:"wechat"`
 }
 
 type MysqlConfig struct {
@@ -75,10 +75,10 @@ type WechatConfig struct {
 }
 
 var (
-	Mysql  *xorm.EngineGroup
-	Rabbit *amqp.Connection
-	Redis  redis.Conn
-	Conf   *Config
+	Mysql     *xorm.EngineGroup
+	Rabbit    *amqp.Connection
+	Redis     redis.Conn
+	Conf      *Config
 	WechatApp *officialAccount.OfficialAccount
 )
 
@@ -96,8 +96,8 @@ func NewConfig(configPath string) {
 	}
 	connectMysql()
 	initWechatApp()
-	connectRabbitMQ()
-	connectRedis()
+	//connectRabbitMQ()
+	//connectRedis()
 	//GetVehicleConfig(Conf.Vehicle.Host)
 }
 
