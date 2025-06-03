@@ -9,9 +9,7 @@ type User struct {
 	OpenId      string   `json:"open_id" xorm:"varchar(128) not null default ''"`
 	RoleStr     Role     `json:"role" xorm:"-"`
 	Permissions []string `json:"permissions" xorm:"-"`
-	CreatedAt   int64    `json:"-" xorm:"int(20) not null default 0"`
-	UpdatedAt   int64    `json:"-" xorm:"int(20) not null default 0"`
-	DeletedAt   int64    `json:"-" xorm:"int(20) not null default 0"`
+	TimeBase
 }
 
 type AddUserReq struct {
