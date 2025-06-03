@@ -13,6 +13,14 @@ func InitRouter(r *gin.Engine) {
 	{
 		v1.GET("/", func(c *gin.Context) { common.ResOk(c, "Hello World!", nil) })
 
+		siemens := v1.Group("siemens")
+		{
+			s7 := siemens.Group("s7").Use(middleware.AuthCheck())
+			{
+				s7.POST("/add")
+			}
+		}
+
 		// 用户相关
 		user := v1.Group("user").Use(middleware.AuthCheck())
 		{
