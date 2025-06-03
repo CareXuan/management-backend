@@ -13,6 +13,7 @@ func GetUserInfoSer(c *gin.Context, userId int) {
 	var user model.User
 	_, err := conf.Mysql.Where("id = ?", userId).Get(&user)
 	if err != nil {
+		fmt.Println(err)
 		common.ResError(c, "获取用户信息失败")
 		return
 	}

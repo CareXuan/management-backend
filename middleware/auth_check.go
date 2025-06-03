@@ -2,6 +2,7 @@ package middleware
 
 import "C"
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"management-backend/common"
 	"management-backend/conf"
@@ -27,6 +28,7 @@ func AuthCheck() gin.HandlerFunc {
 		var user model.User
 		_, err := conf.Mysql.Where("token=?", part[1]).Get(&user)
 		if err != nil {
+			fmt.Println(err)
 			common.ResError(c, "获取用户信息失败")
 			c.Abort()
 			return

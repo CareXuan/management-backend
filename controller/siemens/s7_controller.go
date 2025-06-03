@@ -1,4 +1,4 @@
-package controller
+package siemens
 
 import (
 	"github.com/gin-gonic/gin"
