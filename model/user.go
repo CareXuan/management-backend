@@ -9,7 +9,7 @@ type User struct {
 	OpenId      string   `json:"open_id" xorm:"varchar(128) not null default ''"`
 	RoleStr     Role     `json:"role" xorm:"-"`
 	Permissions []string `json:"permissions" xorm:"-"`
-	TimeBase
+	TimeBase    `xorm:"extends"`
 }
 
 type AddUserReq struct {

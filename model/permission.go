@@ -12,5 +12,5 @@ type Permission struct {
 	Sort      int           `json:"sort" xorm:"int(11) not null default 100"`
 	Children  []*Permission `json:"children" xorm:"-"`
 	ParentId  int           `json:"parent_id" xorm:"int(11) not null default 0"`
-	TimeBase
+	TimeBase  `xorm:"extends"`
 }
