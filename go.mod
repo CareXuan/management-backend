@@ -1,4 +1,4 @@
-module management-backend
+module switchboard-backend
 
 go 1.24
 

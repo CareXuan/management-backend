@@ -2,9 +2,10 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/controller"
-	"management-backend/middleware"
+	"switchboard-backend/common"
+	"switchboard-backend/controller"
+	siemens2 "switchboard-backend/controller/siemens"
+	"switchboard-backend/middleware"
 )
 
 func InitRouter(r *gin.Engine) {
@@ -15,14 +16,16 @@ func InitRouter(r *gin.Engine) {
 
 		siemens := v1.Group("siemens")
 		{
-			s7 := siemens.Group("s7").Use(middleware.AuthCheck())
+			s7 := siemens.Group("s7")
 			{
-				s7.POST("/add")
+				s7.GET("/list", siemens2.List)
+				s7.POST("/add", siemens2.Add)
+				s7.POST("/tttt", siemens2.Tttt)
 			}
 		}
 
 		// 用户相关
-		user := v1.Group("user").Use(middleware.AuthCheck())
+		user := v1.Group("user")
 		{
 			user.GET("/info", controller.GetUserInfo)
 			user.GET("/list", controller.GetUserList)
@@ -34,14 +37,14 @@ func InitRouter(r *gin.Engine) {
 		auth := v1.Group("auth")
 		{
 			auth.POST("/login", controller.Login)
-			auth.GET("/permission", controller.AllPermission).Use(middleware.AuthCheck())
-			auth.GET("/permission/info", controller.PermissionInfo).Use(middleware.AuthCheck())
-			auth.POST("/permission/add", controller.AddPermission).Use(middleware.AuthCheck())
-			auth.POST("/permission/delete", controller.RemovePermission).Use(middleware.AuthCheck())
-			auth.GET("/roles", controller.AllRoles).Use(middleware.AuthCheck())
-			auth.GET("/roles/info", controller.GetRoleInfo).Use(middleware.AuthCheck())
-			auth.POST("/roles/add", controller.AddRole).Use(middleware.AuthCheck())
-			auth.POST("/roles/delete", controller.DeleteRole).Use(middleware.AuthCheck())
+			auth.GET("/permission", controller.AllPermission)
+			auth.GET("/permission/info", controller.PermissionInfo)
+			auth.POST("/permission/add", controller.AddPermission)
+			auth.POST("/permission/delete", controller.RemovePermission)
+			auth.GET("/roles", controller.AllRoles)
+			auth.GET("/roles/info", controller.GetRoleInfo)
+			auth.POST("/roles/add", controller.AddRole)
+			auth.POST("/roles/delete", controller.DeleteRole)
 		}
 
 		commonCtr := v1.Group("common")

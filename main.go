@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"management-backend/conf"
-	"management-backend/router"
 	"net/http"
+	"switchboard-backend/conf"
+	"switchboard-backend/router"
 )
 
 func main() {

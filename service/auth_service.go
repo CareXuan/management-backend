@@ -1,19 +1,17 @@
 package service
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
-	"management-backend/utils"
+	"switchboard-backend/common"
+	"switchboard-backend/conf"
+	"switchboard-backend/model"
+	"switchboard-backend/utils"
 )
 
 func LoginSrv(c *gin.Context, phone string, password string) {
 	var user model.User
 	_, err := conf.Mysql.Where("phone = ?", phone).Get(&user)
 	if err != nil {
-		fmt.Println(err)
 		common.ResError(c, "获取用户失败")
 		return
 	}

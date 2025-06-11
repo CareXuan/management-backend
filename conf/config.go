@@ -6,7 +6,9 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
-	"management-backend/model"
+	"switchboard-backend/model"
+	"switchboard-backend/model/modbus"
+	"switchboard-backend/model/siemens"
 	"time"
 	"xorm.io/core"
 
@@ -117,6 +119,9 @@ func syncTables() {
 		new(model.UserRole),
 		new(model.Permission),
 		new(model.RolePermission),
+		new(modbus.Modbus),
+		new(siemens.SiemensS7),
+		new(siemens.SiemensS7Data),
 	)
 	if err != nil {
 		log.Fatal(err)

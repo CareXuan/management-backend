@@ -1,19 +1,17 @@
 package service
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
-	"management-backend/utils"
+	"switchboard-backend/common"
+	"switchboard-backend/conf"
+	"switchboard-backend/model"
+	"switchboard-backend/utils"
 )
 
 func GetUserInfoSer(c *gin.Context, userId int) {
 	var user model.User
 	_, err := conf.Mysql.Where("id = ?", userId).Get(&user)
 	if err != nil {
-		fmt.Println(err)
 		common.ResError(c, "获取用户信息失败")
 		return
 	}
@@ -153,7 +151,6 @@ func GetUserPermissionSer(c *gin.Context, userId int) {
 	var rolePermission []*model.RolePermission
 	err = conf.Mysql.Where("role_id = ?", userRole.RoleId).Find(&rolePermission)
 	if err != nil {
-		fmt.Println(err)
 		common.ResError(c, "获取用户权限失败")
 		return
 	}

@@ -1,11 +1,10 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
 	"net/http"
+	"switchboard-backend/common"
+	"switchboard-backend/conf"
 )
 
 func Upload(c *gin.Context) {
@@ -21,7 +20,6 @@ func Upload(c *gin.Context) {
 	}
 	reader, err := file.Open()
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 	b := make([]byte, 512)

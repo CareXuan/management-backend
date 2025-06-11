@@ -3,9 +3,9 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
-	"management-backend/service"
 	"strconv"
+	"switchboard-backend/model"
+	"switchboard-backend/service"
 )
 
 type LoginReq struct {
