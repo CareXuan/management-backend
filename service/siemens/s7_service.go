@@ -1,119 +1,89 @@
 package siemens
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"log"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"switchboard-backend/common"
+	"switchboard-backend/conf"
+	"switchboard-backend/model/siemens"
+	"switchboard-backend/utils"
 )
 
 func ListSer(c *gin.Context, name string, page, pageSize int) {
-
+	var s7List []*siemens.SiemensS7
+	sess := conf.Mysql.NewSession()
+	if name != "" {
+		sess.Where("name like ?", "%"+name+"%")
+	}
+	err := sess.Where("deleted_at = 0").Find(&s7List)
+	if err != nil {
+		common.ResError(c, "获取设备列表失败")
+		return
+	}
+	common.ResOk(c, "ok", s7List)
 }
 
-func Tttt(c *gin.Context) {
-	newContent := "[Match]\nName=fe5\n\n[Network]\nAddress=192.168.5.43/24\n" // 实际应从请求中获取或校验
-	targetFile := "/etc/systemd/network/44-fe5.network"
-	backupFile := targetFile + ".bak"
-
-	// 1. 检查root权限
-	if os.Geteuid() != 0 {
-		common.ResError(c, "需要root权限才能修改"+targetFile)
+func InfoSer(c *gin.Context, id, page, pageSize int) {
+	var s7Data []*siemens.SiemensS7Data
+	count, err := conf.Mysql.Where("device_id = ?", id).Where("deleted_at = 0").Limit(pageSize, (page-1)*pageSize).FindAndCount(&s7Data)
+	if err != nil {
+		common.ResError(c, "获取设备列表失败")
 		return
 	}
+	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: s7Data})
+}
 
-	// 2. 检查原文件是否存在（若不存在则创建备份会失败）
-	_, err := os.Stat(targetFile)
-	if err != nil && !os.IsNotExist(err) {
-		common.ResError(c, fmt.Sprintf("检查原文件失败: %v", err))
-		return
-	}
-
-	// 3. 备份原文件（仅当原文件存在时）
-	if !os.IsNotExist(err) {
-		originalContent, err := os.ReadFile(targetFile)
+func AddSer(c *gin.Context, req siemens.AddSiemensS7Req) {
+	if req.Id != 0 {
+		_, err := conf.Mysql.MustCols("name", "ip", "rack", "slot", "is_enable").Where("id = ?", req.Id).Update(&siemens.SiemensS7{
+			Name:     req.Name,
+			Ip:       req.Ip,
+			Rack:     req.Rack,
+			Slot:     req.Slot,
+			IsEnable: req.IsEnable,
+		})
 		if err != nil {
-			common.ResError(c, fmt.Sprintf("读取原文件失败: %v", err))
+			common.ResError(c, "修改设备信息失败")
 			return
 		}
-		// 写入备份文件（权限0644）
-		if err := os.WriteFile(backupFile, originalContent, 0644); err != nil {
-			common.ResError(c, fmt.Sprintf("备份原文件失败: %v", err))
-			return
-		}
-		log.Printf("原文件已备份至 %s", backupFile)
 	} else {
-		log.Printf("原文件不存在，将创建新文件 %s", targetFile)
-	}
-
-	// 4. 创建临时文件（显式设置权限为0644）
-	tmpDir := filepath.Dir(targetFile)
-	tmpFileName := filepath.Join(tmpDir, fmt.Sprintf("%s-", filepath.Base(targetFile))) // 临时文件名前缀
-	tmpFile, err := os.OpenFile(tmpFileName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)     // 关键：显式设置权限0644
-	if err != nil {
-		common.ResError(c, fmt.Sprintf("创建临时文件失败: %v", err))
-		return
-	}
-	defer func() {
-		// 清理临时文件（仅在未成功替换时清理）
+		_, err := conf.Mysql.Insert(&siemens.SiemensS7{
+			Name:     req.Name,
+			Ip:       req.Ip,
+			Rack:     req.Rack,
+			Slot:     req.Slot,
+			IsEnable: req.IsEnable,
+		})
 		if err != nil {
-			_ = os.Remove(tmpFileName)
+			common.ResError(c, "添加设备信息失败")
+			return
 		}
-	}()
-
-	// 5. 写入新内容到临时文件
-	if _, err := tmpFile.WriteString(newContent); err != nil {
-		common.ResError(c, fmt.Sprintf("写入临时文件失败: %v", err))
-		return
 	}
-
-	// 6. 强制同步临时文件到磁盘（确保数据持久化）
-	if err := tmpFile.Sync(); err != nil {
-		common.ResError(c, fmt.Sprintf("同步临时文件失败: %v", err))
-		return
-	}
-	if err := tmpFile.Close(); err != nil { // 关闭文件以便后续重命名
-		common.ResError(c, fmt.Sprintf("关闭临时文件失败: %v", err))
-		return
-	}
-
-	// 7. 原子替换原文件（继承临时文件的0644权限）
-	if err := os.Rename(tmpFileName, targetFile); err != nil {
-		common.ResError(c, fmt.Sprintf("原子替换失败: %v", err))
-		return
-	}
-	log.Printf("文件 %s 已成功替换为临时文件（权限0644）", targetFile)
-
-	err = restartNetwork("fe1")
-	if err != nil {
-		common.ResError(c, "重启服务失败")
-		return
-	}
-
-	common.ResOk(c, "文件修改并生效成功（权限0644）", nil)
+	common.ResOk(c, "ok", nil)
 }
 
-func restartNetwork(network string) error {
-	out, err := exec.Command("chown", "113", "/etc/systemd/network/44-fe5.network").Output()
-	if err != nil {
-		fmt.Println(err)
-		return err
+func AddSiemensDataSer(c *gin.Context, req siemens.AddSiemensDataReq) {
+	if req.Id != 0 {
+		_, err := conf.Mysql.MustCols("device_id", "type", "start", "db_num").Where("id = ?", req.Id).Update(&siemens.SiemensS7Data{
+			DeviceId: req.DeviceId,
+			Type:     req.Type,
+			Start:    req.Start,
+			DbNum:    req.DbNum,
+		})
+		if err != nil {
+			common.ResError(c, "修改信息失败")
+			return
+		}
+	} else {
+		_, err := conf.Mysql.Insert(&siemens.SiemensS7Data{
+			DeviceId: req.DeviceId,
+			Type:     req.Type,
+			Start:    req.Start,
+			DbNum:    req.DbNum,
+		})
+		if err != nil {
+			common.ResError(c, "添加信息失败")
+			return
+		}
 	}
-	fmt.Println(out)
-	out, err = exec.Command("chgrp", "119", "/etc/systemd/network/44-fe5.network").Output()
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println(out)
-	out, err = exec.Command("systemctl", "restart", "systemd-networkd").Output()
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println(out)
-	return nil
+	common.ResOk(c, "ok", nil)
 }

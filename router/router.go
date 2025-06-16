@@ -14,13 +14,19 @@ func InitRouter(r *gin.Engine) {
 	{
 		v1.GET("/", func(c *gin.Context) { common.ResOk(c, "Hello World!", nil) })
 
+		device := v1.Group("device")
+		{
+			device.POST("/tttt", controller.Tttt)
+		}
+
 		siemens := v1.Group("siemens")
 		{
 			s7 := siemens.Group("s7")
 			{
 				s7.GET("/list", siemens2.List)
+				s7.GET("/info", siemens2.Info)
 				s7.POST("/add", siemens2.Add)
-				s7.POST("/tttt", siemens2.Tttt)
+				s7.POST("/add_data", siemens2.AddData)
 			}
 		}
 
