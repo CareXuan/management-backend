@@ -119,6 +119,7 @@ func syncTables() {
 		new(model.UserRole),
 		new(model.Permission),
 		new(model.RolePermission),
+		new(model.Device),
 		new(modbus.Modbus),
 		new(siemens.SiemensS7),
 		new(siemens.SiemensS7Data),

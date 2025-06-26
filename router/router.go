@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"switchboard-backend/common"
 	"switchboard-backend/controller"
+	modbus2 "switchboard-backend/controller/modbus"
 	siemens2 "switchboard-backend/controller/siemens"
 	"switchboard-backend/middleware"
 )
@@ -16,7 +17,8 @@ func InitRouter(r *gin.Engine) {
 
 		device := v1.Group("device")
 		{
-			device.POST("/tttt", controller.Tttt)
+			device.GET("/list", controller.List)
+			device.POST("/change", controller.Change)
 		}
 
 		siemens := v1.Group("siemens")
@@ -28,6 +30,13 @@ func InitRouter(r *gin.Engine) {
 				s7.POST("/add", siemens2.Add)
 				s7.POST("/add_data", siemens2.AddData)
 			}
+		}
+
+		modbus := v1.Group("modbus")
+		{
+			modbus.GET("list", modbus2.List)
+			modbus.GET("info", modbus2.Info)
+			modbus.POST("add", modbus2.Add)
 		}
 
 		// 用户相关
