@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"env-backend/model"
+	"env-backend/service"
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
-	"management-backend/service"
 	"strconv"
 )
 

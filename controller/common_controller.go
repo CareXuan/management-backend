@@ -3,12 +3,15 @@ package controller
 import (
 	"crypto/sha1"
 	"encoding/xml"
+	"env-backend/common"
+	"env-backend/conf"
+	"env-backend/model"
+	"env-backend/service"
 	"fmt"
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/kernel/power"
 	"github.com/gin-gonic/gin"
 	"io"
-	"management-backend/common"
-	"management-backend/conf"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -44,21 +47,53 @@ func Upload(c *gin.Context) {
 }
 
 func WechatCheck(c *gin.Context) {
-	fmt.Println(conf.Conf.Wechat.Warning.TestWarning)
-	err := common.SendTemplateMessage(c, *conf.WechatApp, "oWUHY7STySg4-oE-ZufbgwmwyBeY", conf.Conf.Wechat.Warning.TestWarning, &power.HashMap{
-		"thing1": &power.HashMap{
+	var xuanTest model.User
+	conf.Mysql.Where("phone = ?", conf.Conf.Wechat.TestUser).Get(&xuanTest)
+	err := common.SendTemplateMessage(c, *conf.WechatApp, xuanTest.OpenId, conf.Conf.Wechat.Warning.TestWarning, &power.HashMap{
+		"thing7": &power.HashMap{
 			"value": "测试机",
 		},
-		"character_string3": &power.HashMap{
-			"value": "220V",
+		"thing13": &power.HashMap{
+			"value": "清洗提醒",
+		},
+		"thing6": &power.HashMap{
+			"value": "当前设备油污情况严重，请及时进行清洗",
+		},
+		"time9": &power.HashMap{
+			"value": "2025-06-06 15:00:00",
+		},
+		"time4": &power.HashMap{
+			"value": "2025-07-06",
 		},
 	})
 	if err != nil {
-		fmt.Println(err)
-		common.ResError(c, "err")
+		common.ResError(c, err.Error())
 		return
 	}
 	common.ResOk(c, "ok", nil)
+}
+
+func WechatCode(c *gin.Context) {
+	code := c.Query("code")
+	service.WechatCodeSer(c, code)
+}
+
+func WechatBind(c *gin.Context) {
+	var smsReq model.WechatBindReq
+	if err := c.ShouldBindJSON(&smsReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.WechatBindSer(c, smsReq)
+}
+
+func SmsOne(c *gin.Context) {
+	var smsReq model.SmsOneReq
+	if err := c.ShouldBindJSON(&smsReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	service.SmsCodeOne(c, smsReq)
 }
 
 type WechatMessage struct {

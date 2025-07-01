@@ -1,10 +1,10 @@
 package middleware
 
 import (
+	"env-backend/common"
+	"env-backend/conf"
+	"env-backend/model"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
 	"strconv"
 	"strings"
 )

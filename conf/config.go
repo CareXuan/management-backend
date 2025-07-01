@@ -1,14 +1,14 @@
 package conf
 
 import (
+	"env-backend/common"
+	"env-backend/model"
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 	"github.com/go-xorm/xorm"
 	"github.com/robfig/cron/v3"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
-	"management-backend/common"
-	"management-backend/model"
 	"strconv"
 	"time"
 	"xorm.io/core"
@@ -52,6 +52,7 @@ type WechatConfig struct {
 	Token     string        `yaml:"token"`
 	Warning   wechatWarning `yaml:"warning"`
 	Robot     string        `yaml:"robot"`
+	TestUser  string        `yaml:"test_user"`
 }
 
 type wechatWarning struct {
@@ -142,6 +143,7 @@ func syncTables() {
 		new(model.DeviceServiceData),
 		new(model.DeviceNewServiceData),
 		new(model.DeviceChangeLog),
+		new(model.Sms),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -151,7 +153,7 @@ func syncTables() {
 
 func initCronTask() {
 	c := cron.New()
-	_, err := c.AddFunc("30 09 */1 * *", dailyWarning)
+	_, err := c.AddFunc("30 07 */1 * *", dailyWarning)
 	if err != nil {
 		log.Fatal("添加定时任务失败")
 	}
@@ -190,7 +192,7 @@ func dailyWarning() {
 	if len(noDataDevice) <= 0 {
 		return
 	}
-	warningContent += todayZero.Format("2006-01-02") + "未上线设备：\n"
+	warningContent += todayZero.AddDate(0, 0, -1).Format("2006-01-02") + "未上线设备：\n"
 	for _, i := range noDataDevice {
 		warningContent += "设备ID：" + strconv.Itoa(i.DeviceId) + "；商户名称：" + i.Name + "\n"
 	}

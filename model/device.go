@@ -31,6 +31,8 @@ type Device struct {
 	HeartBeat       int    `json:"heart_beat" xorm:"INT(10) not null default 0"`
 	HeartBeatMin    int    `json:"heart_beat_min" xorm:"INT(10) not null default 0"`
 	PwdChangeDate   int    `json:"pwd_change_date" xorm:"INT(10) not null default 0"`
+	FakeVoltage     string `json:"fake_voltage" xorm:"VARCHAR(8) not null default '' comment('手写的电压值')"`
+	LimitPower      string `json:"limit_power" xorm:"VARCHAR(8) not null default '' comment('限制的功率值')"`
 	IsSupervisor    int    `json:"is_supervisor" xorm:"-"`
 	RealLocation    string `json:"real_location" xorm:"-"`
 	Ts              string `json:"ts" xorm:"timestamp not null"`
@@ -72,25 +74,28 @@ type DeviceServiceData struct {
 }
 
 type DeviceNewServiceData struct {
-	Id              int    `json:"id" xorm:"pk autoincr INT(11)"`
-	SignalIntensity int    `json:"signal_intensity" xorm:"INT(10) not null default 0"`
-	IoStatus        int    `json:"io_status" xorm:"INT(10) not null default 0"`
-	Tem1h           int    `json:"tem1h" xorm:"INT(10) not null default 0"`
-	Tem1l           int    `json:"tem1l" xorm:"INT(10) not null default 0"`
-	DeviceId        int    `json:"device_id" xorm:"INT(10) not null default 0"`
-	HighVoltageL    int    `json:"high_voltage_l" xorm:"INT(10) not null default 0"`
-	HighVoltageH    int    `json:"high_voltage_h" xorm:"INT(10) not null default 0"`
-	HighCurrentL    int    `json:"high_current_l" xorm:"INT(10) not null default 0"`
-	HighCurrentH    int    `json:"high_current_h" xorm:"INT(10) not null default 0"`
-	WarningCount    int    `json:"warning_count" xorm:"INT(10) not null default 0"`
-	VoltageH        int    `json:"voltage_h" xorm:"INT(10) not null default 0"`
-	Voltage         int    `json:"voltage" xorm:"INT(10) not null default 0"`
-	CurrentH        int    `json:"current_h" xorm:"INT(10) not null default 0"`
-	Current         int    `json:"current" xorm:"INT(10) not null default 0"`
-	PowerH          int    `json:"power_h" xorm:"INT(10) not null default 0"`
-	Power           int    `json:"power" xorm:"INT(10) not null default 0"`
-	DataTime        string `json:"data_time" xorm:"VARCHAR(12) not null default ''"`
-	Ts              string `json:"ts" xorm:"timestamp not null"`
+	Id              int     `json:"id" xorm:"pk autoincr INT(11)"`
+	SignalIntensity int     `json:"signal_intensity" xorm:"INT(10) not null default 0"`
+	IoStatus        int     `json:"io_status" xorm:"INT(10) not null default 0"`
+	Tem1h           int     `json:"tem1h" xorm:"INT(10) not null default 0"`
+	Tem1l           int     `json:"tem1l" xorm:"INT(10) not null default 0"`
+	DeviceId        int     `json:"device_id" xorm:"INT(10) not null default 0"`
+	HighVoltageL    int     `json:"high_voltage_l" xorm:"INT(10) not null default 0"`
+	HighVoltageH    int     `json:"high_voltage_h" xorm:"INT(10) not null default 0"`
+	HighCurrentL    int     `json:"high_current_l" xorm:"INT(10) not null default 0"`
+	HighCurrentH    int     `json:"high_current_h" xorm:"INT(10) not null default 0"`
+	WarningCount    int     `json:"warning_count" xorm:"INT(10) not null default 0"`
+	VoltageH        int     `json:"voltage_h" xorm:"INT(10) not null default 0"`
+	Voltage         int     `json:"voltage" xorm:"INT(10) not null default 0"`
+	CurrentH        int     `json:"current_h" xorm:"INT(10) not null default 0"`
+	Current         int     `json:"current" xorm:"INT(10) not null default 0"`
+	PowerH          int     `json:"power_h" xorm:"INT(10) not null default 0"`
+	Power           int     `json:"power" xorm:"INT(10) not null default 0"`
+	DataTime        string  `json:"data_time" xorm:"VARCHAR(12) not null default ''"`
+	Fake            int     `json:"fake" xorm:"-"`
+	FakeVoltage     float64 `json:"fake_voltage" xorm:"-"`
+	FakeCurrent     float64 `json:"fake_current" xorm:"-"`
+	Ts              string  `json:"ts" xorm:"timestamp not null"`
 }
 
 type DeviceChangeLog struct {
@@ -105,16 +110,18 @@ type DeviceChangeLog struct {
 }
 
 type DeviceAddReq struct {
-	Id       int    `json:"id"`
-	DeviceId int    `json:"device_id"`
-	Name     string `json:"name"`
-	Province string `json:"province"`
-	City     string `json:"city"`
-	Zone     string `json:"zone"`
-	Address  string `json:"address"`
-	Manager  string `json:"manager"`
-	Phone    string `json:"phone"`
-	Remark   string `json:"remark"`
+	Id          int    `json:"id"`
+	DeviceId    int    `json:"device_id"`
+	Name        string `json:"name"`
+	Province    string `json:"province"`
+	City        string `json:"city"`
+	Zone        string `json:"zone"`
+	Address     string `json:"address"`
+	Manager     string `json:"manager"`
+	Phone       string `json:"phone"`
+	Remark      string `json:"remark"`
+	FakeVoltage string `json:"fake_voltage"`
+	LimitPower  string `json:"limit_power"`
 }
 
 type UpdateSpecialInfoReq struct {

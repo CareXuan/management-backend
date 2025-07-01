@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"env-backend/model"
+	"env-backend/service"
 	"github.com/gin-gonic/gin"
 	"log"
-	"management-backend/model"
-	"management-backend/service"
 	"strconv"
 )
 
@@ -49,6 +49,13 @@ func ReadSpecialInfo(c *gin.Context) {
 func GetSpecialInfoLog(c *gin.Context) {
 	deviceId := c.Query("device_id")
 	service.GetSpecialInfoLogSer(c, deviceId)
+}
+
+func GetDeviceManager(c *gin.Context) {
+	province := c.Query("province")
+	city := c.Query("city")
+	zone := c.Query("zone")
+	service.GetDeviceManagerSer(c, province, city, zone)
 }
 
 func GetOneDeviceInfo(c *gin.Context) {

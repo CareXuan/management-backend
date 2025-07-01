@@ -1,10 +1,10 @@
 package router
 
 import (
+	"env-backend/common"
+	"env-backend/controller"
+	"env-backend/middleware"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/controller"
-	"management-backend/middleware"
 )
 
 func InitRouter(r *gin.Engine) {
@@ -44,8 +44,15 @@ func InitRouter(r *gin.Engine) {
 		commonCtr := v1.Group("common")
 		{
 			commonCtr.POST("/upload", controller.Upload)
-			commonCtr.GET("/wechat_check", controller.WechatCheck)
+			commonCtr.POST("/wechat_check", controller.WechatCheck)
+			commonCtr.GET("/wechat_code", controller.WechatCode)
+			commonCtr.POST("/wechat/bind", controller.WechatBind)
 			commonCtr.Any("/wechat/callback", controller.WechatHandler)
+		}
+
+		sms := v1.Group("sms")
+		{
+			sms.POST("/one", controller.SmsOne)
 		}
 
 		// 设备
@@ -62,6 +69,7 @@ func InitRouter(r *gin.Engine) {
 			device.GET("/get_all_warning", controller.GetAllWarning)
 			device.GET("/get_single_warning", controller.GetSingleWarning)
 			device.GET("/special_info/log", controller.GetSpecialInfoLog)
+			device.GET("/info/manager", controller.GetDeviceManager)
 			device.POST("/add", controller.AddOneDevice)
 			device.POST("/special_info", controller.UpdateSpecialInfo)
 			device.POST("/special_info/read", controller.ReadSpecialInfo)

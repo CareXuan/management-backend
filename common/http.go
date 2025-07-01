@@ -14,7 +14,7 @@ type HttpResponse struct {
 	Body interface{} `json:"body"`
 }
 
-func DoGet(reqUrl string, params map[string]string) (*HttpResponse, error) {
+func DoGet(reqUrl string, params map[string]string) ([]byte, error) {
 	reqParams := url.Values{}
 	Url, err := url.Parse(reqUrl)
 	if err != nil {
@@ -35,12 +35,7 @@ func DoGet(reqUrl string, params map[string]string) (*HttpResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result HttpResponse
-	err = json.Unmarshal(body, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return body, nil
 }
 
 func DoPost(reqUrl string, data map[string]interface{}) (string, error) {

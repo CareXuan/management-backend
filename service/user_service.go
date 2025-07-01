@@ -1,12 +1,12 @@
 package service
 
 import (
+	"env-backend/common"
+	"env-backend/conf"
+	"env-backend/model"
+	"env-backend/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
-	"management-backend/utils"
 	"time"
 )
 

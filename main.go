@@ -1,9 +1,9 @@
 package main
 
 import (
+	"env-backend/conf"
+	"env-backend/router"
 	"github.com/gin-gonic/gin"
-	"management-backend/conf"
-	"management-backend/router"
 	"net/http"
 )
 

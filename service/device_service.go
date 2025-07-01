@@ -2,12 +2,13 @@ package service
 
 import (
 	"encoding/json"
+	"env-backend/common"
+	"env-backend/conf"
+	"env-backend/model"
+	"env-backend/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"management-backend/common"
-	"management-backend/conf"
-	"management-backend/model"
-	"management-backend/utils"
+	"math"
 	"strconv"
 	"time"
 )
@@ -102,17 +103,19 @@ func DeviceListSer(c *gin.Context, deviceId, name, phone string, page, pageSize 
 
 func AddDeviceSer(c *gin.Context, req model.DeviceAddReq) {
 	if req.Id != 0 {
-		_, err := conf.Mysql.Where("id = ?", req.Id).Update(model.Device{
-			DeviceId: req.DeviceId,
-			Name:     req.Name,
-			Province: req.Province,
-			City:     req.City,
-			Zone:     req.Zone,
-			Address:  req.Address,
-			Manager:  req.Manager,
-			Phone:    req.Phone,
-			Remark:   req.Remark,
-			UpdateTs: time.Now().Format("2006-01-02 15:04:05"),
+		_, err := conf.Mysql.MustCols("fake_voltage").Where("id = ?", req.Id).Update(model.Device{
+			DeviceId:    req.DeviceId,
+			Name:        req.Name,
+			Province:    req.Province,
+			City:        req.City,
+			Zone:        req.Zone,
+			Address:     req.Address,
+			Manager:     req.Manager,
+			Phone:       req.Phone,
+			Remark:      req.Remark,
+			FakeVoltage: req.FakeVoltage,
+			LimitPower:  req.LimitPower,
+			UpdateTs:    time.Now().Format("2006-01-02 15:04:05"),
 		})
 		if err != nil {
 			common.ResError(c, "写入设备信息失败")
@@ -130,17 +133,19 @@ func AddDeviceSer(c *gin.Context, req model.DeviceAddReq) {
 			return
 		}
 		_, err = conf.Mysql.Insert(model.Device{
-			DeviceId: req.DeviceId,
-			Name:     req.Name,
-			Province: req.Province,
-			City:     req.City,
-			Zone:     req.Zone,
-			Address:  req.Address,
-			Manager:  req.Manager,
-			Phone:    req.Phone,
-			Remark:   req.Remark,
-			Ts:       time.Now().Format("2006-01-02 15:04:05"),
-			UpdateTs: time.Now().Format("2006-01-02 15:04:05"),
+			DeviceId:    req.DeviceId,
+			Name:        req.Name,
+			Province:    req.Province,
+			City:        req.City,
+			Zone:        req.Zone,
+			Address:     req.Address,
+			Manager:     req.Manager,
+			Phone:       req.Phone,
+			Remark:      req.Remark,
+			FakeVoltage: req.FakeVoltage,
+			LimitPower:  req.LimitPower,
+			Ts:          time.Now().Format("2006-01-02 15:04:05"),
+			UpdateTs:    time.Now().Format("2006-01-02 15:04:05"),
 		})
 		if err != nil {
 			common.ResError(c, "写入设备信息失败")
@@ -160,7 +165,7 @@ func AddDeviceSer(c *gin.Context, req model.DeviceAddReq) {
 			return
 		}
 		var newUser = model.User{
-			Name:     req.Manager,
+			Name:     req.Name,
 			Password: "123456",
 			Phone:    req.Phone,
 			Token:    newToken,
@@ -272,6 +277,56 @@ func GetSpecialInfoLogSer(c *gin.Context, deviceId string) {
 	common.ResOk(c, "ok", specialInfoLog)
 }
 
+func GetDeviceManagerSer(c *gin.Context, province, city, zone string) {
+	var organizationItems []*model.Organization
+	err := conf.Mysql.Where("province = ?", province).Where("city = ?", city).Where("zone = ?", zone).Find(&organizationItems)
+	if err != nil {
+		common.ResError(c, "获取组织信息失败")
+		return
+	}
+	var organizationIds []int
+	for _, i := range organizationItems {
+		organizationIds = append(organizationIds, i.Id)
+	}
+	var orgUsers []*model.OrganizationUser
+	err = conf.Mysql.In("organization_id", organizationIds).Find(&orgUsers)
+	if err != nil {
+		common.ResError(c, "获取组织关联用户失败")
+		return
+	}
+	var userIds []int
+	for _, i := range orgUsers {
+		userIds = append(userIds, i.UserId)
+	}
+	var roleItems []*model.Role
+	err = conf.Mysql.In("name", []string{"运营管理员", "环保局管理员", "运营操作员"}).Where("deleted_at = 0").Find(&roleItems)
+	if err != nil {
+		common.ResError(c, "搜索角色信息失败")
+		return
+	}
+	var roleIds []int
+	for _, i := range roleItems {
+		roleIds = append(roleIds, i.Id)
+	}
+	var userIdItems []*model.UserRole
+	err = conf.Mysql.In("role_id", roleIds).In("user_id", userIds).Find(&userIdItems)
+	if err != nil {
+		common.ResError(c, "获取权限内用户失败")
+		return
+	}
+	var activeUserIds []int
+	for _, i := range userIdItems {
+		activeUserIds = append(activeUserIds, i.UserId)
+	}
+	var userItems []*model.User
+	err = conf.Mysql.In("id", activeUserIds).Find(&userItems)
+	if err != nil {
+		common.ResError(c, "获取用户失败")
+		return
+	}
+	common.ResOk(c, "ok", userItems)
+}
+
 func DeviceInfoSer(c *gin.Context, deviceId int) {
 	var deviceItem model.Device
 	_, err := conf.Mysql.Where("device_id = ?", deviceId).Get(&deviceItem)
@@ -309,16 +364,35 @@ func DeviceServiceDataSer(c *gin.Context, deviceId, page, pageSize int) {
 }
 
 func DeviceNewServiceDataSer(c *gin.Context, deviceId, page, pageSize int) {
+	var deviceItem model.Device
+	_, err := conf.Mysql.Where("device_id = ?", deviceId).Get(&deviceItem)
+	if err != nil {
+		common.ResError(c, "获取设备信息失败")
+		return
+	}
 	var serviceDatas []*model.DeviceNewServiceData
 	sess := conf.Mysql.NewSession()
 	sess.Where("device_id=?", deviceId)
-	sess.Where("current_h != 255")
-	sess.Where("voltage_h != 255")
 	count, err := sess.OrderBy("id DESC").Limit(pageSize, (page-1)*pageSize).FindAndCount(&serviceDatas)
 	if err != nil {
 		common.ResError(c, "获取通用数据失败")
 		return
 	}
+	if deviceItem.FakeVoltage != "" {
+		for _, i := range serviceDatas {
+			i.Fake = 1
+			power := (float64(i.PowerH<<8) + (float64(i.Power))) * 0.01
+			limitPower, _ := strconv.ParseFloat(deviceItem.LimitPower, 64)
+			if power < limitPower {
+				i.FakeVoltage = 0
+				i.FakeCurrent = 0
+			} else {
+				i.FakeVoltage, _ = strconv.ParseFloat(deviceItem.FakeVoltage, 64)
+				i.FakeCurrent = power / i.FakeVoltage
+			}
+		}
+	}
+
 	common.ResOk(c, "ok", utils.CommonListRes{Count: count, Data: serviceDatas})
 }
 
@@ -369,10 +443,30 @@ func DeviceStatisticSer(c *gin.Context, deviceId int, startTime, endTime string)
 		common.ResError(c, "获取数据失败")
 		return
 	}
+	var deviceItem model.Device
+	_, err = conf.Mysql.Where("device_id = ?", deviceId).Get(&deviceItem)
+	if err != nil {
+		common.ResError(c, "获取设备信息失败")
+		return
+	}
 	for _, i := range serviceData {
 		statisticRes.Columns = append(statisticRes.Columns, i.Ts)
-		highVoltage = append(highVoltage, fmt.Sprintf("%.2f", float64((i.HighVoltageH<<8+i.HighVoltageL)*15)/4095.0))
-		highCurrent = append(highCurrent, fmt.Sprintf("%.2f", float64((i.HighCurrentH<<8+i.HighCurrentL)*20)/4095.0))
+		if deviceItem.FakeVoltage != "" {
+			i.Fake = 1
+			power := (float64(i.PowerH<<8) + float64(i.Power)) * 0.01
+			if power < 10.0 {
+				highVoltage = append(highVoltage, 0)
+				highCurrent = append(highCurrent, 0)
+			} else {
+				i.FakeVoltage, _ = strconv.ParseFloat(deviceItem.FakeVoltage, 64)
+				i.FakeCurrent = math.Round((power/i.FakeVoltage)*100) / 100
+				highVoltage = append(highVoltage, i.FakeVoltage)
+				highCurrent = append(highCurrent, i.FakeCurrent)
+			}
+		} else {
+			highVoltage = append(highVoltage, fmt.Sprintf("%.2f", float64((i.HighVoltageH<<8+i.HighVoltageL)*15)/4095.0))
+			highCurrent = append(highCurrent, fmt.Sprintf("%.2f", float64((i.HighCurrentH<<8+i.HighCurrentL)*20)/4095.0))
+		}
 		warningCnt = append(warningCnt, i.WarningCount)
 		power = append(power, fmt.Sprintf("%.2f", float64((i.PowerH<<8)+i.Power)/100.0))
 		status1Item := 0
@@ -395,7 +489,7 @@ func DeviceStatisticSer(c *gin.Context, deviceId int, startTime, endTime string)
 			tem = -((^tem & 0xffff) + 1)
 			realTem = float64(tem) * 0.0625
 		}
-		if realTem >= -55 {
+		if realTem >= 0 && realTem <= 120 {
 			temperature = append(temperature, realTem)
 		}
 		signalIntensity = append(signalIntensity, i.SignalIntensity)
