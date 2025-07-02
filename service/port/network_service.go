@@ -1,4 +1,4 @@
-package service
+package port
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"switchboard-backend/common"
 	"switchboard-backend/conf"
-	"switchboard-backend/model"
+	"switchboard-backend/model/port"
 )
 
 var NetworkFileMapping = map[string]string{
@@ -26,28 +26,66 @@ var NetworkFileMapping = map[string]string{
 }
 
 func ListSer(c *gin.Context) {
-	var devices []*model.Device
-	err := conf.Mysql.Where("deleted_at = 0").Find(&devices)
+	var networks []*port.Network
+	err := conf.Mysql.Where("deleted_at = 0").Find(&networks)
 	if err != nil {
 		common.ResError(c, "获取网口配置失败")
 		return
 	}
-	common.ResOk(c, "ok", devices)
+	var bridgeIds []int
+	for _, i := range networks {
+		bridgeIds = append(bridgeIds, i.BridgeId)
+	}
+	var bridgeMapping = make(map[int]*port.Bridge)
+	var bridgeItems []*port.Bridge
+	err = conf.Mysql.In("id", bridgeIds).Find(&bridgeItems)
+	if err != nil {
+		common.ResError(c, "获取网桥信息失败")
+		return
+	}
+	for _, i := range bridgeItems {
+		bridgeMapping[i.Id] = i
+	}
+	for _, i := range networks {
+		i.Bridge = bridgeMapping[i.BridgeId]
+	}
+	common.ResOk(c, "ok", networks)
 }
 
-func ChangeSer(c *gin.Context, req model.ChangeDeviceReq) {
-	_, err := conf.Mysql.Where("port = ?", req.Port).Update(&model.Device{
-		Network: req.Network,
+func InfoSer(c *gin.Context, id int) {
+	var networkItem port.Network
+	_, err := conf.Mysql.Where("id = ?", id).Get(&networkItem)
+	if err != nil {
+		common.ResError(c, "获取网口配置失败")
+		return
+	}
+	if networkItem.BridgeId != 0 {
+		var bridge port.Bridge
+		_, err := conf.Mysql.Where("id = ?", networkItem.BridgeId).Get(&bridge)
+		if err != nil {
+			common.ResError(c, "获取网桥失败")
+			return
+		}
+		networkItem.Bridge = &bridge
+	}
+	common.ResOk(c, "ok", networkItem)
+}
+
+func ChangeSer(c *gin.Context, req port.ChangeNetworkReq) {
+	_, err := conf.Mysql.Where("port = ?", req.Port).Update(&port.Network{
+		NetworkType: req.NetworkType,
+		Network:     req.Network,
+		BridgeId:    req.BridgeId,
 	})
 	if err != nil {
 		common.ResError(c, "修改端口信息失败")
 		return
 	}
-	err = changeNetworkFile(req.Port, req.Network)
-	if err != nil {
-		common.ResError(c, err.Error())
-		return
-	}
+	//err = changeNetworkFile(req.Port, req.Network)
+	//if err != nil {
+	//	common.ResError(c, err.Error())
+	//	return
+	//}
 	common.ResOk(c, "ok", nil)
 }
 
@@ -115,10 +153,10 @@ func changeNetworkFile(port, network string) error {
 	}
 	log.Printf("文件 %s 已成功替换为临时文件（权限0644）", targetFile)
 
-	err = restartNetwork(port)
-	if err != nil {
-		return fmt.Errorf("重启服务失败")
-	}
+	//err = restartNetwork(port)
+	//if err != nil {
+	//	return fmt.Errorf("重启服务失败")
+	//}
 
 	return nil
 }

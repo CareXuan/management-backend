@@ -5,6 +5,7 @@ import (
 	"switchboard-backend/common"
 	"switchboard-backend/controller"
 	modbus2 "switchboard-backend/controller/modbus"
+	port2 "switchboard-backend/controller/port"
 	siemens2 "switchboard-backend/controller/siemens"
 	"switchboard-backend/middleware"
 )
@@ -15,10 +16,14 @@ func InitRouter(r *gin.Engine) {
 	{
 		v1.GET("/", func(c *gin.Context) { common.ResOk(c, "Hello World!", nil) })
 
-		device := v1.Group("device")
+		port := v1.Group("port")
 		{
-			device.GET("/list", controller.List)
-			device.POST("/change", controller.Change)
+			port.GET("/network/list", port2.List)
+			port.GET("/network/info", port2.Info)
+			port.GET("/bridge/list", port2.BridgeList)
+			port.GET("/bridge/info", port2.BridgeInfo)
+			port.POST("/network/change", port2.Change)
+			port.POST("/bridge/add", port2.BridgeAdd)
 		}
 
 		siemens := v1.Group("siemens")
