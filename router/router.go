@@ -4,7 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"switchboard-backend/common"
 	"switchboard-backend/controller"
+	firewall2 "switchboard-backend/controller/firewall"
 	modbus2 "switchboard-backend/controller/modbus"
+	opcua2 "switchboard-backend/controller/opcua"
 	port2 "switchboard-backend/controller/port"
 	siemens2 "switchboard-backend/controller/siemens"
 	"switchboard-backend/middleware"
@@ -42,6 +44,21 @@ func InitRouter(r *gin.Engine) {
 			modbus.GET("list", modbus2.List)
 			modbus.GET("info", modbus2.Info)
 			modbus.POST("add", modbus2.Add)
+		}
+
+		opcua := v1.Group("opcua")
+		{
+			opcua.GET("/list", opcua2.List)
+			opcua.GET("/info", opcua2.Info)
+			opcua.POST("/add", opcua2.Add)
+			//opcua.POST("/add_data", opcua2.AddData)
+		}
+
+		firewall := v1.Group("firewall")
+		{
+			firewall.GET("/list", firewall2.List)
+			firewall.POST("/add", firewall2.Add)
+			firewall.POST("/delete", firewall2.Delete)
 		}
 
 		// 用户相关

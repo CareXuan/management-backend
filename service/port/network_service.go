@@ -81,16 +81,32 @@ func ChangeSer(c *gin.Context, req port.ChangeNetworkReq) {
 		common.ResError(c, "修改端口信息失败")
 		return
 	}
-	//err = changeNetworkFile(req.Port, req.Network)
-	//if err != nil {
-	//	common.ResError(c, err.Error())
-	//	return
-	//}
+	network := req.Network
+	if req.NetworkType == 2 {
+		var bridgeItem port.Bridge
+		_, err := conf.Mysql.Where("id = ?", req.BridgeId).Get(&bridgeItem)
+		if err != nil {
+			common.ResError(c, "获取网桥信息失败")
+			return
+		}
+		network = bridgeItem.EnglishName
+	}
+	err = changeNetworkFile(req.Port, network, req.NetworkType)
+	if err != nil {
+		common.ResError(c, err.Error())
+		return
+	}
 	common.ResOk(c, "ok", nil)
 }
 
-func changeNetworkFile(port, network string) error {
-	newContent := "[Match]\nName=" + port + "\n\n[Network]\nAddress=" + network + "\n" // 实际应从请求中获取或校验
+func changeNetworkFile(port, network string, networkType int) error {
+	var newContent string
+	if networkType == 1 {
+		newContent = "[Match]\nName=" + port + "\n\n[Network]\nAddress=" + network + "\n"
+	} else {
+		newContent = "[Match]\nName=" + port + "\n\n[Network]\nBridge=" + network + "\n"
+	}
+	// 实际应从请求中获取或校验
 	targetFile := NetworkFileMapping[port]
 	backupFile := targetFile + ".bak"
 
@@ -153,10 +169,10 @@ func changeNetworkFile(port, network string) error {
 	}
 	log.Printf("文件 %s 已成功替换为临时文件（权限0644）", targetFile)
 
-	//err = restartNetwork(port)
-	//if err != nil {
-	//	return fmt.Errorf("重启服务失败")
-	//}
+	err = restartNetwork(port)
+	if err != nil {
+		return fmt.Errorf("重启服务失败")
+	}
 
 	return nil
 }
@@ -174,11 +190,11 @@ func restartNetwork(network string) error {
 		return err
 	}
 	fmt.Println(out)
-	out, err = exec.Command("systemctl", "restart", "systemd-networkd").Output()
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println(out)
+	//out, err = exec.Command("systemctl", "restart", "systemd-networkd").Output()
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return err
+	//}
+	//fmt.Println(out)
 	return nil
 }

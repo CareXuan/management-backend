@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"log"
 	"switchboard-backend/model"
+	"switchboard-backend/model/firewall"
 	"switchboard-backend/model/modbus"
+	"switchboard-backend/model/opcua"
 	"switchboard-backend/model/port"
 	"switchboard-backend/model/siemens"
 	"time"
@@ -125,6 +127,9 @@ func syncTables() {
 		new(modbus.Modbus),
 		new(siemens.SiemensS7),
 		new(siemens.SiemensS7Data),
+		new(opcua.Opcua),
+		new(opcua.OpcuaData),
+		new(firewall.Firewall),
 	)
 	if err != nil {
 		log.Fatal(err)
