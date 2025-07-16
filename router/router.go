@@ -10,6 +10,7 @@ import (
 	port2 "switchboard-backend/controller/port"
 	siemens2 "switchboard-backend/controller/siemens"
 	"switchboard-backend/middleware"
+	monitor2 "switchboard-backend/service/monitor"
 )
 
 func InitRouter(r *gin.Engine) {
@@ -51,7 +52,7 @@ func InitRouter(r *gin.Engine) {
 			opcua.GET("/list", opcua2.List)
 			opcua.GET("/info", opcua2.Info)
 			opcua.POST("/add", opcua2.Add)
-			//opcua.POST("/add_data", opcua2.AddData)
+			opcua.POST("/add_data", opcua2.AddData)
 		}
 
 		firewall := v1.Group("firewall")
@@ -59,6 +60,11 @@ func InitRouter(r *gin.Engine) {
 			firewall.GET("/list", firewall2.List)
 			firewall.POST("/add", firewall2.Add)
 			firewall.POST("/delete", firewall2.Delete)
+		}
+
+		monitor := v1.Group("monitor")
+		{
+			monitor.GET("collect", monitor2.Collect)
 		}
 
 		// 用户相关

@@ -58,3 +58,28 @@ func AddSer(c *gin.Context, req opcua.AddOpcuaReq) {
 	}
 	common.ResOk(c, "ok", nil)
 }
+
+func AddDataSer(c *gin.Context, req opcua.AddOpcuaDataReq) {
+	if req.Id != 0 {
+		_, err := conf.Mysql.MustCols("namespace_index", "index").Where("id = ?", req.Id).Update(opcua.OpcuaData{
+			DeviceId:       req.DeviceId,
+			NamespaceIndex: req.NamespaceIndex,
+			Index:          req.Index,
+		})
+		if err != nil {
+			common.ResError(c, "修改失败")
+			return
+		}
+	} else {
+		_, err := conf.Mysql.Insert(opcua.OpcuaData{
+			DeviceId:       req.DeviceId,
+			NamespaceIndex: req.NamespaceIndex,
+			Index:          req.Index,
+		})
+		if err != nil {
+			common.ResError(c, "添加失败")
+			return
+		}
+	}
+	common.ResOk(c, "ok", nil)
+}

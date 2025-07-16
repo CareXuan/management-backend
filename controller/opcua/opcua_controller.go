@@ -35,3 +35,12 @@ func Add(c *gin.Context) {
 	}
 	opcua.AddSer(c, addReq)
 }
+
+func AddData(c *gin.Context) {
+	var addReq opcua2.AddOpcuaDataReq
+	if err := c.ShouldBindJSON(&addReq); err != nil {
+		log.Fatal(err)
+		return
+	}
+	opcua.AddDataSer(c, addReq)
+}

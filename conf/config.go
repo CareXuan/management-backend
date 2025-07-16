@@ -3,6 +3,8 @@ package conf
 import (
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 	"github.com/go-xorm/xorm"
+	"github.com/robfig/cron/v3"
+	"github.com/shirou/gopsutil/v3/net"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
@@ -93,6 +95,7 @@ func connectMysql() {
 
 	// 同步表
 	syncTables()
+	initCronTask()
 }
 
 func initWechatApp() {
@@ -130,9 +133,48 @@ func syncTables() {
 		new(opcua.Opcua),
 		new(opcua.OpcuaData),
 		new(firewall.Firewall),
+		new(model.Traffic),
 	)
 	if err != nil {
 		log.Fatal(err)
 		return
+	}
+}
+
+func initCronTask() {
+	c := cron.New()
+	_, err := c.AddFunc("*/1 * * * *", traffic)
+	if err != nil {
+		log.Fatal("添加定时任务失败")
+	}
+	c.Start()
+}
+
+func traffic() {
+
+	ioCounters, err := net.IOCounters(true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var insertData []*model.Traffic
+	for _, iface := range ioCounters {
+		insertData = append(insertData, &model.Traffic{
+			Name:        iface.Name,
+			BytesSent:   iface.BytesSent,
+			BytesRecv:   iface.BytesRecv,
+			PacketsSent: iface.PacketsSent,
+			PacketsRecv: iface.PacketsRecv,
+			Errin:       iface.Errin,
+			Errout:      iface.Errout,
+			Dropin:      iface.Dropin,
+			Dropout:     iface.Dropout,
+			Fifoin:      iface.Fifoin,
+			Fifoout:     iface.Fifoout,
+		})
+	}
+	_, err = Mysql.Insert(&insertData)
+	if err != nil {
+		log.Fatal(err)
 	}
 }

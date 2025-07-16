@@ -14,8 +14,8 @@ type Opcua struct {
 type OpcuaData struct {
 	Id             int `json:"id" xorm:"pk autoincr INT(11)"`
 	DeviceId       int `json:"device_id" xorm:"INT(10) not null default 0 comment('设备ID')"`
-	ParentId       int `json:"parent_id" xorm:"INT(10) not null default 0 comment('父级节点ID')"`
-	Position       int `json:"position" xorm:"INT(10) not null default 0 comment('位数')"`
+	NamespaceIndex int `json:"namespace_index" xorm:"INT(10) not null default 0 comment('namespace_index')"`
+	Index          int `json:"index" xorm:"INT(10) not null default 0 comment('index')"`
 	model.TimeBase `xorm:"extends"`
 }
 
@@ -25,4 +25,11 @@ type AddOpcuaReq struct {
 	Ip       string `json:"ip"`
 	Port     string `json:"port"`
 	IsEnable int    `json:"is_enable"`
+}
+
+type AddOpcuaDataReq struct {
+	Id             int `json:"id"`
+	DeviceId       int `json:"device_id"`
+	NamespaceIndex int `json:"namespace_index"`
+	Index          int `json:"index"`
 }
