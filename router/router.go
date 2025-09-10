@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"switchboard-backend/common"
 	"switchboard-backend/controller"
+	"switchboard-backend/controller/data_sync"
+	dlt6452 "switchboard-backend/controller/dlt645"
 	firewall2 "switchboard-backend/controller/firewall"
 	modbus2 "switchboard-backend/controller/modbus"
 	opcua2 "switchboard-backend/controller/opcua"
@@ -55,6 +57,13 @@ func InitRouter(r *gin.Engine) {
 			opcua.POST("/add_data", opcua2.AddData)
 		}
 
+		dlt645 := v1.Group("dlt645")
+		{
+			dlt645.GET("list", dlt6452.List)
+			dlt645.GET("info", dlt6452.Info)
+			dlt645.POST("add", dlt6452.Add)
+		}
+
 		firewall := v1.Group("firewall")
 		{
 			firewall.GET("/list", firewall2.List)
@@ -65,6 +74,18 @@ func InitRouter(r *gin.Engine) {
 		monitor := v1.Group("monitor")
 		{
 			monitor.GET("collect", monitor2.Collect)
+		}
+
+		dataSync := v1.Group("data_sync")
+		{
+			dataSync.GET("/info", data_sync.ConfigInfo)
+			dataSync.POST("/add", data_sync.ConfigUpdate)
+		}
+
+		mqtt := v1.Group("/mqtt")
+		{
+			mqtt.GET("/list")
+			mqtt.POST("/add")
 		}
 
 		// 用户相关

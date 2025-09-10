@@ -64,10 +64,12 @@ func AddSer(c *gin.Context, req siemens.AddSiemensS7Req) {
 func AddSiemensDataSer(c *gin.Context, req siemens.AddSiemensDataReq) {
 	if req.Id != 0 {
 		_, err := conf.Mysql.MustCols("device_id", "type", "start", "db_num").Where("id = ?", req.Id).Update(&siemens.SiemensS7Data{
-			DeviceId: req.DeviceId,
-			Type:     req.Type,
-			Start:    req.Start,
-			DbNum:    req.DbNum,
+			DeviceId:  req.DeviceId,
+			PointId:   req.PointId,
+			PointName: req.PointName,
+			Type:      req.Type,
+			Start:     req.Start,
+			DbNum:     req.DbNum,
 		})
 		if err != nil {
 			common.ResError(c, "修改信息失败")
@@ -75,10 +77,12 @@ func AddSiemensDataSer(c *gin.Context, req siemens.AddSiemensDataReq) {
 		}
 	} else {
 		_, err := conf.Mysql.Insert(&siemens.SiemensS7Data{
-			DeviceId: req.DeviceId,
-			Type:     req.Type,
-			Start:    req.Start,
-			DbNum:    req.DbNum,
+			DeviceId:  req.DeviceId,
+			PointId:   req.PointId,
+			PointName: req.PointName,
+			Type:      req.Type,
+			Start:     req.Start,
+			DbNum:     req.DbNum,
 		})
 		if err != nil {
 			common.ResError(c, "添加信息失败")

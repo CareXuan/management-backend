@@ -60,12 +60,9 @@ func BridgeAddSer(c *gin.Context, req port.AddBridgeReq) {
 			return
 		}
 	}
-	count, err := conf.Mysql.Where("deleted_at = 0").FindAndCount(&[]*port.Bridge{})
-	if err != nil {
-		common.ResError(c, "获取网桥数量失败")
-		return
-	}
-	err = changeBridgeFile(req.EnglishName, req.Ip, fmt.Sprintf("6%03d", count))
+	var bridgeItem port.Bridge
+	_, err := conf.Mysql.Where("name = ?", req.Name).Get(&bridgeItem)
+	err = changeBridgeFile(req.EnglishName, req.Ip, fmt.Sprintf("4%03d", bridgeItem.Id))
 	if err != nil {
 		common.ResError(c, "创建网桥文件失败")
 		return

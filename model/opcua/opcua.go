@@ -12,10 +12,12 @@ type Opcua struct {
 }
 
 type OpcuaData struct {
-	Id             int `json:"id" xorm:"pk autoincr INT(11)"`
-	DeviceId       int `json:"device_id" xorm:"INT(10) not null default 0 comment('设备ID')"`
-	NamespaceIndex int `json:"namespace_index" xorm:"INT(10) not null default 0 comment('namespace_index')"`
-	Index          int `json:"index" xorm:"INT(10) not null default 0 comment('index')"`
+	Id             int    `json:"id" xorm:"pk autoincr INT(11)"`
+	DeviceId       int    `json:"device_id" xorm:"INT(10) not null default 0 comment('设备ID')"`
+	PointId        string `json:"point_id" xorm:"VARCHAR(24) not null default '' comment('点位ID')"`
+	PointName      string `json:"point_name" xorm:"VARCHAR(24) not null default '' comment('点位名称')"`
+	NamespaceIndex int    `json:"namespace_index" xorm:"INT(10) not null default 0 comment('namespace_index')"`
+	Index          int    `json:"index" xorm:"INT(10) not null default 0 comment('index')"`
 	model.TimeBase `xorm:"extends"`
 }
 
@@ -28,8 +30,10 @@ type AddOpcuaReq struct {
 }
 
 type AddOpcuaDataReq struct {
-	Id             int `json:"id"`
-	DeviceId       int `json:"device_id"`
-	NamespaceIndex int `json:"namespace_index"`
-	Index          int `json:"index"`
+	Id             int    `json:"id"`
+	DeviceId       int    `json:"device_id"`
+	PointId        string `json:"point_id"`
+	PointName      string `json:"point_name"`
+	NamespaceIndex int    `json:"namespace_index"`
+	Index          int    `json:"index"`
 }

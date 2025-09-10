@@ -63,6 +63,8 @@ func AddDataSer(c *gin.Context, req opcua.AddOpcuaDataReq) {
 	if req.Id != 0 {
 		_, err := conf.Mysql.MustCols("namespace_index", "index").Where("id = ?", req.Id).Update(opcua.OpcuaData{
 			DeviceId:       req.DeviceId,
+			PointId:        req.PointId,
+			PointName:      req.PointName,
 			NamespaceIndex: req.NamespaceIndex,
 			Index:          req.Index,
 		})
@@ -73,6 +75,8 @@ func AddDataSer(c *gin.Context, req opcua.AddOpcuaDataReq) {
 	} else {
 		_, err := conf.Mysql.Insert(opcua.OpcuaData{
 			DeviceId:       req.DeviceId,
+			PointId:        req.PointId,
+			PointName:      req.PointName,
 			NamespaceIndex: req.NamespaceIndex,
 			Index:          req.Index,
 		})
