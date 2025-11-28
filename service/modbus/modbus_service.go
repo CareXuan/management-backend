@@ -34,14 +34,26 @@ func InfoSer(c *gin.Context, id int) {
 
 func AddSer(c *gin.Context, req modbus.AddModbusReq) {
 	if req.Id != 0 {
-		_, err := conf.Mysql.Where("id = ?", req.Id).Update(&modbus.Modbus{
+		_, err := conf.Mysql.MustCols("start_address,range_min,range_max,position,proportion").Where("id = ?", req.Id).Update(&modbus.Modbus{
 			Name:         req.Name,
 			ConnectType:  req.ConnectType,
 			Ip:           req.Ip,
 			Port:         req.Port,
 			BaudRate:     req.BaudRate,
+			RegisterType: req.RegisterType,
 			StartAddress: req.StartAddress,
 			Count:        req.Count,
+			RangeMin:     req.RangeMin,
+			RangeMax:     req.RangeMax,
+			Position:     req.Position,
+			Proportion:   req.Proportion,
+			PointDw:      req.PointDw,
+			PointQy:      req.PointQy,
+			PointSb:      req.PointSb,
+			QsMingcheng:  req.QsMingcheng,
+			Leixing:      req.Leixing,
+			Miaoshu:      req.Miaoshu,
+			DataType:     req.DataType,
 			Slave:        req.Slave,
 			IsEnable:     req.IsEnable,
 		})
@@ -56,8 +68,20 @@ func AddSer(c *gin.Context, req modbus.AddModbusReq) {
 			Ip:           req.Ip,
 			Port:         req.Port,
 			BaudRate:     req.BaudRate,
+			RegisterType: req.RegisterType,
 			StartAddress: req.StartAddress,
 			Count:        req.Count,
+			RangeMin:     req.RangeMin,
+			RangeMax:     req.RangeMax,
+			Position:     req.Position,
+			Proportion:   req.Proportion,
+			PointDw:      req.PointDw,
+			PointQy:      req.PointQy,
+			PointSb:      req.PointSb,
+			QsMingcheng:  req.QsMingcheng,
+			Leixing:      req.Leixing,
+			Miaoshu:      req.Miaoshu,
+			DataType:     req.DataType,
 			Slave:        req.Slave,
 			IsEnable:     req.IsEnable,
 		})

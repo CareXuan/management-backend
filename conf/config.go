@@ -178,6 +178,7 @@ func traffic() {
 			Dropout:     iface.Dropout,
 			Fifoin:      iface.Fifoin,
 			Fifoout:     iface.Fifoout,
+			CreateTime:  int(time.Now().Unix()),
 		})
 	}
 	_, err = Mysql.Insert(&insertData)
